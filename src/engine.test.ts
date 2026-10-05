@@ -3,6 +3,7 @@ import { compileBlocksToCommands, blocksToPythonCode } from '../src/lib/game/com
 import { simulateCommands } from '../src/lib/game/engine';
 import { challengesData, levelsData } from '../src/lib/challenges/challengesData';
 import { questionsData, shuffleArray } from '../src/lib/questions/questionsData';
+import { progressStore } from '../src/lib/stores/progressStore';
 import type { CodingBlock } from '../src/lib/types';
 
 describe('Block Compiler', () => {
@@ -50,6 +51,29 @@ describe('Game Engine & 10 Levels System', () => {
 		expect(challengesData.length).toBeGreaterThanOrEqual(30);
 	});
 
+	it('should ensure every challenge has diverse command blocks available (never only MOVE)', () => {
+		for (const ch of challengesData) {
+			expect(ch.availableBlocks.length).toBeGreaterThanOrEqual(3);
+			expect(ch.availableBlocks).toContain('MOVE');
+			expect(ch.availableBlocks).toContain('TURN_LEFT');
+			expect(ch.availableBlocks).toContain('TURN_RIGHT');
+		}
+	});
+
+	it('should ensure hints are pedagogical and strictly capped at 2 tips per mission', () => {
+		for (const ch of challengesData) {
+			expect(ch.hints.length).toBeGreaterThanOrEqual(1);
+			expect(ch.hints.length).toBeLessThanOrEqual(2);
+			for (const hint of ch.hints) {
+				// Should not leak direct commands
+				expect(hint).not.toContain('balok MAJU');
+				expect(hint).not.toContain('MOVE');
+				expect(hint).not.toContain('TURN_LEFT');
+				expect(hint).not.toContain('TURN_RIGHT');
+			}
+		}
+	});
+
 	it('should successfully reach target for challenge 1 with correct commands', () => {
 		const ch1 = challengesData[0];
 		// Start at (1,2) facing RIGHT, Target at (3,2) -> 2 moves
@@ -73,6 +97,17 @@ describe('Game Engine & 10 Levels System', () => {
 		const lastStep = steps[steps.length - 1];
 		expect(lastStep.status).toBe('FAILED');
 		expect(lastStep.message).toContain('menabrak rintangan');
+	});
+
+	it('should award XP on first completion and protect against duplicate XP on replay', () => {
+		progressStore.reset();
+		const testChallengeId = 'lvl1-test-replay';
+		
+		const firstAwarded = progressStore.completeChallenge(testChallengeId, 25);
+		expect(firstAwarded).toBe(true);
+
+		const replayAwarded = progressStore.completeChallenge(testChallengeId, 25);
+		expect(replayAwarded).toBe(false);
 	});
 });
 

@@ -27,7 +27,7 @@
 			return 'AVAILABLE';
 		}
 
-		// Subsequent level unlocks if previous level is completed or unlocked
+		// Subsequent level unlocks if previous level is completed
 		const prevLevel = levels[index - 1];
 		const prevCompletedCount = prevLevel.challenges.filter((ch) =>
 			$progressStore.completedChallenges.includes(ch.id)
@@ -66,7 +66,7 @@
 					<Icon name="gamepad" size={24} class="text-emerald-400" />
 					<span>Pilih Level Coding Game</span>
 				</h1>
-				<p class="text-xs sm:text-sm text-slate-400">10 Level tantangan logika pemrograman labirin 2D</p>
+				<p class="text-xs sm:text-sm text-slate-400">10 Level tantangan logika pemrograman labirin 2D PyQuest</p>
 			</div>
 		</div>
 
@@ -138,29 +138,43 @@
 					</div>
 				</div>
 
-				<!-- Challenges List Inside Level -->
+				<!-- Challenges List Inside Level (Mission Sequential Progression) -->
 				<div class="space-y-2 pt-3 border-t border-slate-800/80">
-					<div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Tantangan:</div>
+					<div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+						<span>Misi Tantangan:</span>
+						<span class="text-[10px] text-slate-400 lowercase font-normal">berurutan</span>
+					</div>
 					<div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
 						{#each level.challenges as ch, chIdx}
 							{@const chDone = $progressStore.completedChallenges.includes(ch.id)}
+							{@const isPrevDone = chIdx === 0 || $progressStore.completedChallenges.includes(level.challenges[chIdx - 1].id)}
+							{@const isMissionLocked = isLocked || !isPrevDone}
+
 							<button
 								type="button"
-								disabled={isLocked}
+								disabled={isMissionLocked}
 								onclick={() => onSelectLevelChallenge(idx, chIdx)}
-								class="p-2.5 rounded-xl border text-left text-xs font-semibold transition-all flex items-center justify-between {isLocked
-									? 'bg-slate-950 text-slate-600 border-slate-900 cursor-not-allowed'
+								title={isMissionLocked ? `Selesaikan Misi ${chIdx} terlebih dahulu untuk membuka misi ini` : chDone ? `Misi Selesai (Klik untuk Replay)` : `Mulai Misi ${chIdx + 1}`}
+								class="p-2.5 rounded-xl border text-left text-xs font-semibold transition-all flex items-center justify-between {isMissionLocked
+									? 'bg-slate-950/70 text-slate-600 border-slate-900 cursor-not-allowed'
 									: chDone
-									? 'bg-emerald-950/40 border-emerald-600/40 text-emerald-300 hover:bg-emerald-900/40 cursor-pointer'
-									: 'bg-slate-800/80 border-slate-700 hover:border-slate-500 text-slate-200 cursor-pointer'}"
+									? 'bg-emerald-950/40 border-emerald-600/40 text-emerald-300 hover:bg-emerald-900/40 cursor-pointer shadow-sm shadow-emerald-950'
+									: 'bg-indigo-950/30 border-indigo-500/40 hover:border-indigo-400 text-indigo-100 hover:bg-indigo-900/30 cursor-pointer shadow-sm'}"
 							>
-								<span class="truncate">Misi {chIdx + 1}</span>
+								<div class="flex items-center gap-1.5 truncate">
+									<span class="truncate">Misi {chIdx + 1}</span>
+								</div>
+
 								{#if chDone}
-									<Icon name="check" size={14} class="text-emerald-400 shrink-0" />
-								{:else if isLocked}
+									<span class="flex items-center gap-1 text-[10px] text-emerald-400 font-bold shrink-0" title="Telah Selesai">
+										<Icon name="check" size={13} class="text-emerald-400" />
+									</span>
+								{:else if isMissionLocked}
 									<Icon name="lock" size={12} class="text-slate-600 shrink-0" />
 								{:else}
-									<Icon name="play" size={11} class="text-slate-400 shrink-0" />
+									<span class="flex items-center gap-1 text-[10px] text-indigo-300 font-bold shrink-0" title="Tersedia">
+										<Icon name="play" size={11} class="text-indigo-400" />
+									</span>
 								{/if}
 							</button>
 						{/each}

@@ -23,7 +23,7 @@
 	} = $props();
 </script>
 
-<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
 	<div class="w-full max-w-lg bg-slate-900 border-2 border-emerald-500/50 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-emerald-500/20 text-center relative overflow-hidden">
 		<!-- Trophy icon -->
 		<div class="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-3xl bg-gradient-to-tr from-amber-400 to-emerald-400 p-1 mb-4 shadow-xl shadow-amber-400/20">
@@ -38,21 +38,28 @@
 		</h2>
 		<p class="text-sm text-slate-400 mb-6 leading-relaxed">
 			{#if isLevelCompleted}
-				Luar biasa! Seluruh tantangan pada level ini berhasil kamu selesaikan. Level berikutnya telah terbuka!
+				Luar biasa! Seluruh misi pada level ini berhasil kamu selesaikan. Level berikutnya telah terbuka!
 			{:else}
-				{challenge.title} — PyBot berhasil mencapai Bintang Emas sesuai instruksi kodemu.
+				{challenge.title} — PyBot berhasil mencapai Bintang Emas sesuai rancangan algoritma kodemu.
 			{/if}
 		</p>
 
 		<!-- Rewards Summary Box -->
 		<div class="grid grid-cols-2 gap-3 bg-slate-950/80 border border-slate-800 rounded-2xl p-4 mb-6 text-left">
 			<div class="flex items-center gap-3">
-				<div class="w-10 h-10 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center">
+				<div class="w-10 h-10 rounded-xl {xpEarned > 0 ? 'bg-amber-400/20 text-amber-400' : 'bg-slate-800 text-slate-400'} flex items-center justify-center">
 					<Icon name="zap" size={20} />
 				</div>
 				<div>
 					<div class="text-[10px] text-slate-500 uppercase font-bold">Reward XP</div>
-					<div class="text-lg font-black text-amber-400">+{xpEarned} XP</div>
+					{#if xpEarned > 0}
+						<div class="text-lg font-black text-amber-400">+{xpEarned} XP</div>
+					{:else}
+						<div class="text-sm font-black text-slate-300">
+							+0 XP
+							<span class="text-[10px] text-slate-500 font-normal block">(Replay Misi Selesai)</span>
+						</div>
+					{/if}
 				</div>
 			</div>
 			<div class="flex items-center gap-3">

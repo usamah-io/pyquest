@@ -2,7 +2,7 @@ import type { GameLevel } from '../types';
 
 export const levelsData: GameLevel[] = [
 	// ==========================================
-	// LEVEL 1: Langkah Pertama (Hanya MAJU)
+	// LEVEL 1: Langkah Pertama (Sekuensial)
 	// ==========================================
 	{
 		id: 1,
@@ -28,11 +28,14 @@ export const levelsData: GameLevel[] = [
 					],
 					coins: [{ x: 2, y: 2 }]
 				},
-				availableBlocks: ['MOVE'],
-				maxBlocks: 3,
+				availableBlocks: ['MOVE', 'TURN_LEFT', 'TURN_RIGHT'],
+				maxBlocks: 4,
 				maxMoves: 3,
 				xpReward: 20,
-				hints: ['PyBot menghadap ke kanan.', 'Jarak ke bintang tepat 2 langkah maju.']
+				hints: [
+					'Perhatikan arah hadap PyBot: robot sudah menghadap langsung ke arah bintang di sebelah kanan.',
+					'Hitung jumlah petak kosong di antara posisi PyBot dan Bintang Emas untuk menentukan berapa kali melangkah maju.'
+				]
 			},
 			{
 				id: 'lvl1-ch2',
@@ -51,11 +54,14 @@ export const levelsData: GameLevel[] = [
 					],
 					coins: [{ x: 2, y: 2 }, { x: 3, y: 2 }]
 				},
-				availableBlocks: ['MOVE'],
-				maxBlocks: 4,
+				availableBlocks: ['MOVE', 'TURN_LEFT', 'TURN_RIGHT'],
+				maxBlocks: 5,
 				maxMoves: 4,
 				xpReward: 25,
-				hints: ['Susun 3 balok MAJU.', 'Bintang berada di koordinat (4, 2).']
+				hints: [
+					'Cek arah hadap PyBot terlebih dahulu apakah perlu berputar atau cukup melangkah lurus.',
+					'Hitung jarak petak lurus melintasi jembatan tanpa berbelok ke arah air di sisi atas dan bawah.'
+				]
 			},
 			{
 				id: 'lvl1-ch3',
@@ -74,11 +80,14 @@ export const levelsData: GameLevel[] = [
 					],
 					coins: [{ x: 1, y: 2 }, { x: 3, y: 2 }]
 				},
-				availableBlocks: ['MOVE'],
-				maxBlocks: 5,
+				availableBlocks: ['MOVE', 'TURN_LEFT', 'TURN_RIGHT'],
+				maxBlocks: 6,
 				maxMoves: 5,
 				xpReward: 30,
-				hints: ['Ada 4 petak kosong di depan PyBot.', 'Gunakan 4 balok MAJU.']
+				hints: [
+					'PyBot berada di koridor lurus. Perhatikan apakah ada rintangan di hadapannya sebelum melangkah.',
+					'Langkah maju secara berurutan akan membawa PyBot menyeberang koridor menuju target di ujung.'
+				]
 			}
 		]
 	},
@@ -111,10 +120,13 @@ export const levelsData: GameLevel[] = [
 					coins: [{ x: 2, y: 1 }]
 				},
 				availableBlocks: ['MOVE', 'TURN_RIGHT', 'TURN_LEFT'],
-				maxBlocks: 4,
+				maxBlocks: 5,
 				maxMoves: 4,
 				xpReward: 25,
-				hints: ['Maju 1 petak ke (2,1).', 'Gunakan BELOK KANAN untuk menghadap ke bawah, lalu MAJU.']
+				hints: [
+					'Saat PyBot berada di persimpangan, bayangkan arah hadap robot dari sudut pandangnya sendiri.',
+					'Setelah melangkah maju, robot harus memutar 90 derajat searah jarum jam untuk menghadap koridor bawah.'
+				]
 			},
 			{
 				id: 'lvl2-ch2',
@@ -134,10 +146,13 @@ export const levelsData: GameLevel[] = [
 					coins: [{ x: 3, y: 3 }]
 				},
 				availableBlocks: ['MOVE', 'TURN_LEFT', 'TURN_RIGHT'],
-				maxBlocks: 5,
+				maxBlocks: 6,
 				maxMoves: 5,
 				xpReward: 30,
-				hints: ['Maju 2 petak dulu.', 'Belok kiri agar menghadap ke atas, lalu melangkah ke bintang.']
+				hints: [
+					'Perhatikan bentuk jalur L: tentukan berapa petak harus maju sebelum mencapai titik belokan.',
+					'Putar robot berlawanan arah jarum jam untuk mengarahkannya ke bintang di sebelah atas.'
+				]
 			},
 			{
 				id: 'lvl2-ch3',
@@ -157,10 +172,13 @@ export const levelsData: GameLevel[] = [
 					coins: [{ x: 2, y: 2 }]
 				},
 				availableBlocks: ['MOVE', 'TURN_LEFT', 'TURN_RIGHT'],
-				maxBlocks: 6,
+				maxBlocks: 7,
 				maxMoves: 6,
 				xpReward: 35,
-				hints: ['Maju ke (2,1) -> Belok Kanan -> Maju ke (2,2) -> Belok Kiri -> Maju ke (3,2).']
+				hints: [
+					'Pecah rute ini menjadi dua tikungan berurutan: tikungan pertama menuju ke bawah, lalu luruskan kembali.',
+					'Pastikan arah hadap PyBot sejajar dengan lorong sebelum mengeksekusi langkah maju berikutnya.'
+				]
 			}
 		]
 	},
@@ -197,7 +215,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 8,
 				maxMoves: 8,
 				xpReward: 35,
-				hints: ['Ada batu di petak (2,1)!', 'Belok ke kanan (turun) ke baris y=2, lalu maju dan kembali naik.']
+				hints: [
+					'Amati posisi batu penghalang: jalan lurus terhalang, cari jalur samping yang terbuka.',
+					'Gunakan belokan untuk memutari batu dari jalur bawah, lalu belok kembali menuju tujuan.'
+				]
 			},
 			{
 				id: 'lvl3-ch2',
@@ -217,10 +238,13 @@ export const levelsData: GameLevel[] = [
 					coins: [{ x: 2, y: 3 }]
 				},
 				availableBlocks: ['MOVE', 'TURN_LEFT', 'TURN_RIGHT'],
-				maxBlocks: 7,
+				maxBlocks: 8,
 				maxMoves: 7,
 				xpReward: 40,
-				hints: ['Maju 1 langkah, belok kanan menuruni lorong, belok kiri untuk mencapai bintang.']
+				hints: [
+					'Jalur berbentuk huruf U membutuhkan perubahan arah bertahap mengikuti lekukan lorong.',
+					'Hindari dinding lorong dengan berbelok tepat saat berada di petak persimpangan.'
+				]
 			},
 			{
 				id: 'lvl3-ch3',
@@ -240,10 +264,13 @@ export const levelsData: GameLevel[] = [
 					coins: [{ x: 2, y: 1 }]
 				},
 				availableBlocks: ['MOVE', 'TURN_LEFT', 'TURN_RIGHT'],
-				maxBlocks: 6,
+				maxBlocks: 7,
 				maxMoves: 6,
 				xpReward: 40,
-				hints: ['Jalur lurus terblokir batu.', 'Belok kiri naik ke atas (y=1) lalu maju lurus.']
+				hints: [
+					'Periksa kedua cabang jalan di depan: salah satu cabang ditutup oleh batu rintangan.',
+					'Arahkan PyBot ke cabang yang bebas rintangan menuju posisi target.'
+				]
 			}
 		]
 	},
@@ -275,11 +302,14 @@ export const levelsData: GameLevel[] = [
 					],
 					coins: [{ x: 1, y: 2 }, { x: 2, y: 2 }, { x: 3, y: 2 }]
 				},
-				availableBlocks: ['REPEAT', 'MOVE'],
-				maxBlocks: 2,
+				availableBlocks: ['REPEAT', 'MOVE', 'TURN_LEFT', 'TURN_RIGHT'],
+				maxBlocks: 4,
 				maxMoves: 5,
 				xpReward: 40,
-				hints: ['Gunakan balok REPEAT dengan angka 4.', 'Di dalam balok REPEAT, masukkan 1 balok MAJU.']
+				hints: [
+					'Alih-alih menyusun banyak balok yang sama, cari aksi identik yang dilakukan berulang kali.',
+					'Balok perulangan (REPEAT) dapat mengulang aksi di dalamnya sesuai jumlah langkah yang dibutuhkan.'
+				]
 			},
 			{
 				id: 'lvl4-ch2',
@@ -298,11 +328,14 @@ export const levelsData: GameLevel[] = [
 					],
 					coins: [{ x: 2, y: 2 }, { x: 4, y: 2 }]
 				},
-				availableBlocks: ['REPEAT', 'MOVE'],
-				maxBlocks: 2,
+				availableBlocks: ['REPEAT', 'MOVE', 'TURN_LEFT', 'TURN_RIGHT'],
+				maxBlocks: 4,
 				maxMoves: 6,
 				xpReward: 45,
-				hints: ['Masukkan 1 balok MAJU ke dalam REPEAT dan atur ke angka 5.']
+				hints: [
+					'Koridor ini cukup panjang. Tentukan berapa kali PyBot harus melangkah maju lurus.',
+					'Manfaatkan balok REPEAT agar kode lebih ringkas dan mematuhi batasan balok maksimal.'
+				]
 			},
 			{
 				id: 'lvl4-ch3',
@@ -322,11 +355,14 @@ export const levelsData: GameLevel[] = [
 					],
 					coins: [{ x: 2, y: 2 }, { x: 2, y: 3 }]
 				},
-				availableBlocks: ['MOVE', 'TURN_RIGHT', 'REPEAT'],
-				maxBlocks: 4,
+				availableBlocks: ['MOVE', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'],
+				maxBlocks: 5,
 				maxMoves: 6,
 				xpReward: 45,
-				hints: ['Maju 1 langkah, belok kanan, lalu pasang REPEAT 3x dengan balok MAJU.']
+				hints: [
+					'Perhatikan urutan aksi: ada aksi persiapan belok sebelum PyBot memasuki lorong panjang.',
+					'Selesaikan belokan terlebih dahulu, lalu manfaatkan loop untuk melintasi lorong vertikal.'
+				]
 			}
 		]
 	},
@@ -362,7 +398,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 6,
 				maxMoves: 9,
 				xpReward: 50,
-				hints: ['Pola tangga: [Maju, Belok Kiri, Maju, Belok Kanan].', 'Jalankan 2 putaran.']
+				hints: [
+					'Setiap anak tangga memiliki pola pergerakan identik: melangkah, berputar, melangkah, lalu kembali ke arah semula.',
+					'Temukan satu siklus anak tangga utuh, lalu masukkan ke dalam blok perulangan.'
+				]
 			},
 			{
 				id: 'lvl5-ch2',
@@ -382,11 +421,14 @@ export const levelsData: GameLevel[] = [
 					],
 					coins: [{ x: 2, y: 2 }]
 				},
-				availableBlocks: ['MOVE', 'TURN_LEFT', 'TURN_RIGHT'],
+				availableBlocks: ['MOVE', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
 				maxBlocks: 8,
 				maxMoves: 8,
 				xpReward: 50,
-				hints: ['Perhatikan posisi batu penghalang di kedua sisi sungai.']
+				hints: [
+					'Perhatikan lekukan sungai: robot harus berganti arah hadap secara teratur di setiap persimpangan.',
+					'Pastikan kamu tidak melangkah maju saat robot masih menghadap dinding sungai.'
+				]
 			},
 			{
 				id: 'lvl5-ch3',
@@ -410,7 +452,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 7,
 				maxMoves: 14,
 				xpReward: 55,
-				hints: ['Gunakan REPEAT 3 kali dengan rangkaian instruksi tangga di dalamnya.']
+				hints: [
+					'Tiga anak tangga berarti pola gerakan tangga yang sama dilakukan berulang tiga kali.',
+					'Susun satu siklus tangga yang tepat di dalam blok REPEAT untuk menghemat kuota balok.'
+				]
 			}
 		]
 	},
@@ -447,7 +492,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 7,
 				maxMoves: 7,
 				xpReward: 55,
-				hints: ['Jangan ke cabang atas karena ada 2 batu penghalang.', 'Turun ke bawah lalu lurus.']
+				hints: [
+					'Analisis rute atas dan bawah: perhatikan cabang mana yang terhalang batu.',
+					'Arahkan PyBot ke lorong terbuka di bawah agar terhindar dari jalan buntu.'
+				]
 			},
 			{
 				id: 'lvl6-ch2',
@@ -471,7 +519,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 9,
 				maxMoves: 9,
 				xpReward: 60,
-				hints: ['Maju 2 petak, belok kanan, maju, putar balik ke kiri melewati celah.']
+				hints: [
+					'Kurva ganda membutuhkan ketelitian arah hadap: belok pertama mengubah arah ke bawah, belok berikutnya meluruskan kembali.',
+					'Jangan melangkah maju sebelum memastikan robot menghadap ke celah terbuka.'
+				]
 			},
 			{
 				id: 'lvl6-ch3',
@@ -494,7 +545,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 7,
 				maxMoves: 9,
 				xpReward: 60,
-				hints: ['Pintu masuk berada di sisi kanan (x=4). Masuki dari sana.']
+				hints: [
+					'Dinding tengah tidak dapat ditembus secara langsung; telusuri tepi luar untuk mencari celah masuk.',
+					'Gunakan perulangan jika ada jalur lurus panjang di sepanjang dinding pembatas.'
+				]
 			}
 		]
 	},
@@ -530,7 +584,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 6,
 				maxMoves: 8,
 				xpReward: 65,
-				hints: ['Gunakan balok REPEAT untuk menghemat susunan balok maju 3 petak.']
+				hints: [
+					'Jalur mengelilingi pulau terdiri dari dua segmen lurus panjang yang dihubungkan satu belokan.',
+					'Gunakan blok perulangan pada masing-masing segmen lurus untuk mematuhi batas maksimal balok.'
+				]
 			},
 			{
 				id: 'lvl7-ch2',
@@ -554,7 +611,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 8,
 				maxMoves: 10,
 				xpReward: 70,
-				hints: ['Maju di batas atas, belok kanan di pojok, lalu masuk ke dalam.']
+				hints: [
+					'Gerakan spiral menyusut ke dalam membutuhkan langkah yang terukur di setiap sudut dinding.',
+					'Cek koordinat target di bagian dalam: masuklah melalui jalur lingkar terluar terlebih dahulu.'
+				]
 			},
 			{
 				id: 'lvl7-ch3',
@@ -577,7 +637,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 9,
 				maxMoves: 9,
 				xpReward: 70,
-				hints: ['Maju sampai ujung (x=3), turun 1 petak, putar haluan kembali ke kiri.']
+				hints: [
+					'Untuk berbalik arah ke lorong sebelah, PyBot perlu melakukan dua kali belokan yang searah.',
+					'Pastikan PyBot melangkah ke lorong sebelah sebelum memutar kembali arah hadapnya.'
+				]
 			}
 		]
 	},
@@ -613,7 +676,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 6,
 				maxMoves: 10,
 				xpReward: 75,
-				hints: ['Setiap sisi adalah: 2x Maju + 1x Belok Kanan.', 'Ulangi 3 kali.']
+				hints: [
+					'Keliling persegi memiliki pola sisi yang simetris: melangkah sepanjang sisi lalu membelokkan arah.',
+					'Ulangi siklus satu sisi tersebut beberapa kali hingga robot tiba di sisi target.'
+				]
 			},
 			{
 				id: 'lvl8-ch2',
@@ -636,7 +702,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 7,
 				maxMoves: 10,
 				xpReward: 80,
-				hints: ['Amati simetri perpindahan antara baris y=3 dan baris y=2.']
+				hints: [
+					'Perhatikan posisi kedua lorong: setelah membersihkan lorong pertama, ubah jalur menuju lorong kedua.',
+					'Pola pergerakan di lorong kedua menyerupai lorong pertama, temukan keteraturan gerakannya.'
+				]
 			},
 			{
 				id: 'lvl8-ch3',
@@ -659,7 +728,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 9,
 				maxMoves: 12,
 				xpReward: 80,
-				hints: ['Naik ke atas (y=2) untuk melompati rintangan pada x=2.']
+				hints: [
+					'Dinding vertikal memisahkan kolom; naiklah ke baris yang bebas rintangan untuk berpindah kolom.',
+					'Setelah melewati dinding pembatas, turunkan kembali posisi PyBot ke jalur target.'
+				]
 			}
 		]
 	},
@@ -695,7 +767,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 10,
 				maxMoves: 15,
 				xpReward: 85,
-				hints: ['Ada dua bukit yang harus dilewati: naik, lewat atas, turun, ulangi.']
+				hints: [
+					'Lintasan W terdiri dari dua puncak: naik melewati rintangan pertama, lalu ulangi manuver untuk rintangan kedua.',
+					'Pecah manuver melewati satu rintangan menjadi sub-langkah: naik, melangkah, lalu turun.'
+				]
 			},
 			{
 				id: 'lvl9-ch2',
@@ -718,7 +793,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 8,
 				maxMoves: 9,
 				xpReward: 90,
-				hints: ['Jalur atas tertutup rapat. Turunlah ke baris y=3 untuk memutar dari bawah.']
+				hints: [
+					'Benteng atas terlalu rapat untuk ditembus; carilah koridor terbuka di bagian bawah.',
+					'Gunakan belokan awal untuk mengarahkan PyBot ke jalur bawah yang lapang menuju target.'
+				]
 			},
 			{
 				id: 'lvl9-ch3',
@@ -741,7 +819,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 8,
 				maxMoves: 11,
 				xpReward: 90,
-				hints: ['Kelilingi dinding luar sebelum masuk ke petak target (2,3).']
+				hints: [
+					'Target berada di ruang dalam labirin; hindari dinding tebal dengan memutar dari sisi terluar.',
+					'Perhitungkan setiap belokan agar PyBot tidak terjebak di lorong sempit tanpa jalan keluar.'
+				]
 			}
 		]
 	},
@@ -778,7 +859,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 9,
 				maxMoves: 12,
 				xpReward: 100,
-				hints: ['Gunakan pola zigzag berulang 2x untuk melewati gerbang istana.']
+				hints: [
+					'Gerbang istana memiliki rintangan simetris di sisi kiri dan kanan lorong.',
+					'Cari pola langkah zigzag yang dapat diulang untuk melewati setiap sekat gerbang.'
+				]
 			},
 			{
 				id: 'lvl10-ch2',
@@ -802,7 +886,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 9,
 				maxMoves: 12,
 				xpReward: 110,
-				hints: ['Masuki mahkota dari sisi atas (y=1) lalu belok ke bawah menuju (3,2).']
+				hints: [
+					'Bintang berada di tengah mahkota; temukan jalur melingkar dari sisi atas untuk masuk ke dalamnya.',
+					'Kombinasikan gerakan lurus teratur dengan belokan tepat di setiap sudut mahkota.'
+				]
 			},
 			{
 				id: 'lvl10-ch3',
@@ -825,7 +912,10 @@ export const levelsData: GameLevel[] = [
 				maxBlocks: 7,
 				maxMoves: 14,
 				xpReward: 150,
-				hints: ['Rute mengelilingi seluruh arena: 2x maju lalu belok kanan, diulang 4 kali.']
+				hints: [
+					'Untuk menyapu seluruh koin di sekeliling arena, buat PyBot berpatroli memutari 4 sudut perimeter.',
+					'Setiap sisi arena memiliki panjang langkah yang serupa sebelum melakukan rotasi 90 derajat.'
+				]
 			}
 		]
 	}

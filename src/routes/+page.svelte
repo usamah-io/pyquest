@@ -17,6 +17,7 @@
 	import { compileBlocksToCommands } from '$lib/game/compiler';
 	import { simulateCommands, type SimulationStep } from '$lib/game/engine';
 	import { progressStore } from '$lib/stores/progressStore';
+	import { requestAppFullscreen, isFullscreenActive } from '$lib/utils/fullscreen';
 	import type { AppScreen, CodingBlock, Direction, GridCoord } from '$lib/types';
 
 	// Screen Flow State
@@ -36,15 +37,15 @@
 	let currentLevelIndex = $state(0);
 	let currentChallengeIndex = $state(0);
 
-	// Attempts counter per challenge
+	// Attempts counter & XP awarded for current run
 	let attemptsCount = $state(0);
+	let earnedXpThisRun = $state(0);
 
 	// Question State
 	let userSelectedOptionId = $state<string | null>(null);
 
 	// Challenge State
 	let workspaceBlocks = $state<CodingBlock[]>([]);
-	let activeChallengeHintIndex = $state(-1);
 	let isRunning = $state(false);
 	let simulationTimer = $state<any>(null);
 
@@ -67,8 +68,8 @@
 		)
 	);
 
-	// Focus Mode State & Anti-Cheat detection
-	let isFocusMode = $state(false);
+	// Focus Mode Pause Overlay & Anti-Cheat detection
+	let isFocusPauseOverlayOpen = $state(false);
 	let focusWarning = $state<string | null>(null);
 	let focusWarningTimeout = $state<any>(null);
 
@@ -80,45 +81,32 @@
 		}, 4500);
 	}
 
-	async function toggleFocusMode() {
-		if (!isFocusMode) {
-			try {
-				if (document.documentElement.requestFullscreen) {
-					await document.documentElement.requestFullscreen();
-				}
-				isFocusMode = true;
-			} catch (e) {
-				isFocusMode = true;
-			}
-		} else {
-			try {
-				if (document.fullscreenElement && document.exitFullscreen) {
-					await document.exitFullscreen();
-				}
-			} catch (e) {
-				// ignore
-			}
-			isFocusMode = false;
-		}
+	async function handleResumeFocusMode() {
+		await requestAppFullscreen();
+		isFocusPauseOverlayOpen = false;
 	}
 
-	// Browser listeners for focus / anti-cheat detection
+	function handleExitFocusToLevelSelect() {
+		isFocusPauseOverlayOpen = false;
+		currentScreen = 'LEVEL_SELECT';
+	}
+
+	// Browser listeners for automatic focus / anti-cheat detection
 	$effect(() => {
 		function onFullscreenChange() {
-			if (currentScreen === 'CHALLENGE' && isFocusMode && !document.fullscreenElement) {
-				isFocusMode = false;
-				showFocusAlert('Peringatan: Kamu keluar dari Mode Layar Penuh. Tetap fokus menyelesaikan tantangan!');
+			if (currentScreen === 'CHALLENGE' && !isFullscreenActive()) {
+				isFocusPauseOverlayOpen = true;
 			}
 		}
 
 		function onVisibilityChange() {
 			if (currentScreen === 'CHALLENGE' && document.hidden) {
-				showFocusAlert('Peringatan: Kamu berpindah tab browser saat tantangan koding aktif.');
+				showFocusAlert('Peringatan: Kamu berpindah tab browser saat misi koding aktif.');
 			}
 		}
 
 		function onWindowBlur() {
-			if (currentScreen === 'CHALLENGE' && isFocusMode) {
+			if (currentScreen === 'CHALLENGE' && !isFocusPauseOverlayOpen) {
 				showFocusAlert('Perhatian: Jendela game kehilangan fokus. Silakan klik kembali area permainan.');
 			}
 		}
@@ -143,14 +131,14 @@
 			gameStatus = 'IDLE';
 			gameStatusMessage = 'Susun balok instruksi lalu tekan tombol JALANKAN KODE.';
 			workspaceBlocks = [];
-			activeChallengeHintIndex = -1;
 		}
 	}
 
-	// Mode Entry Handlers
+	// Mode Entry Handlers (with automatic fullscreen request)
 	function handleStartLearning() {
 		questionIndex = 0;
 		currentScreen = 'QUESTION';
+		requestAppFullscreen();
 	}
 
 	function handleStartCodingGame() {
@@ -161,7 +149,9 @@
 		if (mode === 'HOME') {
 			currentScreen = 'LANDING';
 		} else if (mode === 'LEARN') {
+			questionIndex = 0;
 			currentScreen = 'QUESTION';
+			requestAppFullscreen();
 		} else if (mode === 'GAME') {
 			currentScreen = 'LEVEL_SELECT';
 		}
@@ -171,8 +161,11 @@
 		currentLevelIndex = lvlIdx;
 		currentChallengeIndex = chIdx;
 		attemptsCount = 0;
+		earnedXpThisRun = 0;
+		isFocusPauseOverlayOpen = false;
 		syncChallengeArena();
 		currentScreen = 'CHALLENGE';
+		requestAppFullscreen();
 	}
 
 	// Question Flow Handlers
@@ -194,10 +187,6 @@
 	}
 
 	// Challenge Flow Handlers
-	function handleCycleChallengeHint() {
-		activeChallengeHintIndex = activeChallengeHintIndex + 1;
-	}
-
 	function handleResetGame() {
 		if (simulationTimer) {
 			clearInterval(simulationTimer);
@@ -251,7 +240,8 @@
 				isRunning = false;
 
 				// Award XP (duplicate protection handled inside store)
-				progressStore.completeChallenge(activeChallenge.id, activeChallenge.xpReward);
+				const isFirst = progressStore.completeChallenge(activeChallenge.id, activeChallenge.xpReward);
+				earnedXpThisRun = isFirst ? activeChallenge.xpReward : 0;
 
 				// Check if this was the last unfinished challenge in level
 				const levelNowFinished = activeLevel.challenges.every(
@@ -279,10 +269,12 @@
 		if (currentChallengeIndex < activeLevel.challenges.length - 1) {
 			currentChallengeIndex++;
 			attemptsCount = 0;
+			earnedXpThisRun = 0;
 			syncChallengeArena();
 			currentScreen = 'CHALLENGE';
+			requestAppFullscreen();
 		} else {
-			// Level completed! If there's next level, return to level select or next level
+			// Level completed! Return to level select or summary
 			if (currentLevelIndex < levelsData.length - 1) {
 				currentScreen = 'LEVEL_SELECT';
 			} else {
@@ -293,7 +285,9 @@
 
 	function handleReplayCurrentChallenge() {
 		handleResetGame();
+		earnedXpThisRun = 0;
 		currentScreen = 'CHALLENGE';
+		requestAppFullscreen();
 	}
 
 	function handleRestartAll() {
@@ -302,6 +296,7 @@
 		currentLevelIndex = 0;
 		currentChallengeIndex = 0;
 		attemptsCount = 0;
+		earnedXpThisRun = 0;
 		currentScreen = 'LANDING';
 	}
 </script>
@@ -337,6 +332,44 @@
 			>
 				<Icon name="x" size={14} />
 			</button>
+		</div>
+	{/if}
+
+	<!-- Dedicated Pause Overlay When Fullscreen Focus is Exited in Challenge Mode -->
+	{#if isFocusPauseOverlayOpen && currentScreen === 'CHALLENGE'}
+		<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
+			<div class="w-full max-w-md bg-slate-900 border-2 border-amber-500/60 rounded-3xl p-6 sm:p-7 shadow-2xl shadow-amber-500/10 text-center relative overflow-hidden">
+				<div class="w-16 h-16 mx-auto rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-4 border border-amber-500/30">
+					<Icon name="maximize" size={32} />
+				</div>
+
+				<h3 class="text-xl sm:text-2xl font-black text-white mb-2">
+					MODE FOKUS BERHENTI
+				</h3>
+				<p class="text-xs sm:text-sm text-slate-300 mb-6 leading-relaxed">
+					Game dijeda karena jendela keluar dari Mode Layar Penuh. Kembalikan mode fokus untuk melanjutkan tantangan koding tanpa kehilangan balok instruksimu.
+				</p>
+
+				<div class="space-y-2.5">
+					<button
+						type="button"
+						onclick={handleResumeFocusMode}
+						class="w-full py-3 bg-gradient-to-r from-amber-400 to-emerald-400 hover:from-amber-300 hover:to-emerald-300 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-400/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+					>
+						<Icon name="play" size={16} class="text-slate-950" />
+						<span>Kembali ke Game</span>
+					</button>
+
+					<button
+						type="button"
+						onclick={handleExitFocusToLevelSelect}
+						class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+					>
+						<Icon name="arrow-left" size={14} />
+						<span>Keluar ke Menu Level</span>
+					</button>
+				</div>
+			</div>
 		</div>
 	{/if}
 
@@ -378,16 +411,12 @@
 		<!-- 5. CODING GAME CHALLENGE -->
 		{:else if currentScreen === 'CHALLENGE'}
 			<div class="flex-1 flex flex-col h-full max-w-7xl mx-auto w-full">
-				<!-- Header Objective, Mode info & Focus Toggle -->
+				<!-- Header Objective & Hints Quota -->
 				<ChallengeHeader
 					title={`${activeLevel.title} — ${activeChallenge.title}`}
 					objective={activeChallenge.objective}
 					topic={`Level ${activeLevel.id} • Misi ${currentChallengeIndex + 1}/${activeLevel.challenges.length}`}
 					hints={activeChallenge.hints}
-					activeHintIndex={activeChallengeHintIndex}
-					{isFocusMode}
-					onToggleFocusMode={toggleFocusMode}
-					onShowHint={handleCycleChallengeHint}
 					onBackToModes={() => (currentScreen = 'LEVEL_SELECT')}
 				/>
 
@@ -434,7 +463,7 @@
 	{#if currentScreen === 'REWARD'}
 		<ChallengeSuccessModal
 			challenge={activeChallenge}
-			xpEarned={activeChallenge.xpReward}
+			xpEarned={earnedXpThisRun}
 			{attemptsCount}
 			isLevelCompleted={isLevelCompleted}
 			isLastChallengeInLevel={currentChallengeIndex === activeLevel.challenges.length - 1}
