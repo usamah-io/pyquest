@@ -39,7 +39,7 @@
 	}
 
 	function showNextHint() {
-		if (currentHintIndex < question.hints.length - 1) {
+		if (question.hints && currentHintIndex < question.hints.length - 1) {
 			currentHintIndex++;
 		}
 	}
@@ -109,7 +109,7 @@
 		</div>
 
 		<!-- Hints Section -->
-		{#if question.hints.length > 0}
+		{#if question.hints && question.hints.length > 0}
 			<div class="mb-6">
 				{#if currentHintIndex === -1}
 					<button

@@ -3,6 +3,7 @@
 	import LandingHero from '$lib/components/LandingHero.svelte';
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
 	import FeedbackModal from '$lib/components/FeedbackModal.svelte';
+	import LevelSelect from '$lib/components/LevelSelect.svelte';
 	import ChallengeHeader from '$lib/components/ChallengeHeader.svelte';
 	import BlockWorkspace from '$lib/components/BlockWorkspace.svelte';
 	import GameCanvas from '$lib/components/GameCanvas.svelte';
@@ -12,13 +13,13 @@
 	import Icon from '$lib/components/Icon.svelte';
 
 	import { questionsData } from '$lib/questions/questionsData';
-	import { challengesData } from '$lib/challenges/challengesData';
+	import { levelsData } from '$lib/challenges/levelsData';
 	import { compileBlocksToCommands } from '$lib/game/compiler';
 	import { simulateCommands, type SimulationStep } from '$lib/game/engine';
 	import { progressStore } from '$lib/stores/progressStore';
 	import type { AppScreen, CodingBlock, Direction, GridCoord } from '$lib/types';
 
-	// Screen Flow State: Mode-separated
+	// Screen Flow State
 	let currentScreen = $state<AppScreen>('LANDING');
 
 	// Active Mode identifier for Navbar: 'HOME' | 'LEARN' | 'GAME'
@@ -32,7 +33,11 @@
 
 	// Pointers
 	let questionIndex = $state(0);
-	let challengeIndex = $state(0);
+	let currentLevelIndex = $state(0);
+	let currentChallengeIndex = $state(0);
+
+	// Attempts counter per challenge
+	let attemptsCount = $state(0);
 
 	// Question State
 	let userSelectedOptionId = $state<string | null>(null);
@@ -50,9 +55,17 @@
 	let gameStatus = $state<'IDLE' | 'READY' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'OUT_OF_BOUNDS'>('IDLE');
 	let gameStatusMessage = $state('');
 
-	// Current Active Question & Challenge
+	// Current Active Question, Level, & Challenge
 	let activeQuestion = $derived(questionsData[questionIndex] || questionsData[0]);
-	let activeChallenge = $derived(challengesData[challengeIndex] || challengesData[0]);
+	let activeLevel = $derived(levelsData[currentLevelIndex] || levelsData[0]);
+	let activeChallenge = $derived(activeLevel.challenges[currentChallengeIndex] || activeLevel.challenges[0]);
+
+	// Whether current challenge completion triggers Level completion
+	let isLevelCompleted = $derived(
+		activeLevel.challenges.every((ch) =>
+			$progressStore.completedChallenges.includes(ch.id)
+		)
+	);
 
 	// Focus Mode State & Anti-Cheat detection
 	let isFocusMode = $state(false);
@@ -75,7 +88,6 @@
 				}
 				isFocusMode = true;
 			} catch (e) {
-				// Best-effort: browser permissions may block fullscreen, fallback cleanly
 				isFocusMode = true;
 			}
 		} else {
@@ -95,13 +107,13 @@
 		function onFullscreenChange() {
 			if (currentScreen === 'CHALLENGE' && isFocusMode && !document.fullscreenElement) {
 				isFocusMode = false;
-				showFocusAlert('Peringatan: Kamu keluar dari Mode Layar Penuh (Fullscreen). Tetap fokus menyelesaikan tantangan!');
+				showFocusAlert('Peringatan: Kamu keluar dari Mode Layar Penuh. Tetap fokus menyelesaikan tantangan!');
 			}
 		}
 
 		function onVisibilityChange() {
 			if (currentScreen === 'CHALLENGE' && document.hidden) {
-				showFocusAlert('Peringatan: Kamu berpindah tab browser saat tantangan koding aktif. Tetap fokus di PyQuest!');
+				showFocusAlert('Peringatan: Kamu berpindah tab browser saat tantangan koding aktif.');
 			}
 		}
 
@@ -142,9 +154,7 @@
 	}
 
 	function handleStartCodingGame() {
-		challengeIndex = 0;
-		syncChallengeArena();
-		currentScreen = 'CHALLENGE';
+		currentScreen = 'LEVEL_SELECT';
 	}
 
 	function handleSelectNavbarMode(mode: 'HOME' | 'LEARN' | 'GAME') {
@@ -153,16 +163,23 @@
 		} else if (mode === 'LEARN') {
 			currentScreen = 'QUESTION';
 		} else if (mode === 'GAME') {
-			syncChallengeArena();
-			currentScreen = 'CHALLENGE';
+			currentScreen = 'LEVEL_SELECT';
 		}
+	}
+
+	function handleSelectLevelChallenge(lvlIdx: number, chIdx: number) {
+		currentLevelIndex = lvlIdx;
+		currentChallengeIndex = chIdx;
+		attemptsCount = 0;
+		syncChallengeArena();
+		currentScreen = 'CHALLENGE';
 	}
 
 	// Question Flow Handlers
 	function handleAnswerQuestion(selectedOptionId: string) {
 		userSelectedOptionId = selectedOptionId;
 		if (selectedOptionId === activeQuestion.correctAnswerId) {
-			progressStore.completeQuestion(activeQuestion.id, 15);
+			progressStore.completeQuestion(activeQuestion.id, activeQuestion.xp || 15);
 		}
 		currentScreen = 'FEEDBACK';
 	}
@@ -172,7 +189,6 @@
 			questionIndex++;
 			currentScreen = 'QUESTION';
 		} else {
-			// Finished all questions! Show summary
 			currentScreen = 'SUMMARY';
 		}
 	}
@@ -193,6 +209,8 @@
 
 	function handleRunCode() {
 		if (isRunning || workspaceBlocks.length === 0) return;
+
+		attemptsCount++;
 
 		// 1. Compile blocks to atomic commands
 		const { commands, error } = compileBlocksToCommands(workspaceBlocks);
@@ -231,7 +249,18 @@
 				clearInterval(simulationTimer);
 				simulationTimer = null;
 				isRunning = false;
+
+				// Award XP (duplicate protection handled inside store)
 				progressStore.completeChallenge(activeChallenge.id, activeChallenge.xpReward);
+
+				// Check if this was the last unfinished challenge in level
+				const levelNowFinished = activeLevel.challenges.every(
+					(c) => c.id === activeChallenge.id || $progressStore.completedChallenges.includes(c.id)
+				);
+				if (levelNowFinished) {
+					progressStore.completeLevel(activeLevel.id);
+				}
+
 				setTimeout(() => {
 					currentScreen = 'REWARD';
 				}, 600);
@@ -245,26 +274,40 @@
 		}, 380);
 	}
 
-	function handleNextChallengeOrSummary() {
-		if (challengeIndex < challengesData.length - 1) {
-			challengeIndex++;
+	function handleNextChallengeOrLevel() {
+		// If more challenges in current level
+		if (currentChallengeIndex < activeLevel.challenges.length - 1) {
+			currentChallengeIndex++;
+			attemptsCount = 0;
 			syncChallengeArena();
 			currentScreen = 'CHALLENGE';
 		} else {
-			currentScreen = 'SUMMARY';
+			// Level completed! If there's next level, return to level select or next level
+			if (currentLevelIndex < levelsData.length - 1) {
+				currentScreen = 'LEVEL_SELECT';
+			} else {
+				currentScreen = 'SUMMARY';
+			}
 		}
+	}
+
+	function handleReplayCurrentChallenge() {
+		handleResetGame();
+		currentScreen = 'CHALLENGE';
 	}
 
 	function handleRestartAll() {
 		progressStore.reset();
 		questionIndex = 0;
-		challengeIndex = 0;
+		currentLevelIndex = 0;
+		currentChallengeIndex = 0;
+		attemptsCount = 0;
 		currentScreen = 'LANDING';
 	}
 </script>
 
 <svelte:head>
-	<title>PyQuest — Petualangan Logika Pemrograman Python</title>
+	<title>PyQuest — Belajar Logika Pemrograman Python</title>
 </svelte:head>
 
 <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
@@ -324,20 +367,28 @@
 				onContinue={handleContinueAfterQuestionFeedback}
 			/>
 
-		<!-- 4. CODING GAME MODE -->
+		<!-- 4. LEVEL SELECTION (CODING GAME) -->
+		{:else if currentScreen === 'LEVEL_SELECT'}
+			<LevelSelect
+				levels={levelsData}
+				onSelectLevelChallenge={handleSelectLevelChallenge}
+				onBackToHome={() => (currentScreen = 'LANDING')}
+			/>
+
+		<!-- 5. CODING GAME CHALLENGE -->
 		{:else if currentScreen === 'CHALLENGE'}
 			<div class="flex-1 flex flex-col h-full max-w-7xl mx-auto w-full">
 				<!-- Header Objective, Mode info & Focus Toggle -->
 				<ChallengeHeader
-					title={activeChallenge.title}
+					title={`${activeLevel.title} — ${activeChallenge.title}`}
 					objective={activeChallenge.objective}
-					topic={activeChallenge.topic}
+					topic={`Level ${activeLevel.id} • Misi ${currentChallengeIndex + 1}/${activeLevel.challenges.length}`}
 					hints={activeChallenge.hints}
 					activeHintIndex={activeChallengeHintIndex}
 					{isFocusMode}
 					onToggleFocusMode={toggleFocusMode}
 					onShowHint={handleCycleChallengeHint}
-					onBackToModes={() => (currentScreen = 'LANDING')}
+					onBackToModes={() => (currentScreen = 'LEVEL_SELECT')}
 				/>
 
 				<!-- 2-Column Landscape Layout: Left: Game Arena, Right: Block Coding -->
@@ -359,6 +410,8 @@
 						<BlockWorkspace
 							bind:workspaceBlocks
 							availableBlocks={activeChallenge.availableBlocks}
+							maxMoves={activeChallenge.maxMoves}
+							attempts={attemptsCount}
 							onRun={handleRunCode}
 							onReset={handleResetGame}
 							{isRunning}
@@ -367,7 +420,7 @@
 				</div>
 			</div>
 
-		<!-- 5. SUMMARY SCREEN -->
+		<!-- 6. SUMMARY SCREEN -->
 		{:else if currentScreen === 'SUMMARY'}
 			<SummaryModal
 				progress={$progressStore}
@@ -382,8 +435,12 @@
 		<ChallengeSuccessModal
 			challenge={activeChallenge}
 			xpEarned={activeChallenge.xpReward}
-			isLastChallenge={challengeIndex === challengesData.length - 1}
-			onNext={handleNextChallengeOrSummary}
+			{attemptsCount}
+			isLevelCompleted={isLevelCompleted}
+			isLastChallengeInLevel={currentChallengeIndex === activeLevel.challenges.length - 1}
+			onNext={handleNextChallengeOrLevel}
+			onReplay={handleReplayCurrentChallenge}
+			onBackToLevelSelect={() => (currentScreen = 'LEVEL_SELECT')}
 		/>
 	{/if}
 </div>

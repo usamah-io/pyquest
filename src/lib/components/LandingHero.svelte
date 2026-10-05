@@ -11,23 +11,23 @@
 </script>
 
 <div class="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 max-w-4xl mx-auto my-auto text-center">
-	<!-- Hero Badge & Icon -->
+	<!-- Hero Badge -->
 	<div class="mb-5 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold">
 		<Icon name="python" size={16} class="text-indigo-400" />
-		<span>Belajar Pemrograman Python Visual</span>
+		<span>Dasar Pemrograman Python</span>
 	</div>
 
 	<!-- Main Title -->
 	<h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight mb-3">
-		Jelajahi Logika Koding Python <br class="hidden sm:inline" />
-		<span class="bg-gradient-to-r from-indigo-400 via-purple-300 to-amber-300 bg-clip-text text-transparent">
-			Secara Interaktif & Menyenangkan
+		Pelajari Logika Pemrograman <br class="hidden sm:inline" />
+		<span class="bg-gradient-to-r from-indigo-400 via-purple-300 to-emerald-300 bg-clip-text text-transparent">
+			Melalui Soal & Game Labirin
 		</span>
 	</h1>
 
 	<!-- Subtitle -->
 	<p class="text-slate-300 text-sm sm:text-base max-w-2xl mb-8 leading-relaxed">
-		Pahami konsep dasar pemrograman Python melalui pertanyaan terstruktur dan terapkan langsung logika kodingmu untuk mengendalikan robot PyBot di arena labirin.
+		Pilih jalur belajarmu: latih pemahaman sintaksis Python lewat bank soal terstruktur atau kendalikan PyBot menyelesaikan 10 level tantangan puzzle labirin 2D.
 	</p>
 
 	<!-- Mode Choices: Two Clear Portals -->
@@ -46,12 +46,12 @@
 					Modul Belajar Python
 				</h2>
 				<p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
-					Pelajari variabel, teks (string), fungsi <code class="text-indigo-300">print()</code>, dan perulangan loop lewat kuis konseptual interaktif.
+					50 soal latihan mencakup variabel, fungsi <code class="text-indigo-300">print()</code>, tipe data, percabangan <code class="text-indigo-300">if-else</code>, dan perulangan loop.
 				</p>
 			</div>
 
 			<div class="mt-6 flex items-center justify-between text-xs font-bold text-indigo-400 pt-3 border-t border-slate-800">
-				<span>Mulai Modul Belajar</span>
+				<span>Mulai Belajar Soal</span>
 				<Icon name="chevron-right" size={16} class="group-hover:translate-x-1 transition-transform" />
 			</div>
 		</button>
@@ -70,12 +70,12 @@
 					Main Coding Game
 				</h2>
 				<p class="text-xs sm:text-sm text-slate-400 leading-relaxed">
-					Susun balok instruksi visual seperti Scratch untuk memandu robot PyBot melewati teka-teki labirin dan meraih bintang.
+					Selesaikan 10 level labirin (30 misi) menggunakan balok instruksi seperti MAJU, BELOK, dan REPEAT untuk mengarahkan PyBot.
 				</p>
 			</div>
 
 			<div class="mt-6 flex items-center justify-between text-xs font-bold text-emerald-400 pt-3 border-t border-slate-800">
-				<span>Buka Arena Game</span>
+				<span>Pilih Level Game</span>
 				<Icon name="chevron-right" size={16} class="group-hover:translate-x-1 transition-transform" />
 			</div>
 		</button>
@@ -84,6 +84,6 @@
 	<!-- Small Educational Footnote -->
 	<div class="flex items-center gap-2 text-xs text-slate-500">
 		<Icon name="shield-check" size={14} class="text-slate-400" />
-		<span>100% Bebas biaya & tanpa perlu membuat akun</span>
+		<span>Progres otomatis tersimpan di browsermu</span>
 	</div>
 </div>

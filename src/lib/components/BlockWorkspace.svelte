@@ -6,12 +6,16 @@
 	let {
 		workspaceBlocks = $bindable<CodingBlock[]>([]),
 		availableBlocks,
+		maxMoves,
+		attempts = 0,
 		onRun,
 		onReset,
 		isRunning
 	}: {
 		workspaceBlocks: CodingBlock[];
 		availableBlocks: BlockType[];
+		maxMoves?: number;
+		attempts?: number;
 		onRun: () => void;
 		onReset: () => void;
 		isRunning: boolean;
@@ -96,17 +100,29 @@
 		<div class="flex items-center gap-2">
 			<Icon name="puzzle" size={18} class="text-indigo-400" />
 			<h3 class="font-bold text-white text-sm sm:text-base">Area Balok Koding</h3>
+			{#if attempts > 0}
+				<span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+					Percobaan: {attempts}
+				</span>
+			{/if}
 		</div>
-		<button
-			type="button"
-			onclick={() => (showPythonCode = !showPythonCode)}
-			class="text-xs px-2.5 py-1 rounded-lg border font-mono transition-colors flex items-center gap-1.5 cursor-pointer {showPythonCode
-				? 'bg-indigo-500/20 border-indigo-500 text-indigo-300'
-				: 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}"
-		>
-			<Icon name="python" size={13} />
-			<span>{showPythonCode ? 'Sembunyikan Python' : 'Lihat Python'}</span>
-		</button>
+		<div class="flex items-center gap-2">
+			{#if maxMoves}
+				<span class="text-xs text-slate-400 font-mono hidden sm:inline">
+					Maks: {maxMoves} instruksi
+				</span>
+			{/if}
+			<button
+				type="button"
+				onclick={() => (showPythonCode = !showPythonCode)}
+				class="text-xs px-2.5 py-1 rounded-lg border font-mono transition-colors flex items-center gap-1.5 cursor-pointer {showPythonCode
+					? 'bg-indigo-500/20 border-indigo-500 text-indigo-300'
+					: 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}"
+			>
+				<Icon name="python" size={13} />
+				<span>{showPythonCode ? 'Sembunyikan Python' : 'Lihat Python'}</span>
+			</button>
+		</div>
 	</div>
 
 	<!-- Python Live Code Preview -->

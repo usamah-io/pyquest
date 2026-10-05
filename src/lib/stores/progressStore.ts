@@ -7,10 +7,11 @@ const INITIAL_PROGRESS: UserProgress = {
 	currentModuleIndex: 0,
 	completedQuestions: [],
 	completedChallenges: [],
+	completedLevels: [],
 	streak: 1
 };
 
-const STORAGE_KEY = 'pyquest_progress_v1';
+const STORAGE_KEY = 'pyquest_progress_v2';
 
 function createProgressStore() {
 	let initial = INITIAL_PROGRESS;
@@ -19,7 +20,7 @@ function createProgressStore() {
 		const saved = localStorage.getItem(STORAGE_KEY);
 		if (saved) {
 			try {
-				initial = JSON.parse(saved);
+				initial = { ...INITIAL_PROGRESS, ...JSON.parse(saved) };
 			} catch {
 				initial = INITIAL_PROGRESS;
 			}
@@ -38,8 +39,12 @@ function createProgressStore() {
 			});
 		},
 		completeQuestion: (questionId: string, xpGain = 15) => {
+			let rewarded = false;
 			update((p) => {
-				if (p.completedQuestions.includes(questionId)) return p;
+				if (p.completedQuestions.includes(questionId)) {
+					return p;
+				}
+				rewarded = true;
 				const updated = {
 					...p,
 					xp: p.xp + xpGain,
@@ -49,15 +54,32 @@ function createProgressStore() {
 				if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 				return updated;
 			});
+			return rewarded;
 		},
 		completeChallenge: (challengeId: string, xpGain = 35) => {
+			let isFirstCompletion = false;
 			update((p) => {
-				if (p.completedChallenges.includes(challengeId)) return p;
+				if (p.completedChallenges.includes(challengeId)) {
+					return p; // No duplicate XP on replay
+				}
+				isFirstCompletion = true;
 				const updated = {
 					...p,
 					xp: p.xp + xpGain,
 					score: p.score + xpGain * 10,
 					completedChallenges: [...p.completedChallenges, challengeId]
+				};
+				if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+				return updated;
+			});
+			return isFirstCompletion;
+		},
+		completeLevel: (levelId: number) => {
+			update((p) => {
+				if (p.completedLevels && p.completedLevels.includes(levelId)) return p;
+				const updated = {
+					...p,
+					completedLevels: [...(p.completedLevels || []), levelId]
 				};
 				if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 				return updated;
