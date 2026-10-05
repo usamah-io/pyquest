@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ChallengeGrid, Direction, GridCoord } from '$lib/types';
 	import { isCoordEqual } from '$lib/game/engine';
+	import Icon from './Icon.svelte';
 
 	let {
 		grid,
@@ -38,11 +39,22 @@
 	<!-- Grid Header / Status Message -->
 	<div class="flex items-center justify-between pb-3 border-b border-slate-800">
 		<div class="flex items-center gap-2">
-			<span class="text-lg">🗺️</span>
+			<Icon name="target" size={18} class="text-indigo-400" />
 			<h3 class="font-bold text-white text-sm sm:text-base">Arena Labirin 2D</h3>
 		</div>
-		<div class="text-xs px-3 py-1 rounded-full font-bold {status === 'SUCCESS' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : status === 'FAILED' || status === 'OUT_OF_BOUNDS' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-slate-800 text-slate-300'}">
-			{status === 'SUCCESS' ? '🏆 BERHASIL' : status === 'RUNNING' ? '⚡ SEDANG BERJALAN' : status === 'FAILED' ? '❌ GAGAL' : 'SIAP'}
+		<div class="text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 {status === 'SUCCESS' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : status === 'FAILED' || status === 'OUT_OF_BOUNDS' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : status === 'RUNNING' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-slate-800 text-slate-300'}">
+			{#if status === 'SUCCESS'}
+				<Icon name="check" size={13} />
+				<span>BERHASIL</span>
+			{:else if status === 'RUNNING'}
+				<Icon name="repeat" size={13} class="animate-spin" />
+				<span>MENJALANKAN</span>
+			{:else if status === 'FAILED' || status === 'OUT_OF_BOUNDS'}
+				<Icon name="alert-triangle" size={13} />
+				<span>BELUM TEPAT</span>
+			{:else}
+				<span>SIAP</span>
+			{/if}
 		</div>
 	</div>
 
@@ -72,35 +84,39 @@
 							{c},{r}
 						</span>
 
-						<!-- Obstacle Rock -->
+						<!-- Obstacle Rock / Barrier (Vector Icon) -->
 						{#if isObstacle}
-							<div class="text-lg sm:text-2xl filter drop-shadow">🪨</div>
+							<div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-700/80 border border-slate-600 flex items-center justify-center text-slate-400 shadow-inner">
+								<svg viewBox="0 0 24 24" class="w-4 h-4 fill-none stroke-current stroke-2">
+									<path d="M4 18h16l-3-11-5 4-4-5z" />
+								</svg>
+							</div>
 						{/if}
 
-						<!-- Target Goal (Gold Star) -->
+						<!-- Target Goal (Gold Star Vector Icon) -->
 						{#if isTarget}
-							<div class="text-xl sm:text-2xl animate-pulse filter drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]">
-								⭐
+							<div class="text-amber-400 animate-pulse filter drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">
+								<Icon name="star" size={26} />
 							</div>
 						{/if}
 
-						<!-- Collectible Coin -->
+						<!-- Collectible Coin (Zap Coin Vector Icon) -->
 						{#if isCoin && !isCoinCollected && !isTarget}
-							<div class="text-base sm:text-lg animate-bounce filter drop-shadow">
-								🪙
+							<div class="w-6 h-6 rounded-full bg-amber-400/20 border border-amber-400 text-amber-400 flex items-center justify-center animate-bounce shadow-sm">
+								<Icon name="zap" size={13} />
 							</div>
 						{/if}
 
-						<!-- Player Robot (PyBot) -->
+						<!-- Player Robot (PyBot Vector Icon) -->
 						{#if isPlayer}
 							<div
 								class="absolute inset-0 flex items-center justify-center transition-transform duration-300 z-10"
 								style="transform: rotate({getPlayerRotation(playerDirection)}deg);"
 							>
-								<div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-pink-500 border-2 border-white flex items-center justify-center shadow-lg shadow-indigo-500/50">
-									<span class="text-base sm:text-xl select-none" style="transform: rotate({-getPlayerRotation(playerDirection)}deg);">
-										🤖
-									</span>
+								<div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 border-2 border-indigo-200 text-white flex items-center justify-center shadow-lg shadow-indigo-500/50">
+									<div style="transform: rotate({-getPlayerRotation(playerDirection)}deg);">
+										<Icon name="robot" size={20} class="text-white" />
+									</div>
 								</div>
 								<!-- Direction Pointer Triangle -->
 								<div class="absolute -right-1 w-0 h-0 border-y-4 border-y-transparent border-l-[6px] border-l-white drop-shadow"></div>

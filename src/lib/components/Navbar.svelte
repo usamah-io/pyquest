@@ -1,39 +1,85 @@
 <script lang="ts">
 	import { progressStore } from '$lib/stores/progressStore';
+	import Icon from './Icon.svelte';
 
-	let { onReset }: { onReset?: () => void } = $props();
+	let {
+		currentMode = 'HOME',
+		onSelectMode,
+		onReset
+	}: {
+		currentMode?: 'HOME' | 'LEARN' | 'GAME';
+		onSelectMode?: (mode: 'HOME' | 'LEARN' | 'GAME') => void;
+		onReset?: () => void;
+	} = $props();
 </script>
 
-<header class="flex items-center justify-between px-4 sm:px-6 py-3 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 text-white select-none z-30 sticky top-0">
-	<div class="flex items-center gap-3">
-		<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 ring-2 ring-indigo-400/30">
-			<span class="text-xl">🐍</span>
-		</div>
-		<div>
-			<div class="flex items-center gap-2">
-				<span class="text-lg font-black tracking-wide bg-gradient-to-r from-amber-300 via-indigo-300 to-pink-300 bg-clip-text text-transparent">
-					PyQuest
-				</span>
-				<span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-					Kids Python Game
-				</span>
+<header class="flex items-center justify-between px-4 sm:px-6 py-2.5 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 text-slate-100 select-none z-30 sticky top-0">
+	<!-- Left: Logo & Modes -->
+	<div class="flex items-center gap-4 sm:gap-6">
+		<button
+			type="button"
+			onclick={() => onSelectMode && onSelectMode('HOME')}
+			class="flex items-center gap-2.5 text-left group cursor-pointer focus:outline-none"
+			title="Kembali ke Beranda"
+		>
+			<div class="w-9 h-9 rounded-xl bg-indigo-600/30 border border-indigo-500/40 text-indigo-400 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+				<Icon name="python" size={20} class="text-indigo-400" />
 			</div>
-			<p class="text-xs text-slate-400 hidden sm:block">Belajar Koding Python Seru & Visual</p>
-		</div>
+			<div>
+				<div class="flex items-center gap-1.5">
+					<span class="text-base sm:text-lg font-black tracking-tight text-white group-hover:text-indigo-300 transition-colors">
+						PyQuest
+					</span>
+				</div>
+				<p class="text-[11px] text-slate-400 font-medium hidden md:block">Petualangan Logika Python</p>
+			</div>
+		</button>
+
+		<!-- Mode Switch Tabs -->
+		{#if onSelectMode}
+			<nav class="hidden sm:flex items-center p-1 bg-slate-950/70 border border-slate-800 rounded-xl">
+				<button
+					type="button"
+					onclick={() => onSelectMode('LEARN')}
+					class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer {currentMode === 'LEARN'
+						? 'bg-indigo-600 text-white shadow-sm'
+						: 'text-slate-400 hover:text-slate-200'}"
+				>
+					<Icon name="book-open" size={14} />
+					<span>Modul Belajar</span>
+				</button>
+				<button
+					type="button"
+					onclick={() => onSelectMode('GAME')}
+					class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer {currentMode === 'GAME'
+						? 'bg-emerald-600 text-white shadow-sm'
+						: 'text-slate-400 hover:text-slate-200'}"
+				>
+					<Icon name="gamepad" size={14} />
+					<span>Coding Game</span>
+				</button>
+			</nav>
+		{/if}
 	</div>
 
-	<!-- Stats & Gamification HUD -->
-	<div class="flex items-center gap-3 sm:gap-5">
-		<!-- Streak -->
-		<div class="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-800/80 border border-slate-700/80 shadow-sm text-amber-400 font-bold text-sm">
-			<span class="text-base animate-pulse">🔥</span>
-			<span>{$progressStore.streak}d</span>
+	<!-- Right: Stats & HUD -->
+	<div class="flex items-center gap-2.5 sm:gap-4">
+		<!-- Streak Counter -->
+		<div
+			class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-950/80 border border-slate-800 text-amber-400 text-xs font-bold"
+			title="Hari Belajar Berturut-turut"
+		>
+			<Icon name="flame" size={15} class="text-amber-400" />
+			<span>{$progressStore.streak} Hari</span>
 		</div>
 
 		<!-- XP Counter -->
-		<div class="flex items-center gap-2 px-3.5 py-1 rounded-xl bg-gradient-to-r from-indigo-900/50 to-purple-900/50 border border-indigo-500/30 shadow-sm text-indigo-200 font-bold text-sm">
-			<span class="text-base text-yellow-400">⚡</span>
-			<span>{$progressStore.xp} <span class="text-xs font-normal text-indigo-400">XP</span></span>
+		<div
+			class="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-indigo-950/60 border border-indigo-500/30 text-indigo-200 text-xs font-bold"
+			title="Total Poin Pengalaman"
+		>
+			<Icon name="zap" size={15} class="text-amber-400" />
+			<span>{$progressStore.xp} <span class="text-[10px] text-indigo-400 uppercase">XP</span></span>
 		</div>
 
 		<!-- Reset Button -->
@@ -41,10 +87,11 @@
 			<button
 				type="button"
 				onclick={onReset}
-				class="text-xs text-slate-400 hover:text-rose-400 p-2 rounded-lg hover:bg-slate-800 transition-colors"
-				title="Mulai Ulang Sesi"
+				class="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+				title="Atur Ulang Sesi"
+				aria-label="Atur Ulang Sesi"
 			>
-				↺ Reset
+				<Icon name="rotate-ccw" size={16} />
 			</button>
 		{/if}
 	</div>

@@ -3,62 +3,74 @@ import type { Question } from '../types';
 export const questionsData: Question[] = [
 	{
 		id: 'q-var-1',
-		topic: 'Variables (Variabel)',
+		topic: 'Variabel',
 		type: 'multiple-choice',
-		question: 'Di Python, bagaimana cara yang benar untuk menyimpan angka 5 ke dalam variabel bernama "langkah"?',
-		codeSnippet: '# Pilihan mana yang benar?',
+		question: 'Bagaimana cara yang benar untuk menyimpan angka 5 ke dalam variabel bernama "langkah" di Python?',
+		codeSnippet: '# Pilihan mana sintaks assignment yang tepat?',
 		options: [
-			{ id: 'opt-a', text: 'langkah = 5' },
-			{ id: 'opt-b', text: '5 = langkah' },
-			{ id: 'opt-c', text: 'var langkah : 5' },
-			{ id: 'opt-d', text: 'langkah == 5' }
+			{ id: 'opt-var-a', text: 'langkah = 5' },
+			{ id: 'opt-var-b', text: '5 = langkah' },
+			{ id: 'opt-var-c', text: 'var langkah : 5' },
+			{ id: 'opt-var-d', text: 'langkah == 5' }
 		],
-		correctAnswerId: 'opt-a',
-		explanation: 'Di Python, kita menulis nama variabel di sisi kiri tanda sama dengan (=), lalu nilainya di sebelah kanan: langkah = 5. Tanda == digunakan untuk membandingkan, bukan menyimpan nilai!',
+		correctAnswerId: 'opt-var-a',
+		explanation: 'Di Python, nama variabel ditulis di sisi kiri dan nilainya di sebelah kanan tanda sama dengan tunggal (=). Tanda == dipakai untuk membandingkan kesamaan, bukan menetapkan nilai variabel.',
 		hints: [
-			'Nama variabel selalu berada di sisi kiri tanda sama dengan.',
-			'Tanda sama dengan tunggal (=) digunakan untuk assignment (menyimpan nilai).'
+			'Nama penampung (variabel) selalu berada di sebelah kiri.',
+			'Gunakan tanda sama dengan tunggal (=) untuk assignment.'
 		],
 		difficulty: 1
 	},
 	{
 		id: 'q-print-2',
-		topic: 'Print & Strings (Teks)',
+		topic: 'Fungsi Print & String',
 		type: 'multiple-choice',
-		question: 'Apa fungsi dari perintah print("Maju!") di Python?',
+		question: 'Apa hasil yang terjadi saat komputer menjalankan perintah print("Maju!") di Python?',
 		codeSnippet: 'print("Maju!")',
 		options: [
-			{ id: 'opt-a', text: 'Menampilkan tulisan "Maju!" ke layar komputer' },
-			{ id: 'opt-b', text: 'Membuat karakter game melompat' },
-			{ id: 'opt-c', text: 'Menghapus kode yang sudah ditulis' },
-			{ id: 'opt-d', text: 'Mematikan komputer' }
+			{ id: 'opt-prt-a', text: 'Menampilkan teks "Maju!" ke layar terminal' },
+			{ id: 'opt-prt-b', text: 'Membuat karakter robot melompat' },
+			{ id: 'opt-prt-c', text: 'Menghapus kode yang tersimpan' },
+			{ id: 'opt-prt-d', text: 'Mengulang langkah program' }
 		],
-		correctAnswerId: 'opt-a',
-		explanation: 'Fungsi print() digunakan untuk mencetak atau menampilkan teks/angka ke layar terminal. Teks di dalam tanda petik disebut String.',
+		correctAnswerId: 'opt-prt-a',
+		explanation: 'Fungsi print() berguna untuk menampilkan keluaran pesan atau nilai ke layar konsol. Teks di dalam tanda kutip disebut string.',
 		hints: [
-			'Fikirkan arti kata "print" dalam bahasa Indonesia: mencetak.',
-			'Perintah print() tidak menggerakkan robot secara fisik, melainkan menampilkan pesan.'
+			'Print dalam istilah pemrograman berarti mencetak keluaran ke layar.',
+			'Perintah print() tidak mengendalikan gerakan fisik, melainkan menyajikan teks.'
 		],
 		difficulty: 1
 	},
 	{
 		id: 'q-loop-3',
-		topic: 'Loops (Perulangan)',
+		topic: 'Perulangan (Loop)',
 		type: 'predict-output',
-		question: 'Jika robot ingin melangkah maju sebanyak 3 kali, pola Python mana yang paling ringkas?',
+		question: 'Jika ingin menjalankan robot.maju() sebanyak 3 kali secara otomatis, penulisan Python mana yang benar?',
 		codeSnippet: 'for i in range(3):\n    robot.maju()',
 		options: [
-			{ id: 'opt-a', text: 'for i in range(3): robot.maju() — Mengulangi maju 3 kali' },
-			{ id: 'opt-b', text: 'robot.maju() * 3 — Mengalikan robot' },
-			{ id: 'opt-c', text: 'repeat 3 robot — Sintaks bukan Python' },
-			{ id: 'opt-d', text: 'robot.berhenti() — Berhenti' }
+			{ id: 'opt-loop-a', text: 'for i in range(3): robot.maju() (Mengulang blok 3 kali)' },
+			{ id: 'opt-loop-b', text: 'robot.maju() * 3 (Bukan sintaks pemanggilan berulang)' },
+			{ id: 'opt-loop-c', text: 'repeat 3: robot.maju() (Bukan sintaks bawaan Python)' },
+			{ id: 'opt-loop-d', text: 'while robot == 3 (Kondisi logika tidak cocok)' }
 		],
-		correctAnswerId: 'opt-a',
-		explanation: 'Perulangan `for i in range(3):` adalah cara standar Python untuk mengulangi sebuah perintah sebanyak 3 kali secara otomatis tanpa menulisnya berulang-ulang!',
+		correctAnswerId: 'opt-loop-a',
+		explanation: 'Sintaks for i in range(3): adalah cara standar Python untuk mengulangi baris perintah berindentasi di bawahnya sebanyak 3 kali tanpa duplikasi kode manual.',
 		hints: [
-			'range(3) menghasilkan 3 kali putaran (0, 1, 2).',
-			'Ini sama seperti coding block REPEAT 3!'
+			'Fungsi range(3) menghasilkan urutan hitungan 3 kali.',
+			'Ini setara dengan balok visual ULANGI 3 KALI.'
 		],
 		difficulty: 2
 	}
 ];
+
+/**
+ * Fisher-Yates array shuffle that returns a new randomized array.
+ */
+export function shuffleArray<T>(array: T[]): T[] {
+	const copy = [...array];
+	for (let i = copy.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[copy[i], copy[j]] = [copy[j], copy[i]];
+	}
+	return copy;
+}

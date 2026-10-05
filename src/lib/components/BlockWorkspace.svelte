@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { CodingBlock, BlockType } from '$lib/types';
 	import { blocksToPythonCode } from '$lib/game/compiler';
+	import Icon from './Icon.svelte';
 
 	let {
 		workspaceBlocks = $bindable<CodingBlock[]>([]),
@@ -60,28 +61,28 @@
 			case 'MOVE':
 				return {
 					name: 'MAJU (MOVE)',
-					icon: '⬆️',
+					icon: 'arrow-up',
 					color: 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400 text-white',
-					badge: 'hero.move()'
+					badge: 'pybot.move()'
 				};
 			case 'TURN_LEFT':
 				return {
 					name: 'BELOK KIRI',
-					icon: '↩️',
+					icon: 'corner-up-left',
 					color: 'bg-amber-600 hover:bg-amber-500 border-amber-400 text-white',
-					badge: 'hero.turn_left()'
+					badge: 'pybot.turn_left()'
 				};
 			case 'TURN_RIGHT':
 				return {
 					name: 'BELOK KANAN',
-					icon: '↪️',
+					icon: 'corner-up-right',
 					color: 'bg-orange-600 hover:bg-orange-500 border-orange-400 text-white',
-					badge: 'hero.turn_right()'
+					badge: 'pybot.turn_right()'
 				};
 			case 'REPEAT':
 				return {
 					name: 'ULANGI (REPEAT)',
-					icon: '🔁',
+					icon: 'repeat',
 					color: 'bg-indigo-600 hover:bg-indigo-500 border-indigo-400 text-white',
 					badge: 'for i in range(n):'
 				};
@@ -93,31 +94,35 @@
 	<!-- Top Bar -->
 	<div class="flex items-center justify-between pb-3 border-b border-slate-800">
 		<div class="flex items-center gap-2">
-			<span class="text-lg">🧩</span>
+			<Icon name="puzzle" size={18} class="text-indigo-400" />
 			<h3 class="font-bold text-white text-sm sm:text-base">Area Balok Koding</h3>
 		</div>
 		<button
 			type="button"
 			onclick={() => (showPythonCode = !showPythonCode)}
-			class="text-xs px-2.5 py-1 rounded-lg border font-mono transition-colors {showPythonCode
+			class="text-xs px-2.5 py-1 rounded-lg border font-mono transition-colors flex items-center gap-1.5 cursor-pointer {showPythonCode
 				? 'bg-indigo-500/20 border-indigo-500 text-indigo-300'
 				: 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}"
 		>
-			{showPythonCode ? 'Tutup Python Code' : 'Lihat Python Code'}
+			<Icon name="python" size={13} />
+			<span>{showPythonCode ? 'Sembunyikan Python' : 'Lihat Python'}</span>
 		</button>
 	</div>
 
 	<!-- Python Live Code Preview -->
 	{#if showPythonCode}
 		<div class="mt-3 p-2.5 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-emerald-400 shrink-0">
-			<div class="text-[10px] text-slate-500 font-sans uppercase font-bold mb-1">🐍 Kode Python Otomatis:</div>
+			<div class="text-[10px] text-slate-500 font-sans uppercase font-bold mb-1 flex items-center gap-1">
+				<Icon name="python" size={12} class="text-emerald-400" />
+				<span>Kode Python Otomatis:</span>
+			</div>
 			<pre class="overflow-x-auto whitespace-pre-wrap max-h-20 leading-snug">{blocksToPythonCode(workspaceBlocks)}</pre>
 		</div>
 	{/if}
 
 	<!-- Palette / Block Choices -->
 	<div class="my-3">
-		<div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Pilih Balok (Klik untuk Tambah):</div>
+		<div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Pilih Balok (Klik untuk Menambah):</div>
 		<div class="flex flex-wrap gap-2">
 			{#each availableBlocks as bType}
 				{@const meta = getBlockMeta(bType)}
@@ -127,7 +132,7 @@
 					disabled={isRunning}
 					class="px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 shadow-md transition-transform active:scale-95 disabled:opacity-50 cursor-pointer {meta.color}"
 				>
-					<span>{meta.icon}</span>
+					<Icon name={meta.icon} size={14} />
 					<span>{meta.name}</span>
 				</button>
 			{/each}
@@ -152,8 +157,8 @@
 
 		{#if workspaceBlocks.length === 0}
 			<div class="flex-1 flex flex-col items-center justify-center text-center p-4 text-slate-500 text-xs sm:text-sm border-2 border-dashed border-slate-800 rounded-xl">
-				<span class="text-3xl mb-2">👆</span>
-				<p>Klik tombol balok di atas untuk mulai menyusun urutan instruksi!</p>
+				<Icon name="puzzle" size={28} class="mb-2 text-slate-600" />
+				<p>Klik tombol balok di atas untuk mulai menyusun urutan aksi PyBot!</p>
 			</div>
 		{:else}
 			<div class="space-y-2">
@@ -165,7 +170,7 @@
 						<!-- Left: Index + Name -->
 						<div class="flex items-center gap-2">
 							<span class="text-xs font-bold text-slate-500 w-4">{i + 1}.</span>
-							<span class="text-base">{meta.icon}</span>
+							<Icon name={meta.icon} size={15} class="text-slate-300" />
 							<span class="text-xs sm:text-sm font-bold text-white">{meta.name}</span>
 							{#if block.type === 'REPEAT'}
 								<div class="flex items-center gap-1 ml-2 bg-indigo-950 px-2 py-0.5 rounded-lg border border-indigo-700">
@@ -193,28 +198,31 @@
 								type="button"
 								onclick={() => moveBlockUp(i)}
 								disabled={i === 0 || isRunning}
-								class="p-1 text-slate-400 hover:text-white disabled:opacity-30 text-xs"
+								class="p-1 text-slate-400 hover:text-white disabled:opacity-30 text-xs rounded hover:bg-slate-700 cursor-pointer"
 								title="Pindah ke Atas"
+								aria-label="Pindah ke Atas"
 							>
-								▲
+								<Icon name="arrow-up" size={14} />
 							</button>
 							<button
 								type="button"
 								onclick={() => moveBlockDown(i)}
 								disabled={i === workspaceBlocks.length - 1 || isRunning}
-								class="p-1 text-slate-400 hover:text-white disabled:opacity-30 text-xs"
+								class="p-1 text-slate-400 hover:text-white disabled:opacity-30 text-xs rounded hover:bg-slate-700 cursor-pointer"
 								title="Pindah ke Bawah"
+								aria-label="Pindah ke Bawah"
 							>
-								▼
+								<Icon name="arrow-down" size={14} />
 							</button>
 							<button
 								type="button"
 								onclick={() => removeBlock(i)}
 								disabled={isRunning}
-								class="p-1 text-rose-400 hover:text-rose-300 hover:bg-rose-500/20 rounded disabled:opacity-30 text-xs"
+								class="p-1 text-rose-400 hover:text-rose-300 hover:bg-rose-500/20 rounded disabled:opacity-30 text-xs cursor-pointer"
 								title="Hapus Balok"
+								aria-label="Hapus Balok"
 							>
-								✕
+								<Icon name="x" size={14} />
 							</button>
 						</div>
 					</div>
@@ -229,9 +237,10 @@
 			type="button"
 			onclick={onReset}
 			disabled={isRunning}
-			class="px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-sm rounded-xl transition-all cursor-pointer disabled:opacity-50"
+			class="px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-sm rounded-xl transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
 		>
-			🔄 Reset
+			<Icon name="rotate-ccw" size={15} />
+			<span>Reset</span>
 		</button>
 		<button
 			type="button"
@@ -240,10 +249,11 @@
 			class="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-slate-950 font-black text-sm sm:text-base rounded-xl shadow-lg shadow-emerald-500/30 transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 		>
 			{#if isRunning}
-				<span class="animate-spin">⚙️</span>
+				<Icon name="repeat" size={18} class="animate-spin text-slate-950" />
 				<span>Menjalankan Kodemu...</span>
 			{:else}
-				<span>▶️ JALANKAN KODE (RUN)</span>
+				<Icon name="play" size={16} class="text-slate-950" />
+				<span>JALANKAN KODE (RUN)</span>
 			{/if}
 		</button>
 	</div>
