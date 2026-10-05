@@ -8,6 +8,7 @@ const INITIAL_PROGRESS: UserProgress = {
 	completedQuestions: [],
 	completedChallenges: [],
 	completedLevels: [],
+	completedLearningLevels: [],
 	streak: 1
 };
 
@@ -20,7 +21,12 @@ function createProgressStore() {
 		const saved = localStorage.getItem(STORAGE_KEY);
 		if (saved) {
 			try {
-				initial = { ...INITIAL_PROGRESS, ...JSON.parse(saved) };
+				const parsed = JSON.parse(saved);
+				initial = {
+					...INITIAL_PROGRESS,
+					...parsed,
+					completedLearningLevels: parsed.completedLearningLevels || []
+				};
 			} catch {
 				initial = INITIAL_PROGRESS;
 			}
@@ -84,6 +90,25 @@ function createProgressStore() {
 				if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 				return updated;
 			});
+		},
+		completeLearningLevel: (levelId: number, bonusXp = 50) => {
+			let isFirstCompletion = false;
+			update((p) => {
+				const existing = p.completedLearningLevels || [];
+				if (existing.includes(levelId)) {
+					return p; // No duplicate XP on replay
+				}
+				isFirstCompletion = true;
+				const updated = {
+					...p,
+					xp: p.xp + bonusXp,
+					score: p.score + bonusXp * 10,
+					completedLearningLevels: [...existing, levelId]
+				};
+				if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+				return updated;
+			});
+			return isFirstCompletion;
 		},
 		nextModule: () => {
 			update((p) => {

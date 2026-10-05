@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Navbar from '$lib/components/Navbar.svelte';
 	import LandingHero from '$lib/components/LandingHero.svelte';
+	import LearningLevelSelect from '$lib/components/LearningLevelSelect.svelte';
+	import LearningSuccessModal from '$lib/components/LearningSuccessModal.svelte';
 	import QuestionCard from '$lib/components/QuestionCard.svelte';
 	import FeedbackModal from '$lib/components/FeedbackModal.svelte';
 	import LevelSelect from '$lib/components/LevelSelect.svelte';
@@ -12,7 +14,8 @@
 	import OrientationGuard from '$lib/components/OrientationGuard.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 
-	import { questionsData } from '$lib/questions/questionsData';
+	import { learningLevelsData } from '$lib/questions/learningLevelsData';
+	import { questionsData, getQuestionsByLevel } from '$lib/questions/questionsData';
 	import { levelsData } from '$lib/challenges/levelsData';
 	import { compileBlocksToCommands } from '$lib/game/compiler';
 	import { simulateCommands, type SimulationStep } from '$lib/game/engine';
@@ -27,24 +30,27 @@
 	let activeNavbarMode = $derived<'HOME' | 'LEARN' | 'GAME'>(
 		currentScreen === 'LANDING' || currentScreen === 'SUMMARY'
 			? 'HOME'
-			: currentScreen === 'QUESTION' || currentScreen === 'FEEDBACK'
+			: currentScreen === 'LEARN_SELECT' ||
+			  currentScreen === 'QUESTION' ||
+			  currentScreen === 'FEEDBACK' ||
+			  currentScreen === 'LEARN_SUCCESS'
 			? 'LEARN'
 			: 'GAME'
 	);
 
-	// Pointers
-	let questionIndex = $state(0);
+	// Pointers for Learning Module (10-Level System)
+	let currentLearningLevelIndex = $state(0);
+	let currentQuestionInLevelIndex = $state(0);
+	let earnedLearningXpThisRun = $state(0);
+	let userSelectedOptionId = $state<string | null>(null);
+
+	// Pointers for Coding Game (10-Level System)
 	let currentLevelIndex = $state(0);
 	let currentChallengeIndex = $state(0);
-
-	// Attempts counter & XP awarded for current run
 	let attemptsCount = $state(0);
 	let earnedXpThisRun = $state(0);
 
-	// Question State
-	let userSelectedOptionId = $state<string | null>(null);
-
-	// Challenge State
+	// Coding Game State
 	let workspaceBlocks = $state<CodingBlock[]>([]);
 	let isRunning = $state(false);
 	let simulationTimer = $state<any>(null);
@@ -56,8 +62,12 @@
 	let gameStatus = $state<'IDLE' | 'READY' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'OUT_OF_BOUNDS'>('IDLE');
 	let gameStatusMessage = $state('');
 
-	// Current Active Question, Level, & Challenge
-	let activeQuestion = $derived(questionsData[questionIndex] || questionsData[0]);
+	// Current Active Learning Level, Question List & Question
+	let activeLearningLevel = $derived(learningLevelsData[currentLearningLevelIndex] || learningLevelsData[0]);
+	let activeLevelQuestions = $derived(getQuestionsByLevel(activeLearningLevel.id));
+	let activeQuestion = $derived(activeLevelQuestions[currentQuestionInLevelIndex] || activeLevelQuestions[0] || questionsData[0]);
+
+	// Current Active Coding Level & Challenge
 	let activeLevel = $derived(levelsData[currentLevelIndex] || levelsData[0]);
 	let activeChallenge = $derived(activeLevel.challenges[currentChallengeIndex] || activeLevel.challenges[0]);
 
@@ -86,28 +96,32 @@
 		isFocusPauseOverlayOpen = false;
 	}
 
-	function handleExitFocusToLevelSelect() {
+	function handleExitFocus() {
 		isFocusPauseOverlayOpen = false;
-		currentScreen = 'LEVEL_SELECT';
+		if (currentScreen === 'CHALLENGE') {
+			currentScreen = 'LEVEL_SELECT';
+		} else {
+			currentScreen = 'LEARN_SELECT';
+		}
 	}
 
 	// Browser listeners for automatic focus / anti-cheat detection
 	$effect(() => {
 		function onFullscreenChange() {
-			if (currentScreen === 'CHALLENGE' && !isFullscreenActive()) {
+			if ((currentScreen === 'CHALLENGE' || currentScreen === 'QUESTION') && !isFullscreenActive()) {
 				isFocusPauseOverlayOpen = true;
 			}
 		}
 
 		function onVisibilityChange() {
-			if (currentScreen === 'CHALLENGE' && document.hidden) {
-				showFocusAlert('Peringatan: Kamu berpindah tab browser saat misi koding aktif.');
+			if ((currentScreen === 'CHALLENGE' || currentScreen === 'QUESTION') && document.hidden) {
+				showFocusAlert('Peringatan: Kamu berpindah tab browser saat sesi aktif.');
 			}
 		}
 
 		function onWindowBlur() {
-			if (currentScreen === 'CHALLENGE' && !isFocusPauseOverlayOpen) {
-				showFocusAlert('Perhatian: Jendela game kehilangan fokus. Silakan klik kembali area permainan.');
+			if ((currentScreen === 'CHALLENGE' || currentScreen === 'QUESTION') && !isFocusPauseOverlayOpen) {
+				showFocusAlert('Perhatian: Jendela kehilangan fokus. Silakan klik kembali area permainan/kuis.');
 			}
 		}
 
@@ -134,11 +148,9 @@
 		}
 	}
 
-	// Mode Entry Handlers (with automatic fullscreen request)
+	// Mode Entry Handlers
 	function handleStartLearning() {
-		questionIndex = 0;
-		currentScreen = 'QUESTION';
-		requestAppFullscreen();
+		currentScreen = 'LEARN_SELECT';
 	}
 
 	function handleStartCodingGame() {
@@ -149,14 +161,67 @@
 		if (mode === 'HOME') {
 			currentScreen = 'LANDING';
 		} else if (mode === 'LEARN') {
-			questionIndex = 0;
-			currentScreen = 'QUESTION';
-			requestAppFullscreen();
+			currentScreen = 'LEARN_SELECT';
 		} else if (mode === 'GAME') {
 			currentScreen = 'LEVEL_SELECT';
 		}
 	}
 
+	// Learning Level Flow
+	function handleSelectLearningLevel(levelId: number) {
+		const idx = learningLevelsData.findIndex((lvl) => lvl.id === levelId);
+		currentLearningLevelIndex = idx !== -1 ? idx : 0;
+		currentQuestionInLevelIndex = 0;
+		userSelectedOptionId = null;
+		earnedLearningXpThisRun = 0;
+		isFocusPauseOverlayOpen = false;
+		currentScreen = 'QUESTION';
+		requestAppFullscreen();
+	}
+
+	function handleAnswerQuestion(selectedOptionId: string) {
+		userSelectedOptionId = selectedOptionId;
+		if (selectedOptionId === activeQuestion.correctAnswerId) {
+			progressStore.completeQuestion(activeQuestion.id, activeQuestion.xp || 15);
+		}
+		currentScreen = 'FEEDBACK';
+	}
+
+	function handleContinueAfterQuestionFeedback() {
+		if (currentQuestionInLevelIndex < activeLevelQuestions.length - 1) {
+			currentQuestionInLevelIndex++;
+			userSelectedOptionId = null;
+			currentScreen = 'QUESTION';
+		} else {
+			// All 5 questions in level finished
+			const isFirst = progressStore.completeLearningLevel(activeLearningLevel.id, activeLearningLevel.xpReward);
+			earnedLearningXpThisRun = isFirst ? activeLearningLevel.xpReward : 0;
+			currentScreen = 'LEARN_SUCCESS';
+		}
+	}
+
+	function handleNextLearningLevel() {
+		if (currentLearningLevelIndex < learningLevelsData.length - 1) {
+			currentLearningLevelIndex++;
+			currentQuestionInLevelIndex = 0;
+			userSelectedOptionId = null;
+			earnedLearningXpThisRun = 0;
+			currentScreen = 'QUESTION';
+			requestAppFullscreen();
+		} else {
+			currentScreen = 'LEARN_SELECT';
+		}
+	}
+
+	function handleReplayLearningLevel() {
+		currentQuestionInLevelIndex = 0;
+		userSelectedOptionId = null;
+		earnedLearningXpThisRun = 0;
+		currentScreen = 'QUESTION';
+		requestAppFullscreen();
+	}
+
+	// Coding Game Flow Handlers
 	function handleSelectLevelChallenge(lvlIdx: number, chIdx: number) {
 		currentLevelIndex = lvlIdx;
 		currentChallengeIndex = chIdx;
@@ -168,25 +233,6 @@
 		requestAppFullscreen();
 	}
 
-	// Question Flow Handlers
-	function handleAnswerQuestion(selectedOptionId: string) {
-		userSelectedOptionId = selectedOptionId;
-		if (selectedOptionId === activeQuestion.correctAnswerId) {
-			progressStore.completeQuestion(activeQuestion.id, activeQuestion.xp || 15);
-		}
-		currentScreen = 'FEEDBACK';
-	}
-
-	function handleContinueAfterQuestionFeedback() {
-		if (questionIndex < questionsData.length - 1) {
-			questionIndex++;
-			currentScreen = 'QUESTION';
-		} else {
-			currentScreen = 'SUMMARY';
-		}
-	}
-
-	// Challenge Flow Handlers
 	function handleResetGame() {
 		if (simulationTimer) {
 			clearInterval(simulationTimer);
@@ -201,7 +247,6 @@
 
 		attemptsCount++;
 
-		// 1. Compile blocks to atomic commands
 		const { commands, error } = compileBlocksToCommands(workspaceBlocks);
 		if (error) {
 			gameStatus = 'FAILED';
@@ -209,10 +254,8 @@
 			return;
 		}
 
-		// 2. Pre-simulate entire execution
 		const steps: SimulationStep[] = simulateCommands(activeChallenge.grid, commands);
 
-		// 3. Play back steps visually with tick timer (~380ms per tick)
 		isRunning = true;
 		gameStatus = 'RUNNING';
 		let stepIdx = 0;
@@ -239,11 +282,9 @@
 				simulationTimer = null;
 				isRunning = false;
 
-				// Award XP (duplicate protection handled inside store)
 				const isFirst = progressStore.completeChallenge(activeChallenge.id, activeChallenge.xpReward);
 				earnedXpThisRun = isFirst ? activeChallenge.xpReward : 0;
 
-				// Check if this was the last unfinished challenge in level
 				const levelNowFinished = activeLevel.challenges.every(
 					(c) => c.id === activeChallenge.id || $progressStore.completedChallenges.includes(c.id)
 				);
@@ -265,7 +306,6 @@
 	}
 
 	function handleNextChallengeOrLevel() {
-		// If more challenges in current level
 		if (currentChallengeIndex < activeLevel.challenges.length - 1) {
 			currentChallengeIndex++;
 			attemptsCount = 0;
@@ -274,7 +314,6 @@
 			currentScreen = 'CHALLENGE';
 			requestAppFullscreen();
 		} else {
-			// Level completed! Return to level select or summary
 			if (currentLevelIndex < levelsData.length - 1) {
 				currentScreen = 'LEVEL_SELECT';
 			} else {
@@ -292,11 +331,13 @@
 
 	function handleRestartAll() {
 		progressStore.reset();
-		questionIndex = 0;
+		currentLearningLevelIndex = 0;
+		currentQuestionInLevelIndex = 0;
 		currentLevelIndex = 0;
 		currentChallengeIndex = 0;
 		attemptsCount = 0;
 		earnedXpThisRun = 0;
+		earnedLearningXpThisRun = 0;
 		currentScreen = 'LANDING';
 	}
 </script>
@@ -335,8 +376,8 @@
 		</div>
 	{/if}
 
-	<!-- Dedicated Pause Overlay When Fullscreen Focus is Exited in Challenge Mode -->
-	{#if isFocusPauseOverlayOpen && currentScreen === 'CHALLENGE'}
+	<!-- Dedicated Pause Overlay When Fullscreen Focus is Exited in Challenge or Quiz Mode -->
+	{#if isFocusPauseOverlayOpen && (currentScreen === 'CHALLENGE' || currentScreen === 'QUESTION')}
 		<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
 			<div class="w-full max-w-md bg-slate-900 border-2 border-amber-500/60 rounded-3xl p-6 sm:p-7 shadow-2xl shadow-amber-500/10 text-center relative overflow-hidden">
 				<div class="w-16 h-16 mx-auto rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-4 border border-amber-500/30">
@@ -347,7 +388,7 @@
 					MODE FOKUS BERHENTI
 				</h3>
 				<p class="text-xs sm:text-sm text-slate-300 mb-6 leading-relaxed">
-					Game dijeda karena jendela keluar dari Mode Layar Penuh. Kembalikan mode fokus untuk melanjutkan tantangan koding tanpa kehilangan balok instruksimu.
+					Sesi dijeda karena jendela keluar dari Mode Layar Penuh. Kembalikan mode fokus untuk melanjutkan {currentScreen === 'CHALLENGE' ? 'tantangan koding' : 'soal latihan'} tanpa kehilangan progresmu.
 				</p>
 
 				<div class="space-y-2.5">
@@ -357,16 +398,16 @@
 						class="w-full py-3 bg-gradient-to-r from-amber-400 to-emerald-400 hover:from-amber-300 hover:to-emerald-300 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-400/20 transition-all cursor-pointer flex items-center justify-center gap-2"
 					>
 						<Icon name="play" size={16} class="text-slate-950" />
-						<span>Kembali ke Game</span>
+						<span>Kembali ke Permainan</span>
 					</button>
 
 					<button
 						type="button"
-						onclick={handleExitFocusToLevelSelect}
+						onclick={handleExitFocus}
 						class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
 					>
 						<Icon name="arrow-left" size={14} />
-						<span>Keluar ke Menu Level</span>
+						<span>{currentScreen === 'CHALLENGE' ? 'Keluar ke Menu Game' : 'Keluar ke Menu Level'}</span>
 					</button>
 				</div>
 			</div>
@@ -382,25 +423,45 @@
 				onStartCodingGame={handleStartCodingGame}
 			/>
 
-		<!-- 2. LEARNING / QUESTION MODE -->
+		<!-- 2. LEARNING LEVEL SELECTION (10 LEVELS) -->
+		{:else if currentScreen === 'LEARN_SELECT'}
+			<LearningLevelSelect
+				learningLevels={learningLevelsData}
+				onSelectLearningLevel={handleSelectLearningLevel}
+				onBackToHome={() => (currentScreen = 'LANDING')}
+			/>
+
+		<!-- 3. LEARNING / QUESTION MODE -->
 		{:else if currentScreen === 'QUESTION'}
 			<QuestionCard
 				question={activeQuestion}
-				questionNumber={questionIndex + 1}
-				totalQuestions={questionsData.length}
+				questionNumber={currentQuestionInLevelIndex + 1}
+				totalQuestions={activeLevelQuestions.length}
 				onAnswer={handleAnswerQuestion}
+				onBackToLevels={() => (currentScreen = 'LEARN_SELECT')}
 			/>
 
-		<!-- 3. LEARNING FEEDBACK -->
+		<!-- 4. LEARNING FEEDBACK -->
 		{:else if currentScreen === 'FEEDBACK'}
 			<FeedbackModal
 				question={activeQuestion}
 				userSelectedId={userSelectedOptionId || ''}
-				isLastQuestion={questionIndex === questionsData.length - 1}
+				isLastQuestion={currentQuestionInLevelIndex === activeLevelQuestions.length - 1}
 				onContinue={handleContinueAfterQuestionFeedback}
 			/>
 
-		<!-- 4. LEVEL SELECTION (CODING GAME) -->
+		<!-- 5. LEARNING LEVEL SUCCESS MODAL -->
+		{:else if currentScreen === 'LEARN_SUCCESS'}
+			<LearningSuccessModal
+				level={activeLearningLevel}
+				xpEarned={earnedLearningXpThisRun}
+				isLastLevel={currentLearningLevelIndex === learningLevelsData.length - 1}
+				onNextLevel={handleNextLearningLevel}
+				onReplayLevel={handleReplayLearningLevel}
+				onBackToSelect={() => (currentScreen = 'LEARN_SELECT')}
+			/>
+
+		<!-- 6. LEVEL SELECTION (CODING GAME) -->
 		{:else if currentScreen === 'LEVEL_SELECT'}
 			<LevelSelect
 				levels={levelsData}
@@ -408,10 +469,9 @@
 				onBackToHome={() => (currentScreen = 'LANDING')}
 			/>
 
-		<!-- 5. CODING GAME CHALLENGE -->
+		<!-- 7. CODING GAME CHALLENGE -->
 		{:else if currentScreen === 'CHALLENGE'}
 			<div class="flex-1 flex flex-col h-full max-w-7xl mx-auto w-full">
-				<!-- Header Objective & Hints Quota -->
 				<ChallengeHeader
 					title={`${activeLevel.title} — ${activeChallenge.title}`}
 					objective={activeChallenge.objective}
@@ -420,9 +480,7 @@
 					onBackToModes={() => (currentScreen = 'LEVEL_SELECT')}
 				/>
 
-				<!-- 2-Column Landscape Layout: Left: Game Arena, Right: Block Coding -->
 				<div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-0">
-					<!-- Game Area (Left) -->
 					<div class="h-full min-h-[300px]">
 						<GameCanvas
 							grid={activeChallenge.grid}
@@ -434,7 +492,6 @@
 						/>
 					</div>
 
-					<!-- Code Blocks & Workspace Area (Right) -->
 					<div class="h-full min-h-[350px]">
 						<BlockWorkspace
 							bind:workspaceBlocks
@@ -449,7 +506,7 @@
 				</div>
 			</div>
 
-		<!-- 6. SUMMARY SCREEN -->
+		<!-- 8. CODING GAME SUMMARY -->
 		{:else if currentScreen === 'SUMMARY'}
 			<SummaryModal
 				progress={$progressStore}

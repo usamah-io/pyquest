@@ -12,27 +12,54 @@ export type BlockType = 'MOVE' | 'TURN_LEFT' | 'TURN_RIGHT' | 'REPEAT';
 export interface CodingBlock {
 	id: string;
 	type: BlockType;
-	repeatCount?: number; // for REPEAT block
-	children?: CodingBlock[]; // inner blocks for REPEAT
+	repeatCount?: number;
+	children?: CodingBlock[];
+}
+
+export type QuestionType =
+	| 'output-prediction'
+	| 'concept'
+	| 'code-reading'
+	| 'choose-code'
+	| 'find-error'
+	| 'condition-logic'
+	| 'syntax'
+	| 'type-understanding';
+
+export type QuestionDifficulty = 'easy' | 'medium' | 'hard' | 'challenge';
+
+export interface QuestionOption {
+	id: string;
+	text: string;
+	explanation?: string;
 }
 
 export interface Question {
 	id: string;
+	level: number;
 	topic: string;
-	difficulty: 1 | 2 | 3;
+	difficulty: QuestionDifficulty;
+	type: QuestionType;
 	question: string;
 	code?: string;
 	codeSnippet?: string; // backward compatibility
-	options: {
-		id: string;
-		text: string;
-		explanation?: string;
-	}[];
+	options: QuestionOption[];
 	correctAnswer: string;
 	correctAnswerId: string; // stable ID matching options[].id
 	explanation: string;
-	hints?: string[];
+	hints: string[];
 	xp: number;
+}
+
+export interface LearningLevel {
+	id: number;
+	title: string;
+	topic: string;
+	description: string;
+	concept: string;
+	difficulty: QuestionDifficulty;
+	questionIds: string[];
+	xpReward: number;
 }
 
 export interface ChallengeGrid {
@@ -88,16 +115,18 @@ export interface UserProgress {
 	currentModuleIndex: number;
 	completedQuestions: string[];
 	completedChallenges: string[];
-	completedLevels: number[];
+	completedLevels: number[]; // Coding game levels
+	completedLearningLevels: number[]; // Learning module levels
 	streak: number;
 }
 
 export type AppScreen =
 	| 'LANDING'
+	| 'LEARN_SELECT'
 	| 'QUESTION'
 	| 'FEEDBACK'
+	| 'LEARN_SUCCESS'
 	| 'LEVEL_SELECT'
 	| 'CHALLENGE'
 	| 'REWARD'
-	| 'LEVEL_SUCCESS'
 	| 'SUMMARY';

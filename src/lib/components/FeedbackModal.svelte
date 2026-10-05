@@ -30,7 +30,7 @@
 					<Icon name="check" size={36} />
 				</div>
 				<h2 class="text-2xl sm:text-3xl font-black text-emerald-400">Jawaban Tepat!</h2>
-				<p class="text-xs sm:text-sm text-slate-400 mt-1">Kamu mendapatkan bonus <strong class="text-amber-400 font-bold">+15 XP</strong></p>
+				<p class="text-xs sm:text-sm text-slate-400 mt-1">Kamu mendapatkan bonus <strong class="text-amber-400 font-bold">+{question.xp || 15} XP</strong></p>
 			{:else}
 				<div class="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-3xl bg-rose-500/20 border border-rose-400 text-rose-400 flex items-center justify-center shadow-lg shadow-rose-500/20 mb-3">
 					<Icon name="x" size={36} />
@@ -59,7 +59,7 @@
 				? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
 				: 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30'}"
 		>
-			<span>{isLastQuestion ? 'Selesaikan Modul Belajar' : 'Lanjut ke Soal Berikutnya'}</span>
+			<span>{isLastQuestion ? 'Selesaikan Level Ini' : 'Lanjut ke Soal Berikutnya'}</span>
 			<Icon name="chevron-right" size={18} />
 		</button>
 	</div>
