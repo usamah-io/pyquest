@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { dashboardUserStore } from '$lib/stores/authStore';
+	import PwaInstallButton from './PwaInstallButton.svelte';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -89,6 +90,11 @@
 					<span class="text-xs font-black text-white">{$dashboardUserStore.xp}</span>
 					<span class="text-[9px] text-slate-500 font-bold uppercase">XP</span>
 				</div>
+			</div>
+
+			<!-- PWA Install Prompt (Subtle, visible when installable) -->
+			<div class="pt-1">
+				<PwaInstallButton />
 			</div>
 		</div>
 	</div>

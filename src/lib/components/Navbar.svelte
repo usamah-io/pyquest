@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { authStore, dashboardUserStore } from '$lib/stores/authStore';
 	import PyQuestLogo from './PyQuestLogo.svelte';
+	import PwaInstallButton from './PwaInstallButton.svelte';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -39,8 +40,11 @@
 		/>
 	</div>
 
-	<!-- Right: Minimal Clean Avatar Button & Quick Dropdown -->
+	<!-- Right: Actions, Install Button & Profile Avatar Button -->
 	<div class="flex items-center gap-2 sm:gap-3 relative">
+		<!-- PWA Install Button (Subtle, visible when installable) -->
+		<PwaInstallButton compact={true} />
+
 		<!-- Dynamic Profile Button -->
 		<button
 			type="button"

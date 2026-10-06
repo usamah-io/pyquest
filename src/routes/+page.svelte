@@ -400,7 +400,7 @@
 </script>
 
 <svelte:head>
-	<title>PyQuest — Belajar Logika Pemrograman Python</title>
+	<title>PyQuest — Petualangan Logika Python</title>
 </svelte:head>
 
 <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
