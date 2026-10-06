@@ -6,87 +6,92 @@ export const levelsData: GameLevel[] = [
 	// ==========================================
 	{
 		id: 1,
-		title: 'Level 1: Langkah Lurus',
-		description: 'Pahami cara menggerakkan PyBot maju lurus di jalur sederhana.',
-		concept: 'Sekuensial: Instruksi dieksekusi secara berurutan baris demi baris.',
+		title: 'Level 1: Langkah & Belokan',
+		description: 'Pahami cara melangkah dan mengarahkan belokan PyBot di jalur sudut sederhana.',
+		concept: 'Sekuensial & Arah: Instruksi langkah dan rotasi dieksekusi berurutan menuju target.',
 		difficulty: 1,
 		challenges: [
 			{
 				id: 'lvl1-ch1',
-				title: 'Langkah Pertama',
-				objective: 'Gerakkan PyBot 2 langkah ke depan menuju Bintang Emas.',
-				pythonContext: 'pybot.move()\npybot.move()',
+				title: 'Langkah & Belokan Pertama',
+				objective: 'Maju 1 langkah, belok kanan di sudut lorong, lalu maju menuju Bintang.',
+				pythonContext: 'pybot.move()\npybot.turn_right()\npybot.move()',
 				grid: {
 					cols: 5,
 					rows: 5,
-					startPos: { x: 1, y: 2 },
+					startPos: { x: 1, y: 1 },
 					startDirection: 'RIGHT',
-					targetPos: { x: 3, y: 2 },
+					targetPos: { x: 2, y: 2 },
 					obstacles: [
-						{ x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 },
-						{ x: 1, y: 3 }, { x: 2, y: 3 }, { x: 3, y: 3 }
+						{ x: 1, y: 0 }, { x: 2, y: 0 },
+						{ x: 0, y: 1 }, { x: 3, y: 1 },
+						{ x: 1, y: 2 }, { x: 3, y: 2 },
+						{ x: 2, y: 3 }
 					],
-					coins: [{ x: 2, y: 2 }]
-				},
-				availableBlocks: ['MOVE', 'TURN_LEFT', 'TURN_RIGHT'],
-				maxBlocks: 4,
-				maxMoves: 3,
-				xpReward: 20,
-				hints: [
-					'Perhatikan arah hadap PyBot: robot sudah menghadap langsung ke arah bintang di sebelah kanan.',
-					'Hitung jumlah petak kosong di antara posisi PyBot dan Bintang Emas untuk menentukan berapa kali melangkah maju.'
-				]
-			},
-			{
-				id: 'lvl1-ch2',
-				title: 'Tiga Langkah Pasti',
-				objective: 'Maju lurus 3 langkah melewati jembatan sempit.',
-				pythonContext: 'pybot.move()\npybot.move()\npybot.move()',
-				grid: {
-					cols: 6,
-					rows: 5,
-					startPos: { x: 1, y: 2 },
-					startDirection: 'RIGHT',
-					targetPos: { x: 4, y: 2 },
-					obstacles: [
-						{ x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 }, { x: 4, y: 1 },
-						{ x: 1, y: 3 }, { x: 2, y: 3 }, { x: 3, y: 3 }, { x: 4, y: 3 }
-					],
-					coins: [{ x: 2, y: 2 }, { x: 3, y: 2 }]
+					coins: [{ x: 2, y: 1 }]
 				},
 				availableBlocks: ['MOVE', 'TURN_LEFT', 'TURN_RIGHT'],
 				maxBlocks: 5,
 				maxMoves: 4,
-				xpReward: 25,
+				xpReward: 20,
 				hints: [
-					'Cek arah hadap PyBot terlebih dahulu apakah perlu berputar atau cukup melangkah lurus.',
-					'Hitung jarak petak lurus melintasi jembatan tanpa berbelok ke arah air di sisi atas dan bawah.'
+					'Perhatikan rintangan di depan: jalan lurus terhalang, arahkan robot membelok ke celah terbuka.',
+					'Putar arah hadap robot 90 derajat searah jarum jam (belok kanan) setelah melangkah maju agar menghadap ke bawah.'
 				]
 			},
 			{
-				id: 'lvl1-ch3',
-				title: 'Menyeberang Koridor',
-				objective: 'Langkah maju 4 petak lurus tanpa ragu.',
-				pythonContext: 'for step in range(4):\n    pybot.move()',
+				id: 'lvl1-ch2',
+				title: 'Lorong Siku',
+				objective: 'Maju 2 langkah menyusuri lorong, belok kanan, lalu maju 1 langkah menuju Bintang.',
+				pythonContext: 'pybot.move()\npybot.move()\npybot.turn_right()\npybot.move()',
 				grid: {
-					cols: 6,
+					cols: 5,
 					rows: 5,
-					startPos: { x: 0, y: 2 },
+					startPos: { x: 1, y: 1 },
 					startDirection: 'RIGHT',
-					targetPos: { x: 4, y: 2 },
+					targetPos: { x: 3, y: 2 },
 					obstacles: [
-						{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 }, { x: 4, y: 1 },
-						{ x: 0, y: 3 }, { x: 1, y: 3 }, { x: 2, y: 3 }, { x: 3, y: 3 }, { x: 4, y: 3 }
+						{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 },
+						{ x: 0, y: 1 }, { x: 4, y: 1 },
+						{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }, { x: 4, y: 2 },
+						{ x: 3, y: 3 }
 					],
-					coins: [{ x: 1, y: 2 }, { x: 3, y: 2 }]
+					coins: [{ x: 2, y: 1 }, { x: 3, y: 1 }]
 				},
 				availableBlocks: ['MOVE', 'TURN_LEFT', 'TURN_RIGHT'],
 				maxBlocks: 6,
 				maxMoves: 5,
+				xpReward: 25,
+				hints: [
+					'Telusuri koridor lurus terlebih dahulu hingga mencapai tikungan sebelum memutar robot.',
+					'Gunakan belokan kanan di persimpangan agar robot mengarah lurus ke target.'
+				]
+			},
+			{
+				id: 'lvl1-ch3',
+				title: 'Sudut Zig-Zag',
+				objective: 'Navigasi sudut belokan: maju, belok kanan, maju, lalu belok kiri menuju bintang.',
+				pythonContext: 'pybot.move()\npybot.turn_right()\npybot.move()\npybot.turn_left()\npybot.move()',
+				grid: {
+					cols: 5,
+					rows: 5,
+					startPos: { x: 1, y: 1 },
+					startDirection: 'RIGHT',
+					targetPos: { x: 3, y: 2 },
+					obstacles: [
+						{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 },
+						{ x: 0, y: 1 }, { x: 3, y: 1 },
+						{ x: 1, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 3 }, { x: 3, y: 3 }
+					],
+					coins: [{ x: 2, y: 1 }, { x: 2, y: 2 }]
+				},
+				availableBlocks: ['MOVE', 'TURN_LEFT', 'TURN_RIGHT'],
+				maxBlocks: 7,
+				maxMoves: 6,
 				xpReward: 30,
 				hints: [
-					'PyBot berada di koridor lurus. Perhatikan apakah ada rintangan di hadapannya sebelum melangkah.',
-					'Langkah maju secara berurutan akan membawa PyBot menyeberang koridor menuju target di ujung.'
+					'Perhatikan rute berbelok: robot perlu berputar dua kali untuk menyusuri lorong berbentuk tangga.',
+					'Gunakan kombinasi putaran kanan lalu putaran kiri untuk mengarahkan robot kembali sejajar ke bintang.'
 				]
 			}
 		]

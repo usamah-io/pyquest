@@ -7,7 +7,7 @@ export interface GridCoord {
 	y: number;
 }
 
-export type BlockType = 'MOVE' | 'TURN_LEFT' | 'TURN_RIGHT' | 'REPEAT';
+export type BlockType = 'MOVE' | 'TURN_LEFT' | 'TURN_RIGHT' | 'REPEAT' | 'FOREVER';
 
 export interface CodingBlock {
 	id: string;
@@ -127,6 +127,10 @@ export type AppScreen =
 	| 'FEEDBACK'
 	| 'LEARN_SUCCESS'
 	| 'LEVEL_SELECT'
+	| 'MISSION_BRIEFING'
 	| 'CHALLENGE'
 	| 'REWARD'
-	| 'SUMMARY';
+	| 'SUMMARY'
+	| 'PROFILE_SETUP'
+	| 'PROFILE';
+

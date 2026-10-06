@@ -11,9 +11,13 @@ export function compileBlocksToCommands(
 	maxInstructions = 100
 ): { commands: AtomicCommand[]; error?: string } {
 	const commands: AtomicCommand[] = [];
+	let inForever = false;
 
 	function processBlock(block: CodingBlock) {
 		if (commands.length >= maxInstructions) {
+			if (inForever) {
+				throw new Error('Kodenya berjalan terlalu lama. Coba periksa blok SELAMANYA.');
+			}
 			throw new Error('Maksimum instruksi terlampaui (mencegah loop tak terhingga).');
 		}
 
@@ -34,6 +38,21 @@ export function compileBlocksToCommands(
 					processBlock(inner);
 				}
 			}
+		} else if (block.type === 'FOREVER') {
+			const innerBlocks =
+				block.children && block.children.length > 0
+					? block.children
+					: [{ id: 'default', type: 'MOVE' as const }];
+			// Safe execution limit for FOREVER to prevent infinite loops and freezing
+			const prevInForever = inForever;
+			inForever = true;
+			const foreverCap = Math.min(30, maxInstructions + 1);
+			for (let i = 0; i < foreverCap; i++) {
+				for (const inner of innerBlocks) {
+					processBlock(inner);
+				}
+			}
+			inForever = prevInForever;
 		}
 	}
 
@@ -46,6 +65,15 @@ export function compileBlocksToCommands(
 		const message = err instanceof Error ? err.message : 'Kesalahan saat kompilasi blok.';
 		return { commands, error: message };
 	}
+}
+
+/**
+ * Checks whether the given block hierarchy contains any FOREVER block.
+ */
+export function hasForeverBlock(blocks: CodingBlock[]): boolean {
+	return blocks.some(
+		(b) => b.type === 'FOREVER' || (b.children && hasForeverBlock(b.children))
+	);
 }
 
 /**
@@ -68,6 +96,13 @@ export function blocksToPythonCode(blocks: CodingBlock[], indent = ''): string {
 		} else if (block.type === 'REPEAT') {
 			const count = block.repeatCount || 2;
 			lines.push(`${indent}for step in range(${count}):`);
+			if (block.children && block.children.length > 0) {
+				lines.push(blocksToPythonCode(block.children, indent + '    '));
+			} else {
+				lines.push(`${indent}    pass # Kosong`);
+			}
+		} else if (block.type === 'FOREVER') {
+			lines.push(`${indent}while True:`);
 			if (block.children && block.children.length > 0) {
 				lines.push(blocksToPythonCode(block.children, indent + '    '));
 			} else {

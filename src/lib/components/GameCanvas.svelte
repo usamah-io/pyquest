@@ -107,19 +107,23 @@
 							</div>
 						{/if}
 
-						<!-- Player Robot (PyBot Vector Icon) -->
+						<!-- Player Robot (PyBot Mascot Character) -->
 						{#if isPlayer}
 							<div
 								class="absolute inset-0 flex items-center justify-center transition-transform duration-300 z-10"
 								style="transform: rotate({getPlayerRotation(playerDirection)}deg);"
 							>
-								<div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 border-2 border-indigo-200 text-white flex items-center justify-center shadow-lg shadow-indigo-500/50">
-									<div style="transform: rotate({-getPlayerRotation(playerDirection)}deg);">
-										<Icon name="robot" size={20} class="text-white" />
+								<div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-slate-900 border-2 border-cyan-400 p-1 flex items-center justify-center shadow-lg shadow-cyan-500/40 relative">
+									<div style="transform: rotate({-getPlayerRotation(playerDirection)}deg);" class="w-full h-full flex items-center justify-center">
+										<img
+											src="/mascot/pybot-front-idle.png"
+											alt="PyBot"
+											class="w-full h-full object-contain filter drop-shadow"
+										/>
 									</div>
 								</div>
 								<!-- Direction Pointer Triangle -->
-								<div class="absolute -right-1 w-0 h-0 border-y-4 border-y-transparent border-l-[6px] border-l-white drop-shadow"></div>
+								<div class="absolute -right-1 w-0 h-0 border-y-4 border-y-transparent border-l-[7px] border-l-cyan-300 drop-shadow"></div>
 							</div>
 						{/if}
 					</div>

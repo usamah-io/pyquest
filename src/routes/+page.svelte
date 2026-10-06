@@ -12,23 +12,32 @@
 	import ChallengeSuccessModal from '$lib/components/ChallengeSuccessModal.svelte';
 	import SummaryModal from '$lib/components/SummaryModal.svelte';
 	import OrientationGuard from '$lib/components/OrientationGuard.svelte';
+	import Sidebar from '$lib/components/Sidebar.svelte';
+	import MissionBriefing from '$lib/components/MissionBriefing.svelte';
+	import GoogleAuthModal from '$lib/components/GoogleAuthModal.svelte';
+	import ProfileSetup from '$lib/components/ProfileSetup.svelte';
+	import ProfileView from '$lib/components/ProfileView.svelte';
+	import BottomNav from '$lib/components/BottomNav.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 
 	import { learningLevelsData } from '$lib/questions/learningLevelsData';
 	import { questionsData, getQuestionsByLevel } from '$lib/questions/questionsData';
 	import { levelsData } from '$lib/challenges/levelsData';
-	import { compileBlocksToCommands } from '$lib/game/compiler';
+	import { compileBlocksToCommands, hasForeverBlock } from '$lib/game/compiler';
 	import { simulateCommands, type SimulationStep } from '$lib/game/engine';
 	import { progressStore } from '$lib/stores/progressStore';
+	import { authStore } from '$lib/stores/authStore';
 	import { requestAppFullscreen, isFullscreenActive } from '$lib/utils/fullscreen';
 	import type { AppScreen, CodingBlock, Direction, GridCoord } from '$lib/types';
 
 	// Screen Flow State
 	let currentScreen = $state<AppScreen>('LANDING');
 
-	// Active Mode identifier for Navbar: 'HOME' | 'LEARN' | 'GAME'
-	let activeNavbarMode = $derived<'HOME' | 'LEARN' | 'GAME'>(
-		currentScreen === 'LANDING' || currentScreen === 'SUMMARY'
+	// Active Mode identifier for Navigation: 'HOME' | 'LEARN' | 'GAME' | 'PROFILE'
+	let activeNavbarMode = $derived<'HOME' | 'LEARN' | 'GAME' | 'PROFILE'>(
+		currentScreen === 'PROFILE'
+			? 'PROFILE'
+			: currentScreen === 'LANDING' || currentScreen === 'SUMMARY'
 			? 'HOME'
 			: currentScreen === 'LEARN_SELECT' ||
 			  currentScreen === 'QUESTION' ||
@@ -37,6 +46,7 @@
 			? 'LEARN'
 			: 'GAME'
 	);
+
 
 	// Pointers for Learning Module (10-Level System)
 	let currentLearningLevelIndex = $state(0);
@@ -194,6 +204,12 @@
 		}
 	}
 
+	function handleOpenProfile() {
+		stopSimulation();
+		currentScreen = 'PROFILE';
+	}
+
+
 	// Learning Level Flow
 	function handleSelectLearningLevel(levelId: number) {
 		const idx = learningLevelsData.findIndex((lvl) => lvl.id === levelId);
@@ -257,6 +273,10 @@
 		earnedXpThisRun = 0;
 		isFocusPauseOverlayOpen = false;
 		syncChallengeArena();
+		currentScreen = 'MISSION_BRIEFING';
+	}
+
+	function handleStartActualMission() {
 		currentScreen = 'CHALLENGE';
 		requestAppFullscreen();
 	}
@@ -310,7 +330,10 @@
 			playerDirection = frame.playerDirection;
 			collectedCoins = frame.collectedCoins;
 			gameStatus = frame.status;
-			gameStatusMessage = frame.message;
+			gameStatusMessage =
+				frame.status === 'FAILED' && frame.message.includes('Batas maksimum') && hasForeverBlock(workspaceBlocks)
+					? 'Kodenya berjalan terlalu lama. Coba periksa blok SELAMANYA.'
+					: frame.message;
 
 			if (frame.status === 'SUCCESS') {
 				stopSimulation();
@@ -344,8 +367,7 @@
 			attemptsCount = 0;
 			earnedXpThisRun = 0;
 			syncChallengeArena();
-			currentScreen = 'CHALLENGE';
-			requestAppFullscreen();
+			currentScreen = 'MISSION_BRIEFING';
 		} else {
 			if (currentLevelIndex < levelsData.length - 1) {
 				currentScreen = 'LEVEL_SELECT';
@@ -389,9 +411,8 @@
 
 	<!-- Top Nav with Mode Switcher -->
 	<Navbar
-		currentMode={activeNavbarMode}
 		onSelectMode={handleSelectNavbarMode}
-		onReset={handleRestartAll}
+		onOpenProfile={handleOpenProfile}
 	/>
 
 	<!-- Focus Mode / Anti-Cheat Warning Toast Banner -->
@@ -449,110 +470,167 @@
 		</div>
 	{/if}
 
-	<!-- Main Stage -->
-	<main class="flex-1 flex flex-col p-2 sm:p-4 md:p-6 overflow-y-auto min-h-0">
-		<!-- 1. LANDING / HOME -->
-		{#if currentScreen === 'LANDING'}
-			<LandingHero
-				onStartLearning={handleStartLearning}
-				onStartCodingGame={handleStartCodingGame}
-			/>
+	<!-- Google Authentication Modal -->
+	<GoogleAuthModal
+		isOpen={$authStore.isGoogleModalOpen}
+		onClose={() => authStore.closeGoogleModal()}
+		onLoginSuccess={(needsSetup) => {
+			if (needsSetup) {
+				currentScreen = 'PROFILE_SETUP';
+			}
+		}}
+	/>
 
-		<!-- 2. LEARNING LEVEL SELECTION (10 LEVELS) -->
-		{:else if currentScreen === 'LEARN_SELECT'}
-			<LearningLevelSelect
-				learningLevels={learningLevelsData}
-				onSelectLearningLevel={handleSelectLearningLevel}
-				onBackToHome={() => (currentScreen = 'LANDING')}
-			/>
-
-		<!-- 3. LEARNING / QUESTION MODE -->
-		{:else if currentScreen === 'QUESTION'}
-			<QuestionCard
-				question={activeQuestion}
-				questionNumber={currentQuestionInLevelIndex + 1}
-				totalQuestions={activeLevelQuestions.length}
-				onAnswer={handleAnswerQuestion}
-				onBackToLevels={() => (currentScreen = 'LEARN_SELECT')}
-			/>
-
-		<!-- 4. LEARNING FEEDBACK -->
-		{:else if currentScreen === 'FEEDBACK'}
-			<FeedbackModal
-				question={activeQuestion}
-				userSelectedId={userSelectedOptionId || ''}
-				isLastQuestion={currentQuestionInLevelIndex === activeLevelQuestions.length - 1}
-				onContinue={handleContinueAfterQuestionFeedback}
-			/>
-
-		<!-- 5. LEARNING LEVEL SUCCESS MODAL -->
-		{:else if currentScreen === 'LEARN_SUCCESS'}
-			<LearningSuccessModal
-				level={activeLearningLevel}
-				xpEarned={earnedLearningXpThisRun}
-				isLastLevel={currentLearningLevelIndex === learningLevelsData.length - 1}
-				onNextLevel={handleNextLearningLevel}
-				onReplayLevel={handleReplayLearningLevel}
-				onBackToSelect={() => (currentScreen = 'LEARN_SELECT')}
-			/>
-
-		<!-- 6. LEVEL SELECTION (CODING GAME) -->
-		{:else if currentScreen === 'LEVEL_SELECT'}
-			<LevelSelect
-				levels={levelsData}
-				onSelectLevelChallenge={handleSelectLevelChallenge}
-				onBackToHome={() => (currentScreen = 'LANDING')}
-			/>
-
-		<!-- 7. CODING GAME CHALLENGE -->
-		{:else if currentScreen === 'CHALLENGE'}
-			<div class="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto w-full">
-				<ChallengeHeader
-					title={`${activeLevel.title} — ${activeChallenge.title}`}
-					objective={activeChallenge.objective}
-					topic={`Level ${activeLevel.id} • Misi ${currentChallengeIndex + 1}/${activeLevel.challenges.length}`}
-					hints={activeChallenge.hints}
-					onBackToModes={() => {
-						stopSimulation();
-						currentScreen = 'LEVEL_SELECT';
-					}}
-				/>
-
-				<div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-0">
-					<div class="h-full min-h-[260px]">
-						<GameCanvas
-							grid={activeChallenge.grid}
-							{playerPos}
-							{playerDirection}
-							{collectedCoins}
-							statusMessage={gameStatusMessage}
-							status={gameStatus}
-						/>
-					</div>
-
-					<div class="h-full min-h-[280px]">
-						<BlockWorkspace
-							bind:workspaceBlocks
-							availableBlocks={activeChallenge.availableBlocks}
-							maxMoves={activeChallenge.maxMoves}
-							attempts={attemptsCount}
-							onRun={handleRunCode}
-							onReset={handleResetGame}
-							{isRunning}
-						/>
-					</div>
-				</div>
-			</div>
-
-		<!-- 8. CODING GAME SUMMARY -->
-		{:else if currentScreen === 'SUMMARY'}
-			<SummaryModal
-				progress={$progressStore}
-				onBackToHome={() => (currentScreen = 'LANDING')}
-				onRestart={handleRestartAll}
+	<!-- Body Layout with Desktop Sidebar -->
+	<div class="flex-1 flex overflow-hidden min-h-0">
+		{#if currentScreen === 'LANDING' || currentScreen === 'LEARN_SELECT' || currentScreen === 'LEVEL_SELECT' || currentScreen === 'PROFILE'}
+			<Sidebar
+				currentMode={activeNavbarMode}
+				onSelectMode={handleSelectNavbarMode}
+				onOpenProfile={handleOpenProfile}
 			/>
 		{/if}
-	</main>
+
+		<!-- Main Stage -->
+		<main class="flex-1 flex flex-col p-2 sm:p-4 md:p-6 pb-20 lg:pb-6 overflow-y-auto min-h-0">
+			<!-- 1. LANDING / HOME -->
+			{#if currentScreen === 'LANDING'}
+				<LandingHero
+					onStartLearning={handleStartLearning}
+					onStartCodingGame={handleStartCodingGame}
+					onContinueCoding={(lvlIdx, chIdx) => handleSelectLevelChallenge(lvlIdx, chIdx)}
+					onContinueLearning={(levelId) => handleSelectLearningLevel(levelId)}
+				/>
+
+			<!-- 2. LEARNING LEVEL SELECTION (10 LEVELS) -->
+			{:else if currentScreen === 'LEARN_SELECT'}
+				<LearningLevelSelect
+					learningLevels={learningLevelsData}
+					onSelectLearningLevel={handleSelectLearningLevel}
+					onBackToHome={() => (currentScreen = 'LANDING')}
+				/>
+
+			<!-- 3. LEARNING / QUESTION MODE -->
+			{:else if currentScreen === 'QUESTION'}
+				<QuestionCard
+					question={activeQuestion}
+					questionNumber={currentQuestionInLevelIndex + 1}
+					totalQuestions={activeLevelQuestions.length}
+					onAnswer={handleAnswerQuestion}
+					onBackToLevels={() => (currentScreen = 'LEARN_SELECT')}
+				/>
+
+			<!-- 4. LEARNING FEEDBACK -->
+			{:else if currentScreen === 'FEEDBACK'}
+				<FeedbackModal
+					question={activeQuestion}
+					userSelectedId={userSelectedOptionId || ''}
+					isLastQuestion={currentQuestionInLevelIndex === activeLevelQuestions.length - 1}
+					onContinue={handleContinueAfterQuestionFeedback}
+				/>
+
+			<!-- 5. LEARNING LEVEL SUCCESS MODAL -->
+			{:else if currentScreen === 'LEARN_SUCCESS'}
+				<LearningSuccessModal
+					level={activeLearningLevel}
+					xpEarned={earnedLearningXpThisRun}
+					isLastLevel={currentLearningLevelIndex === learningLevelsData.length - 1}
+					onNextLevel={handleNextLearningLevel}
+					onReplayLevel={handleReplayLearningLevel}
+					onBackToSelect={() => (currentScreen = 'LEARN_SELECT')}
+				/>
+
+			<!-- 6. LEVEL SELECTION (CODING GAME) -->
+			{:else if currentScreen === 'LEVEL_SELECT'}
+				<LevelSelect
+					levels={levelsData}
+					onSelectLevelChallenge={handleSelectLevelChallenge}
+					onBackToHome={() => (currentScreen = 'LANDING')}
+				/>
+
+			<!-- 7. MISSION BRIEFING SCREEN -->
+			{:else if currentScreen === 'MISSION_BRIEFING'}
+				<MissionBriefing
+					level={activeLevel}
+					challenge={activeChallenge}
+					challengeIndex={currentChallengeIndex}
+					totalChallengesInLevel={activeLevel.challenges.length}
+					onStartMission={handleStartActualMission}
+					onBack={() => (currentScreen = 'LEVEL_SELECT')}
+				/>
+
+			<!-- 8. CODING GAME CHALLENGE -->
+			{:else if currentScreen === 'CHALLENGE'}
+				<div class="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto w-full">
+					<ChallengeHeader
+						title={`${activeLevel.title} — ${activeChallenge.title}`}
+						objective={activeChallenge.objective}
+						topic={`Level ${activeLevel.id} • Misi ${currentChallengeIndex + 1}/${activeLevel.challenges.length}`}
+						hints={activeChallenge.hints}
+						onBackToModes={() => {
+							stopSimulation();
+							currentScreen = 'LEVEL_SELECT';
+						}}
+					/>
+
+					<div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-0">
+						<div class="h-full min-h-[260px]">
+							<GameCanvas
+								grid={activeChallenge.grid}
+								{playerPos}
+								{playerDirection}
+								{collectedCoins}
+								statusMessage={gameStatusMessage}
+								status={gameStatus}
+							/>
+						</div>
+
+						<div class="h-full min-h-[280px]">
+							<BlockWorkspace
+								bind:workspaceBlocks
+								availableBlocks={activeChallenge.availableBlocks}
+								maxMoves={activeChallenge.maxMoves}
+								attempts={attemptsCount}
+								onRun={handleRunCode}
+								onReset={handleResetGame}
+								{isRunning}
+							/>
+						</div>
+					</div>
+				</div>
+
+			<!-- 9. CODING GAME SUMMARY -->
+			{:else if currentScreen === 'SUMMARY'}
+				<SummaryModal
+					progress={$progressStore}
+					onBackToHome={() => (currentScreen = 'LANDING')}
+					onRestart={handleRestartAll}
+				/>
+
+			<!-- 10. PROFILE SETUP SCREEN (First Google Login) -->
+			{:else if currentScreen === 'PROFILE_SETUP'}
+				<ProfileSetup
+					onComplete={() => (currentScreen = 'LANDING')}
+				/>
+
+			<!-- 11. DEDICATED PROFILE PAGE -->
+			{:else if currentScreen === 'PROFILE'}
+				<ProfileView
+					onBackToHome={() => (currentScreen = 'LANDING')}
+				/>
+			{/if}
+		</main>
+	</div>
+
+	<!-- Mobile Fixed Bottom Navigation Bar -->
+	{#if currentScreen !== 'CHALLENGE' && currentScreen !== 'QUESTION' && currentScreen !== 'PROFILE_SETUP'}
+		<BottomNav
+			currentMode={activeNavbarMode}
+			onSelectMode={handleSelectNavbarMode}
+			onOpenProfile={handleOpenProfile}
+		/>
+	{/if}
+
 
 	<!-- Success Reward Modal Popup (Coding Game Mode) -->
 	{#if currentScreen === 'REWARD'}

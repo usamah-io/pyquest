@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 import { get } from 'svelte/store';
-import { compileBlocksToCommands, blocksToPythonCode, type AtomicCommand } from '../src/lib/game/compiler';
+import { compileBlocksToCommands, blocksToPythonCode, hasForeverBlock, type AtomicCommand } from '../src/lib/game/compiler';
 import { simulateCommands } from '../src/lib/game/engine';
 import { challengesData, levelsData } from '../src/lib/challenges/challengesData';
 import {
@@ -48,6 +48,33 @@ describe('Block Compiler', () => {
 		expect(pythonCode).toContain('pybot.move()');
 		expect(pythonCode).toContain('pybot.turn_left()');
 	});
+
+	it('should safely compile FOREVER blocks with cap and safe feedback when exceeded', () => {
+		const blocks: CodingBlock[] = [
+			{
+				id: '1',
+				type: 'FOREVER',
+				children: [{ id: '2', type: 'MOVE' }]
+			}
+		];
+		expect(hasForeverBlock(blocks)).toBe(true);
+		const res = compileBlocksToCommands(blocks, 15);
+		expect(res.commands.length).toBe(15);
+		expect(res.error).toBe('Kodenya berjalan terlalu lama. Coba periksa blok SELAMANYA.');
+	});
+
+	it('should generate valid Python code with while True: for FOREVER blocks', () => {
+		const blocks: CodingBlock[] = [
+			{
+				id: '1',
+				type: 'FOREVER',
+				children: [{ id: '2', type: 'MOVE' }]
+			}
+		];
+		const pythonCode = blocksToPythonCode(blocks);
+		expect(pythonCode).toContain('while True:');
+		expect(pythonCode).toContain('    pybot.move()');
+	});
 });
 
 describe('Coding Game Engine & 10 Levels System', () => {
@@ -83,7 +110,26 @@ describe('Coding Game Engine & 10 Levels System', () => {
 
 	it('should successfully reach target for challenge 1 with correct commands', () => {
 		const ch1 = challengesData[0];
-		const steps = simulateCommands(ch1.grid, ['MOVE', 'MOVE']);
+		expect(ch1.id).toBe('lvl1-ch1');
+		const steps = simulateCommands(ch1.grid, ['MOVE', 'TURN_RIGHT', 'MOVE']);
+		const lastStep = steps[steps.length - 1];
+		expect(lastStep.status).toBe('SUCCESS');
+		expect(lastStep.playerPos).toEqual({ x: 2, y: 2 });
+	});
+
+	it('should successfully reach target for challenge 2 (first turn mission)', () => {
+		const ch2 = challengesData[1];
+		expect(ch2.id).toBe('lvl1-ch2');
+		const steps = simulateCommands(ch2.grid, ['MOVE', 'MOVE', 'TURN_RIGHT', 'MOVE']);
+		const lastStep = steps[steps.length - 1];
+		expect(lastStep.status).toBe('SUCCESS');
+		expect(lastStep.playerPos).toEqual({ x: 3, y: 2 });
+	});
+
+	it('should successfully reach target for challenge 3 (zig-zag corner mission)', () => {
+		const ch3 = challengesData[2];
+		expect(ch3.id).toBe('lvl1-ch3');
+		const steps = simulateCommands(ch3.grid, ['MOVE', 'TURN_RIGHT', 'MOVE', 'TURN_LEFT', 'MOVE']);
 		const lastStep = steps[steps.length - 1];
 		expect(lastStep.status).toBe('SUCCESS');
 		expect(lastStep.playerPos).toEqual({ x: 3, y: 2 });

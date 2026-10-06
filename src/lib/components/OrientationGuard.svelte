@@ -7,13 +7,13 @@
 		<Icon name="device-mobile-rotated" size={38} class="text-indigo-400 animate-pulse" />
 	</div>
 	<h2 class="text-xl font-black text-white mb-2">
-		Putar Perangkatmu ke Landscape!
+		Putar Perangkatmu
 	</h2>
 	<p class="text-slate-300 text-sm max-w-xs leading-relaxed mb-5">
-		"Putar perangkatmu ke landscape untuk bermain."
+		Gunakan mode landscape agar arena coding lebih nyaman dimainkan.
 	</p>
 	<div class="px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-indigo-300 font-mono inline-flex items-center gap-2">
 		<Icon name="maximize" size={13} />
-		<span>Mode Horizontal (Landscape) Diperlukan</span>
+		<span>Mode Landscape Direkomendasikan</span>
 	</div>
 </div>
