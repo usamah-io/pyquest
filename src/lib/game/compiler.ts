@@ -25,7 +25,10 @@ export function compileBlocksToCommands(
 			commands.push('TURN_RIGHT');
 		} else if (block.type === 'REPEAT') {
 			const count = Math.min(Math.max(block.repeatCount || 2, 1), 10);
-			const innerBlocks = block.children || [];
+			const innerBlocks =
+				block.children && block.children.length > 0
+					? block.children
+					: [{ id: 'default', type: 'MOVE' as const }];
 			for (let i = 0; i < count; i++) {
 				for (const inner of innerBlocks) {
 					processBlock(inner);

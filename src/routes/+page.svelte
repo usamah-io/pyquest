@@ -54,6 +54,19 @@
 	let workspaceBlocks = $state<CodingBlock[]>([]);
 	let isRunning = $state(false);
 	let simulationTimer = $state<any>(null);
+	let rewardModalTimer = $state<any>(null);
+
+	function stopSimulation() {
+		if (simulationTimer) {
+			clearInterval(simulationTimer);
+			simulationTimer = null;
+		}
+		if (rewardModalTimer) {
+			clearTimeout(rewardModalTimer);
+			rewardModalTimer = null;
+		}
+		isRunning = false;
+	}
 
 	// Game Engine Live State
 	let playerPos = $state<GridCoord>({ x: 0, y: 0 });
@@ -97,6 +110,7 @@
 	}
 
 	function handleExitFocus() {
+		stopSimulation();
 		isFocusPauseOverlayOpen = false;
 		if (currentScreen === 'CHALLENGE') {
 			currentScreen = 'LEVEL_SELECT';
@@ -130,6 +144,7 @@
 		window.addEventListener('blur', onWindowBlur);
 
 		return () => {
+			stopSimulation();
 			document.removeEventListener('fullscreenchange', onFullscreenChange);
 			document.removeEventListener('visibilitychange', onVisibilityChange);
 			window.removeEventListener('blur', onWindowBlur);
@@ -158,6 +173,7 @@
 	}
 
 	function handleSelectNavbarMode(mode: 'HOME' | 'LEARN' | 'GAME') {
+		stopSimulation();
 		if (mode === 'HOME') {
 			currentScreen = 'LANDING';
 		} else if (mode === 'LEARN') {
@@ -223,6 +239,7 @@
 
 	// Coding Game Flow Handlers
 	function handleSelectLevelChallenge(lvlIdx: number, chIdx: number) {
+		stopSimulation();
 		currentLevelIndex = lvlIdx;
 		currentChallengeIndex = chIdx;
 		attemptsCount = 0;
@@ -234,39 +251,46 @@
 	}
 
 	function handleResetGame() {
-		if (simulationTimer) {
-			clearInterval(simulationTimer);
-			simulationTimer = null;
-		}
-		isRunning = false;
+		stopSimulation();
 		syncChallengeArena();
 	}
 
 	function handleRunCode() {
 		if (isRunning || workspaceBlocks.length === 0) return;
 
+		// Immediately stop any lingering intervals and set isRunning to prevent double-run race conditions
+		stopSimulation();
+		isRunning = true;
 		attemptsCount++;
 
 		const { commands, error } = compileBlocksToCommands(workspaceBlocks);
 		if (error) {
+			isRunning = false;
 			gameStatus = 'FAILED';
 			gameStatusMessage = error;
 			return;
 		}
 
-		const steps: SimulationStep[] = simulateCommands(activeChallenge.grid, commands);
+		if (commands.length === 0) {
+			isRunning = false;
+			gameStatus = 'FAILED';
+			gameStatusMessage = 'Tidak ada balok instruksi untuk dijalankan.';
+			return;
+		}
 
-		isRunning = true;
+		const effectiveMaxActions = activeChallenge.maxMoves || 30;
+		const steps: SimulationStep[] = simulateCommands(activeChallenge.grid, commands, effectiveMaxActions);
+
 		gameStatus = 'RUNNING';
 		let stepIdx = 0;
 
-		if (simulationTimer) clearInterval(simulationTimer);
-
 		simulationTimer = setInterval(() => {
 			if (stepIdx >= steps.length) {
-				clearInterval(simulationTimer);
-				simulationTimer = null;
-				isRunning = false;
+				stopSimulation();
+				if (gameStatus === 'RUNNING') {
+					gameStatus = 'FAILED';
+					gameStatusMessage = 'Program selesai, tetapi PyBot belum mencapai Bintang target.';
+				}
 				return;
 			}
 
@@ -278,9 +302,7 @@
 			gameStatusMessage = frame.message;
 
 			if (frame.status === 'SUCCESS') {
-				clearInterval(simulationTimer);
-				simulationTimer = null;
-				isRunning = false;
+				stopSimulation();
 
 				const isFirst = progressStore.completeChallenge(activeChallenge.id, activeChallenge.xpReward);
 				earnedXpThisRun = isFirst ? activeChallenge.xpReward : 0;
@@ -292,13 +314,12 @@
 					progressStore.completeLevel(activeLevel.id);
 				}
 
-				setTimeout(() => {
+				rewardModalTimer = setTimeout(() => {
 					currentScreen = 'REWARD';
+					rewardModalTimer = null;
 				}, 600);
 			} else if (frame.status === 'FAILED' || frame.status === 'OUT_OF_BOUNDS') {
-				clearInterval(simulationTimer);
-				simulationTimer = null;
-				isRunning = false;
+				stopSimulation();
 			}
 
 			stepIdx++;
@@ -306,6 +327,7 @@
 	}
 
 	function handleNextChallengeOrLevel() {
+		stopSimulation();
 		if (currentChallengeIndex < activeLevel.challenges.length - 1) {
 			currentChallengeIndex++;
 			attemptsCount = 0;
@@ -323,6 +345,7 @@
 	}
 
 	function handleReplayCurrentChallenge() {
+		stopSimulation();
 		handleResetGame();
 		earnedXpThisRun = 0;
 		currentScreen = 'CHALLENGE';
@@ -330,6 +353,7 @@
 	}
 
 	function handleRestartAll() {
+		stopSimulation();
 		progressStore.reset();
 		currentLearningLevelIndex = 0;
 		currentQuestionInLevelIndex = 0;
@@ -477,7 +501,10 @@
 					objective={activeChallenge.objective}
 					topic={`Level ${activeLevel.id} • Misi ${currentChallengeIndex + 1}/${activeLevel.challenges.length}`}
 					hints={activeChallenge.hints}
-					onBackToModes={() => (currentScreen = 'LEVEL_SELECT')}
+					onBackToModes={() => {
+						stopSimulation();
+						currentScreen = 'LEVEL_SELECT';
+					}}
 				/>
 
 				<div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-0">
@@ -526,7 +553,10 @@
 			isLastChallengeInLevel={currentChallengeIndex === activeLevel.challenges.length - 1}
 			onNext={handleNextChallengeOrLevel}
 			onReplay={handleReplayCurrentChallenge}
-			onBackToLevelSelect={() => (currentScreen = 'LEVEL_SELECT')}
+			onBackToLevelSelect={() => {
+				stopSimulation();
+				currentScreen = 'LEVEL_SELECT';
+			}}
 		/>
 	{/if}
 </div>

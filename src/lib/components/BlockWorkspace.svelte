@@ -56,8 +56,48 @@
 	}
 
 	function updateRepeatCount(index: number, newCount: number) {
-		if (newCount < 1 || newCount > 9) return;
+		if (isRunning) return;
+		if (newCount < 1 || newCount > 10) return;
 		workspaceBlocks = workspaceBlocks.map((b, i) => (i === index ? { ...b, repeatCount: newCount } : b));
+	}
+
+	function updateRepeatChildType(blockIndex: number, childIndex: number, newType: BlockType) {
+		if (isRunning) return;
+		workspaceBlocks = workspaceBlocks.map((b, i) => {
+			if (i !== blockIndex || !b.children) return b;
+			const newChildren = b.children.map((child, ci) =>
+				ci === childIndex ? { ...child, type: newType } : child
+			);
+			return { ...b, children: newChildren };
+		});
+	}
+
+	function addRepeatChild(blockIndex: number) {
+		if (isRunning) return;
+		workspaceBlocks = workspaceBlocks.map((b, i) => {
+			if (i !== blockIndex) return b;
+			const currentChildren = b.children || [];
+			if (currentChildren.length >= 4) return b;
+			return {
+				...b,
+				children: [
+					...currentChildren,
+					{ id: 'blk-' + Math.random().toString(36).substring(2, 9), type: 'MOVE' }
+				]
+			};
+		});
+	}
+
+	function removeRepeatChild(blockIndex: number, childIndex: number) {
+		if (isRunning) return;
+		workspaceBlocks = workspaceBlocks.map((b, i) => {
+			if (i !== blockIndex || !b.children) return b;
+			if (b.children.length <= 1) return b;
+			return {
+				...b,
+				children: b.children.filter((_, ci) => ci !== childIndex)
+			};
+		});
 	}
 
 	function getBlockMeta(type: BlockType) {
@@ -181,66 +221,120 @@
 				{#each workspaceBlocks as block, i}
 					{@const meta = getBlockMeta(block.type)}
 					<div
-						class="flex items-center justify-between p-2.5 rounded-xl border bg-slate-800/90 border-slate-700 shadow-md group hover:border-slate-500 transition-colors"
+						class="flex flex-col p-2.5 rounded-xl border bg-slate-800/90 border-slate-700 shadow-md group hover:border-slate-500 transition-colors"
 					>
-						<!-- Left: Index + Name -->
-						<div class="flex items-center gap-2">
-							<span class="text-xs font-bold text-slate-500 w-4">{i + 1}.</span>
-							<Icon name={meta.icon} size={15} class="text-slate-300" />
-							<span class="text-xs sm:text-sm font-bold text-white">{meta.name}</span>
-							{#if block.type === 'REPEAT'}
-								<div class="flex items-center gap-1 ml-2 bg-indigo-950 px-2 py-0.5 rounded-lg border border-indigo-700">
-									<span class="text-xs text-indigo-300">kali:</span>
-									<button
-										type="button"
-										onclick={() => updateRepeatCount(i, (block.repeatCount || 2) - 1)}
-										class="px-1 text-xs font-bold text-slate-300 hover:text-white"
-										disabled={isRunning}
-									>-</button>
-									<span class="text-xs font-mono font-bold text-white px-1">{block.repeatCount || 2}</span>
-									<button
-										type="button"
-										onclick={() => updateRepeatCount(i, (block.repeatCount || 2) + 1)}
-										class="px-1 text-xs font-bold text-slate-300 hover:text-white"
-										disabled={isRunning}
-									>+</button>
-								</div>
-							{/if}
+						<div class="flex items-center justify-between">
+							<!-- Left: Index + Name -->
+							<div class="flex items-center gap-2">
+								<span class="text-xs font-bold text-slate-500 w-4">{i + 1}.</span>
+								<Icon name={meta.icon} size={15} class="text-slate-300" />
+								<span class="text-xs sm:text-sm font-bold text-white">{meta.name}</span>
+								{#if block.type === 'REPEAT'}
+									<div class="flex items-center gap-1 ml-2 bg-indigo-950 px-2 py-0.5 rounded-lg border border-indigo-700">
+										<span class="text-xs text-indigo-300">kali:</span>
+										<button
+											type="button"
+											onclick={() => updateRepeatCount(i, (block.repeatCount || 2) - 1)}
+											class="px-1 text-xs font-bold text-slate-300 hover:text-white"
+											disabled={isRunning}
+										>-</button>
+										<span class="text-xs font-mono font-bold text-white px-1">{block.repeatCount || 2}</span>
+										<button
+											type="button"
+											onclick={() => updateRepeatCount(i, (block.repeatCount || 2) + 1)}
+											class="px-1 text-xs font-bold text-slate-300 hover:text-white"
+											disabled={isRunning}
+										>+</button>
+									</div>
+								{/if}
+							</div>
+
+							<!-- Right: Move Up/Down + Delete -->
+							<div class="flex items-center gap-1">
+								<button
+									type="button"
+									onclick={() => moveBlockUp(i)}
+									disabled={i === 0 || isRunning}
+									class="p-1 text-slate-400 hover:text-white disabled:opacity-30 text-xs rounded hover:bg-slate-700 cursor-pointer"
+									title="Pindah ke Atas"
+									aria-label="Pindah ke Atas"
+								>
+									<Icon name="arrow-up" size={14} />
+								</button>
+								<button
+									type="button"
+									onclick={() => moveBlockDown(i)}
+									disabled={i === workspaceBlocks.length - 1 || isRunning}
+									class="p-1 text-slate-400 hover:text-white disabled:opacity-30 text-xs rounded hover:bg-slate-700 cursor-pointer"
+									title="Pindah ke Bawah"
+									aria-label="Pindah ke Bawah"
+								>
+									<Icon name="arrow-down" size={14} />
+								</button>
+								<button
+									type="button"
+									onclick={() => removeBlock(i)}
+									disabled={isRunning}
+									class="p-1 text-rose-400 hover:text-rose-300 hover:bg-rose-500/20 rounded disabled:opacity-30 text-xs cursor-pointer"
+									title="Hapus Balok"
+									aria-label="Hapus Balok"
+								>
+									<Icon name="x" size={14} />
+								</button>
+							</div>
 						</div>
 
-						<!-- Right: Move Up/Down + Delete -->
-						<div class="flex items-center gap-1">
-							<button
-								type="button"
-								onclick={() => moveBlockUp(i)}
-								disabled={i === 0 || isRunning}
-								class="p-1 text-slate-400 hover:text-white disabled:opacity-30 text-xs rounded hover:bg-slate-700 cursor-pointer"
-								title="Pindah ke Atas"
-								aria-label="Pindah ke Atas"
-							>
-								<Icon name="arrow-up" size={14} />
-							</button>
-							<button
-								type="button"
-								onclick={() => moveBlockDown(i)}
-								disabled={i === workspaceBlocks.length - 1 || isRunning}
-								class="p-1 text-slate-400 hover:text-white disabled:opacity-30 text-xs rounded hover:bg-slate-700 cursor-pointer"
-								title="Pindah ke Bawah"
-								aria-label="Pindah ke Bawah"
-							>
-								<Icon name="arrow-down" size={14} />
-							</button>
-							<button
-								type="button"
-								onclick={() => removeBlock(i)}
-								disabled={isRunning}
-								class="p-1 text-rose-400 hover:text-rose-300 hover:bg-rose-500/20 rounded disabled:opacity-30 text-xs cursor-pointer"
-								title="Hapus Balok"
-								aria-label="Hapus Balok"
-							>
-								<Icon name="x" size={14} />
-							</button>
-						</div>
+						<!-- Repeat Inner Actions Editor -->
+						{#if block.type === 'REPEAT'}
+							<div class="mt-2.5 pt-2 border-t border-indigo-900/60 pl-2 sm:pl-3 border-l-2 border-indigo-500/50 ml-1 space-y-1.5">
+								<div class="flex items-center justify-between text-[11px] text-indigo-300 font-semibold mb-1">
+									<span>Aksi di dalam loop ({block.children?.length || 1}):</span>
+									{#if (!block.children || block.children.length < 4)}
+										<button
+											type="button"
+											onclick={() => addRepeatChild(i)}
+											disabled={isRunning}
+											class="text-[10px] px-2 py-0.5 rounded bg-indigo-900/80 hover:bg-indigo-800 text-indigo-200 border border-indigo-600 cursor-pointer disabled:opacity-40"
+										>
+											+ Tambah Aksi
+										</button>
+									{/if}
+								</div>
+
+								{#each (block.children || []) as child, ci}
+									{@const childMeta = getBlockMeta(child.type)}
+									<div class="flex items-center justify-between gap-1.5 bg-slate-900/90 px-2 py-1.5 rounded-lg border border-indigo-800/40">
+										<div class="flex items-center gap-1.5">
+											<span class="text-[10px] text-indigo-400 font-mono">{ci + 1}.</span>
+											<Icon name={childMeta.icon} size={13} class="text-indigo-400" />
+											<select
+												value={child.type}
+												onchange={(e) => updateRepeatChildType(i, ci, (e.target as HTMLSelectElement).value as BlockType)}
+												disabled={isRunning}
+												class="bg-slate-800 text-white text-xs rounded px-1.5 py-0.5 border border-slate-700 focus:outline-none focus:border-indigo-400 cursor-pointer disabled:opacity-50"
+											>
+												<option value="MOVE">MAJU (MOVE)</option>
+												<option value="TURN_LEFT">BELOK KIRI</option>
+												<option value="TURN_RIGHT">BELOK KANAN</option>
+											</select>
+										</div>
+
+										{#if (block.children && block.children.length > 1)}
+											<button
+												type="button"
+												onclick={() => removeRepeatChild(i, ci)}
+												disabled={isRunning}
+												class="text-rose-400 hover:text-rose-300 p-0.5 rounded hover:bg-rose-900/30 text-xs cursor-pointer disabled:opacity-40"
+												title="Hapus aksi ini"
+												aria-label="Hapus aksi"
+											>
+												<Icon name="x" size={12} />
+											</button>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						{/if}
 					</div>
 				{/each}
 			</div>

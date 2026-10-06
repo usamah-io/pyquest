@@ -1,4 +1,4 @@
-import type { Direction, GridCoord, ChallengeGrid, GameExecutionState } from '../types';
+import type { Direction, GridCoord, ChallengeGrid } from '../types';
 import type { AtomicCommand } from './compiler';
 
 export const DIRECTION_ORDER: Direction[] = ['UP', 'RIGHT', 'DOWN', 'LEFT'];
@@ -48,9 +48,18 @@ export interface SimulationStep {
 }
 
 /**
- * Runs a deterministic simulation of all commands over the grid and yields individual frame states.
+ * Runs a deterministic simulation of commands over the grid with strict termination conditions:
+ * 1. Target reached -> SUCCESS & STOP immediately
+ * 2. Obstacle collision -> FAILED & STOP immediately
+ * 3. Out of bounds -> OUT_OF_BOUNDS & STOP immediately
+ * 4. maxActions limit reached -> FAILED & STOP immediately (no infinite loops)
+ * 5. All commands finished without target -> FAILED & STOP
  */
-export function simulateCommands(grid: ChallengeGrid, commands: AtomicCommand[]): SimulationStep[] {
+export function simulateCommands(
+	grid: ChallengeGrid,
+	commands: AtomicCommand[],
+	maxActions = 30
+): SimulationStep[] {
 	const steps: SimulationStep[] = [];
 
 	let currentPos: GridCoord = { ...grid.startPos };
@@ -73,8 +82,31 @@ export function simulateCommands(grid: ChallengeGrid, commands: AtomicCommand[])
 		return steps;
 	}
 
+	// Check if already at target
+	if (isCoordEqual(currentPos, grid.targetPos)) {
+		steps[0].status = 'SUCCESS';
+		steps[0].message = 'PyBot sudah berada di Bintang Emas!';
+		return steps;
+	}
+
+	let executedActionCount = 0;
+
 	for (let i = 0; i < commands.length; i++) {
+		// Enforce max actions limit before executing next action
+		if (executedActionCount >= maxActions) {
+			steps.push({
+				playerPos: { ...currentPos },
+				playerDirection: currentDir,
+				collectedCoins: [...collectedCoins],
+				command: 'INIT',
+				status: 'FAILED',
+				message: `Batas maksimum ${maxActions} aksi tercapai! PyBot kehabisan energi langkah.`
+			});
+			return steps;
+		}
+
 		const cmd = commands[i];
+		executedActionCount++;
 
 		if (cmd === 'TURN_LEFT') {
 			currentDir = turnLeft(currentDir);
@@ -99,7 +131,7 @@ export function simulateCommands(grid: ChallengeGrid, commands: AtomicCommand[])
 		} else if (cmd === 'MOVE') {
 			const nextPos = getNextCoord(currentPos, currentDir);
 
-			// Check out of bounds
+			// 1. Check out of bounds -> STOP immediately
 			if (isOutOfBounds(nextPos, grid)) {
 				steps.push({
 					playerPos: { ...nextPos },
@@ -112,7 +144,7 @@ export function simulateCommands(grid: ChallengeGrid, commands: AtomicCommand[])
 				return steps;
 			}
 
-			// Check obstacle collision
+			// 2. Check obstacle collision -> STOP immediately
 			if (isObstacle(nextPos, grid)) {
 				steps.push({
 					playerPos: { ...nextPos },
@@ -134,7 +166,7 @@ export function simulateCommands(grid: ChallengeGrid, commands: AtomicCommand[])
 				}
 			}
 
-			// Check target arrival
+			// 3. Check target arrival -> SUCCESS & STOP immediately
 			if (isCoordEqual(currentPos, grid.targetPos)) {
 				steps.push({
 					playerPos: { ...currentPos },
@@ -156,13 +188,21 @@ export function simulateCommands(grid: ChallengeGrid, commands: AtomicCommand[])
 				message: 'PyBot melangkah 1 petak maju.'
 			});
 		}
+
+		// Enforce max actions limit on current step
+		if (executedActionCount >= maxActions && !isCoordEqual(currentPos, grid.targetPos)) {
+			const lastStep = steps[steps.length - 1];
+			lastStep.status = 'FAILED';
+			lastStep.message = `Batas maksimum ${maxActions} aksi tercapai! PyBot kehabisan energi langkah.`;
+			return steps;
+		}
 	}
 
-	// If commands finished and target not reached
-	const lastStep = steps[steps.length - 1];
-	if (lastStep.status === 'RUNNING') {
-		lastStep.status = 'FAILED';
-		lastStep.message = 'Program selesai, tetapi PyBot belum mencapai Bintang target. Coba sesuaikan balokmu!';
+	// If all commands finished and target not reached -> STOP with FAILED
+	const finalStep = steps[steps.length - 1];
+	if (finalStep.status === 'RUNNING') {
+		finalStep.status = 'FAILED';
+		finalStep.message = 'Program selesai, tetapi PyBot belum mencapai Bintang target. Coba sesuaikan balokmu!';
 	}
 
 	return steps;

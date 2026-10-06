@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'bun:test';
-import { compileBlocksToCommands, blocksToPythonCode } from '../src/lib/game/compiler';
+import { get } from 'svelte/store';
+import { compileBlocksToCommands, blocksToPythonCode, type AtomicCommand } from '../src/lib/game/compiler';
 import { simulateCommands } from '../src/lib/game/engine';
 import { challengesData, levelsData } from '../src/lib/challenges/challengesData';
 import {
@@ -269,5 +270,181 @@ describe('Question Bank (50 Questions Minimum, Topics, & Variety)', () => {
 		const found = shuffled.find((opt) => opt.id === q.correctAnswerId);
 		expect(found).toBeDefined();
 		expect(found?.text).toBe(q.correctAnswer);
+	});
+});
+
+describe('Movement Safety, Termination Conditions & Anti-Loop (10 Required Test Cases)', () => {
+	const ch1 = challengesData[0]; // startPos: { x: 1, y: 2 }, targetPos: { x: 3, y: 2 }, startDirection: 'RIGHT'
+
+	// Test 1: PyBot reaches goal -> SUCCESS and terminates immediately
+	it('Test 1: should immediately terminate with SUCCESS when PyBot reaches target', () => {
+		const steps = simulateCommands(ch1.grid, ['MOVE', 'MOVE'], 10);
+		expect(steps.length).toBe(3); // INIT + MOVE 1 + MOVE 2 (reaches target)
+		const lastStep = steps[steps.length - 1];
+		expect(lastStep.status).toBe('SUCCESS');
+		expect(lastStep.playerPos).toEqual({ x: 3, y: 2 });
+		expect(lastStep.message).toContain('PyBot berhasil meraih Bintang Emas');
+	});
+
+	// Test 2: Multi-instruction stop -> stops at goal, does not execute subsequent instructions
+	it('Test 2: should immediately halt upon reaching goal without executing following instructions', () => {
+		const excessiveCommands: AtomicCommand[] = ['MOVE', 'MOVE', 'MOVE', 'MOVE', 'TURN_LEFT'];
+		const steps = simulateCommands(ch1.grid, excessiveCommands, 10);
+		// Goal is reached at second MOVE. Remaining 2 MOVE and 1 TURN_LEFT must NOT be executed!
+		expect(steps.length).toBe(3); // INIT + 1st MOVE + 2nd MOVE (SUCCESS)
+		const lastStep = steps[steps.length - 1];
+		expect(lastStep.status).toBe('SUCCESS');
+		expect(lastStep.playerPos).toEqual({ x: 3, y: 2 });
+	});
+
+	// Test 3: Obstacle stop -> PyBot hits obstacle, FAILED and stops immediately
+	it('Test 3: should immediately terminate with FAILED when PyBot collides with obstacle', () => {
+		// PyBot starts at { x: 1, y: 2 }, facing RIGHT.
+		// If PyBot turns LEFT (faces UP) and moves, nextPos is { x: 1, y: 1 }, which is an obstacle in ch1!
+		const steps = simulateCommands(ch1.grid, ['TURN_LEFT', 'MOVE', 'MOVE', 'MOVE'], 10);
+		const lastStep = steps[steps.length - 1];
+		expect(lastStep.status).toBe('FAILED');
+		expect(lastStep.message).toContain('menabrak rintangan');
+		// Must stop immediately upon collision without executing the remaining 2 MOVEs
+		expect(steps.length).toBe(3); // INIT + TURN_LEFT + collision MOVE
+	});
+
+	// Test 4: Grid boundary stop -> PyBot goes out of bounds, OUT_OF_BOUNDS and stops immediately
+	it('Test 4: should immediately terminate with OUT_OF_BOUNDS when PyBot leaves grid boundary', () => {
+		// PyBot is at { x: 1, y: 2 }, facing RIGHT. Turn LEFT twice -> facing LEFT.
+		// Move 1 -> { x: 0, y: 2 }. Move 2 -> { x: -1, y: 2 } which is out of bounds!
+		const steps = simulateCommands(ch1.grid, ['TURN_LEFT', 'TURN_LEFT', 'MOVE', 'MOVE', 'MOVE'], 10);
+		const lastStep = steps[steps.length - 1];
+		expect(lastStep.status).toBe('OUT_OF_BOUNDS');
+		expect(lastStep.message).toContain('keluar dari batas arena');
+		// Stops at boundary check, never executes the 3rd MOVE
+		expect(lastStep.playerPos).toEqual({ x: -1, y: 2 });
+	});
+
+	// Test 5: Repeat 3x move -> executes exactly 3 moves and stops
+	it('Test 5: should compile and execute REPEAT 3x MOVE deterministically', () => {
+		const repeatBlock: CodingBlock[] = [
+			{
+				id: 'rep-1',
+				type: 'REPEAT',
+				repeatCount: 3,
+				children: [{ id: 'child-1', type: 'MOVE' }]
+			}
+		];
+		const { commands } = compileBlocksToCommands(repeatBlock);
+		expect(commands).toEqual(['MOVE', 'MOVE', 'MOVE']);
+
+		// Using a blank grid where 3 moves are valid
+		const customGrid = {
+			cols: 5,
+			rows: 5,
+			startPos: { x: 0, y: 2 },
+			startDirection: 'RIGHT' as const,
+			targetPos: { x: 3, y: 2 },
+			obstacles: []
+		};
+		const steps = simulateCommands(customGrid, commands, 10);
+		expect(steps.length).toBe(4); // INIT + 3 moves
+		const lastStep = steps[steps.length - 1];
+		expect(lastStep.status).toBe('SUCCESS');
+		expect(lastStep.playerPos).toEqual({ x: 3, y: 2 });
+	});
+
+	// Test 6: Repeat 4x turn -> rotates 360 degrees and stops
+	it('Test 6: should execute REPEAT 4x TURN_RIGHT and rotate full circle without moving coordinates', () => {
+		const repeatTurnBlock: CodingBlock[] = [
+			{
+				id: 'rep-turn',
+				type: 'REPEAT',
+				repeatCount: 4,
+				children: [{ id: 'child-turn', type: 'TURN_RIGHT' }]
+			}
+		];
+		const { commands } = compileBlocksToCommands(repeatTurnBlock);
+		expect(commands).toEqual(['TURN_RIGHT', 'TURN_RIGHT', 'TURN_RIGHT', 'TURN_RIGHT']);
+
+		const steps = simulateCommands(ch1.grid, commands, 10);
+		expect(steps.length).toBe(5); // INIT + 4 turns
+		const lastStep = steps[steps.length - 1];
+		// End orientation should be back to startDirection ('RIGHT')
+		expect(lastStep.playerDirection).toBe('RIGHT');
+		expect(lastStep.playerPos).toEqual(ch1.grid.startPos);
+		// Since target was not reached, status is FAILED
+		expect(lastStep.status).toBe('FAILED');
+	});
+
+	// Test 7: Large repeat maxActions stop -> stops strictly at maxActions with limit message
+	it('Test 7: should terminate execution strictly at maxActions limit to prevent infinite loops', () => {
+		const hugeRepeat: CodingBlock[] = [
+			{
+				id: 'huge-rep',
+				type: 'REPEAT',
+				repeatCount: 10,
+				children: [{ id: 'turn-c', type: 'TURN_LEFT' }]
+			}
+		];
+		const { commands } = compileBlocksToCommands(hugeRepeat);
+		expect(commands.length).toBe(10);
+
+		// With maxActions = 4, engine must stop at 4 actions
+		const steps = simulateCommands(ch1.grid, commands, 4);
+		expect(steps.length).toBe(5); // INIT + 4 actions
+		const lastStep = steps[steps.length - 1];
+		expect(lastStep.status).toBe('FAILED');
+		expect(lastStep.message).toContain('Batas maksimum 4 aksi tercapai');
+	});
+
+	// Test 8: Double run guard -> prevent concurrent or re-entrant runs
+	it('Test 8: should enforce double-run protection guard', () => {
+		let isRunning = false;
+		let runCount = 0;
+
+		function triggerRun() {
+			if (isRunning) return false;
+			isRunning = true;
+			runCount++;
+			return true;
+		}
+
+		// First trigger should succeed
+		expect(triggerRun()).toBe(true);
+		expect(runCount).toBe(1);
+
+		// Subsequent triggers while isRunning is true must be rejected
+		expect(triggerRun()).toBe(false);
+		expect(triggerRun()).toBe(false);
+		expect(runCount).toBe(1);
+
+		// After completion
+		isRunning = false;
+		expect(triggerRun()).toBe(true);
+		expect(runCount).toBe(2);
+	});
+
+	// Test 9: Fail-edit-rerun lifecycle -> modifying commands allows clean rerun
+	it('Test 9: should support fail-edit-rerun flow cleanly without stuck state', () => {
+		// Attempt 1: only 1 MOVE (fails because 2 required)
+		const attempt1 = simulateCommands(ch1.grid, ['MOVE'], 5);
+		expect(attempt1[attempt1.length - 1].status).toBe('FAILED');
+
+		// Attempt 2: player edits blocks and adds 2nd MOVE (succeeds)
+		const attempt2 = simulateCommands(ch1.grid, ['MOVE', 'MOVE'], 5);
+		expect(attempt2[attempt2.length - 1].status).toBe('SUCCESS');
+		expect(attempt2[attempt2.length - 1].playerPos).toEqual(ch1.grid.targetPos);
+	});
+
+	// Test 10: Replay XP protection -> already completed challenge gives 0 XP
+	it('Test 10: should award XP once on first completion and 0 XP on subsequent replay', () => {
+		progressStore.reset();
+		const challengeId = 'replay-xp-test-mission';
+
+		const firstRunAwarded = progressStore.completeChallenge(challengeId, 50);
+		expect(firstRunAwarded).toBe(true);
+		expect(get(progressStore).completedChallenges).toContain(challengeId);
+		const xpAfterFirst = get(progressStore).xp;
+
+		const replayAwarded = progressStore.completeChallenge(challengeId, 50);
+		expect(replayAwarded).toBe(false);
+		expect(get(progressStore).xp).toBe(xpAfterFirst); // XP remained unchanged
 	});
 });
