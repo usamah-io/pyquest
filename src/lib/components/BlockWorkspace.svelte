@@ -21,7 +21,7 @@
 		isRunning: boolean;
 	} = $props();
 
-	let showPythonCode = $state(true);
+	let showPythonCode = $state(false);
 
 	function addBlock(type: BlockType) {
 		const newBlock: CodingBlock = {
@@ -136,7 +136,7 @@
 
 <div class="flex flex-col h-full bg-slate-900/90 border border-slate-800 rounded-3xl p-4 shadow-xl overflow-hidden backdrop-blur-md">
 	<!-- Top Bar -->
-	<div class="flex items-center justify-between pb-3 border-b border-slate-800">
+	<div class="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
 		<div class="flex items-center gap-2">
 			<Icon name="puzzle" size={18} class="text-indigo-400" />
 			<h3 class="font-bold text-white text-sm sm:text-base">Area Balok Koding</h3>
@@ -177,7 +177,7 @@
 	{/if}
 
 	<!-- Palette / Block Choices -->
-	<div class="my-3">
+	<div class="my-3 shrink-0">
 		<div class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Pilih Balok (Klik untuk Menambah):</div>
 		<div class="flex flex-wrap gap-2">
 			{#each availableBlocks as bType}
@@ -342,7 +342,7 @@
 	</div>
 
 	<!-- Bottom Run / Reset Actions -->
-	<div class="flex items-center gap-3 pt-3 border-t border-slate-800 mt-3">
+	<div class="flex items-center gap-3 pt-3 border-t border-slate-800 mt-3 shrink-0">
 		<button
 			type="button"
 			onclick={onReset}

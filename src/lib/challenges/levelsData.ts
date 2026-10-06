@@ -114,7 +114,7 @@ export const levelsData: GameLevel[] = [
 					startDirection: 'RIGHT',
 					targetPos: { x: 2, y: 2 },
 					obstacles: [
-						{ x: 0, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 },
+						{ x: 0, y: 1 }, { x: 2, y: 0 }, { x: 3, y: 1 },
 						{ x: 1, y: 0 }, { x: 1, y: 2 }, { x: 3, y: 2 }
 					],
 					coins: [{ x: 2, y: 1 }]
@@ -483,7 +483,6 @@ export const levelsData: GameLevel[] = [
 					targetPos: { x: 4, y: 3 },
 					obstacles: [
 						{ x: 3, y: 1 }, { x: 4, y: 1 }, // Cabang atas buntu
-						{ x: 2, y: 2 },
 						{ x: 1, y: 1 }, { x: 1, y: 3 }
 					],
 					coins: [{ x: 2, y: 3 }, { x: 3, y: 3 }]
@@ -670,7 +669,7 @@ export const levelsData: GameLevel[] = [
 						{ x: 2, y: 2 }, { x: 3, y: 2 },
 						{ x: 2, y: 3 }, { x: 3, y: 3 }
 					],
-					coins: [{ x: 3, y: 1 }, { x: 3, y: 3 }]
+					coins: [{ x: 3, y: 1 }, { x: 3, y: 4 }]
 				},
 				availableBlocks: ['REPEAT', 'MOVE', 'TURN_RIGHT', 'TURN_LEFT'],
 				maxBlocks: 6,

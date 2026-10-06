@@ -37,7 +37,7 @@
 
 <div class="flex flex-col h-full bg-slate-900/90 border border-slate-800 rounded-3xl p-4 shadow-xl overflow-hidden backdrop-blur-md">
 	<!-- Grid Header / Status Message -->
-	<div class="flex items-center justify-between pb-3 border-b border-slate-800">
+	<div class="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
 		<div class="flex items-center gap-2">
 			<Icon name="target" size={18} class="text-indigo-400" />
 			<h3 class="font-bold text-white text-sm sm:text-base">Arena Labirin 2D</h3>
@@ -129,7 +129,7 @@
 	</div>
 
 	<!-- Status Message Bar at Bottom -->
-	<div class="pt-2 border-t border-slate-800">
+	<div class="pt-2 border-t border-slate-800 shrink-0">
 		<div class="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-center font-medium {status === 'SUCCESS' ? 'text-emerald-400 font-bold' : status === 'FAILED' || status === 'OUT_OF_BOUNDS' ? 'text-rose-400 font-bold' : 'text-slate-300'}">
 			{statusMessage || 'Susun balok instruksi lalu tekan tombol JALANKAN KODE.'}
 		</div>

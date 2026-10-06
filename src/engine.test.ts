@@ -447,4 +447,64 @@ describe('Movement Safety, Termination Conditions & Anti-Loop (10 Required Test 
 		expect(replayAwarded).toBe(false);
 		expect(get(progressStore).xp).toBe(xpAfterFirst); // XP remained unchanged
 	});
+
+	it('should verify Level 2 Mission 1 (Tikungan Kanan Sederhana) is 100% solvable without collision', () => {
+		const lvl2ch1 = challengesData.find((c) => c.id === 'lvl2-ch1');
+		expect(lvl2ch1).toBeDefined();
+		if (!lvl2ch1) return;
+
+		// PyBot moves 1 step forward to (2, 1) [collects coin], turns right [faces DOWN], moves 1 step to (2, 2) [target star]
+		const steps = simulateCommands(lvl2ch1.grid, ['MOVE', 'TURN_RIGHT', 'MOVE'], lvl2ch1.maxMoves);
+		const lastStep = steps[steps.length - 1];
+
+		expect(lastStep.status).toBe('SUCCESS');
+		expect(lastStep.playerPos).toEqual({ x: 2, y: 2 });
+		expect(lastStep.playerDirection).toBe('DOWN');
+		expect(lastStep.collectedCoins).toEqual([{ x: 2, y: 1 }]);
+	});
+
+	it('should verify all 30 challenges have zero obstacle collisions with start, target, or coins and are solvable', () => {
+		for (const ch of challengesData) {
+			// No obstacle on start
+			expect(ch.grid.obstacles.some((o) => o.x === ch.grid.startPos.x && o.y === ch.grid.startPos.y)).toBe(false);
+			// No obstacle on target
+			expect(ch.grid.obstacles.some((o) => o.x === ch.grid.targetPos.x && o.y === ch.grid.targetPos.y)).toBe(false);
+			// No obstacle on coins
+			if (ch.grid.coins) {
+				for (const coin of ch.grid.coins) {
+					expect(ch.grid.obstacles.some((o) => o.x === coin.x && o.y === coin.y)).toBe(false);
+				}
+			}
+
+			// Solvable with BFS
+			const isBlocked = (x: number, y: number) => {
+				if (x < 0 || x >= ch.grid.cols || y < 0 || y >= ch.grid.rows) return true;
+				return ch.grid.obstacles.some((o) => o.x === x && o.y === y);
+			};
+
+			const queue: [number, number][] = [[ch.grid.startPos.x, ch.grid.startPos.y]];
+			const visited = new Set<string>();
+			visited.add(`${ch.grid.startPos.x},${ch.grid.startPos.y}`);
+			let pathFound = false;
+
+			while (queue.length > 0) {
+				const [x, y] = queue.shift()!;
+				if (x === ch.grid.targetPos.x && y === ch.grid.targetPos.y) {
+					pathFound = true;
+					break;
+				}
+				for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
+					const nx = x + dx;
+					const ny = y + dy;
+					const key = `${nx},${ny}`;
+					if (!visited.has(key) && !isBlocked(nx, ny)) {
+						visited.add(key);
+						queue.push([nx, ny]);
+					}
+				}
+			}
+
+			expect(pathFound).toBe(true);
+		}
+	});
 });

@@ -151,7 +151,18 @@
 		};
 	});
 
-	// Initialize Grid Positions when challenge changes
+	// Reset robot and arena state without deleting the arranged coding blocks
+	function resetRobotPosition() {
+		if (activeChallenge) {
+			playerPos = { ...activeChallenge.grid.startPos };
+			playerDirection = activeChallenge.grid.startDirection;
+			collectedCoins = [];
+			gameStatus = 'READY';
+			gameStatusMessage = 'Posisi PyBot kembali ke awal. Balokmu tersimpan, siap disesuaikan atau dijalankan kembali!';
+		}
+	}
+
+	// Initialize Grid Positions when challenge changes (clears blocks for the new challenge)
 	function syncChallengeArena() {
 		if (activeChallenge) {
 			playerPos = { ...activeChallenge.grid.startPos };
@@ -252,7 +263,7 @@
 
 	function handleResetGame() {
 		stopSimulation();
-		syncChallengeArena();
+		resetRobotPosition();
 	}
 
 	function handleRunCode() {
@@ -439,7 +450,7 @@
 	{/if}
 
 	<!-- Main Stage -->
-	<main class="flex-1 flex flex-col p-2 sm:p-4 md:p-6 overflow-hidden">
+	<main class="flex-1 flex flex-col p-2 sm:p-4 md:p-6 overflow-y-auto min-h-0">
 		<!-- 1. LANDING / HOME -->
 		{#if currentScreen === 'LANDING'}
 			<LandingHero
@@ -495,7 +506,7 @@
 
 		<!-- 7. CODING GAME CHALLENGE -->
 		{:else if currentScreen === 'CHALLENGE'}
-			<div class="flex-1 flex flex-col h-full max-w-7xl mx-auto w-full">
+			<div class="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto w-full">
 				<ChallengeHeader
 					title={`${activeLevel.title} — ${activeChallenge.title}`}
 					objective={activeChallenge.objective}
@@ -508,7 +519,7 @@
 				/>
 
 				<div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-0">
-					<div class="h-full min-h-[300px]">
+					<div class="h-full min-h-[260px]">
 						<GameCanvas
 							grid={activeChallenge.grid}
 							{playerPos}
@@ -519,7 +530,7 @@
 						/>
 					</div>
 
-					<div class="h-full min-h-[350px]">
+					<div class="h-full min-h-[280px]">
 						<BlockWorkspace
 							bind:workspaceBlocks
 							availableBlocks={activeChallenge.availableBlocks}
