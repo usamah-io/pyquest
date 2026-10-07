@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { authStore, dashboardUserStore } from '$lib/stores/authStore';
+	import { progressStore } from '$lib/stores/progressStore';
+	import { levelsData } from '$lib/challenges/levelsData';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -239,6 +241,49 @@
 						</button>
 					</div>
 				</form>
+			</div>
+
+			<!-- Koleksi Lencana Pencapaian (Achievements Showcase) -->
+			<div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl backdrop-blur-md">
+				<div class="flex items-center justify-between mb-4">
+					<h4 class="text-base font-black text-white flex items-center gap-2">
+						<Icon name="trophy" size={18} class="text-amber-400" />
+						<span>Koleksi Lencana Level</span>
+					</h4>
+					<span class="text-xs font-bold text-slate-400 font-mono">
+						{($progressStore.completedLevels || []).length} / {levelsData.length} Lencana
+					</span>
+				</div>
+
+				<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+					{#each levelsData as lvl}
+						{@const isUnlocked = ($progressStore.completedLevels || []).includes(lvl.id)}
+						<div class="p-3 rounded-2xl border transition-all flex items-start gap-3 {isUnlocked
+							? 'bg-amber-950/20 border-amber-500/40 shadow-sm'
+							: 'bg-slate-950/40 border-slate-800/80 opacity-60'}">
+							<div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 {isUnlocked
+								? 'bg-amber-400/20 text-amber-400 border border-amber-400/30'
+								: 'bg-slate-800 text-slate-500'}">
+								<Icon name={isUnlocked ? (lvl.achievement?.icon || 'trophy') : 'lock'} size={18} />
+							</div>
+							<div class="flex-1 min-w-0">
+								<div class="flex items-center justify-between gap-1 mb-0.5">
+									<span class="text-xs font-black text-white truncate">
+										{lvl.achievement?.title || `Level ${lvl.id}`}
+									</span>
+									<span class="text-[9px] font-mono px-1.5 py-0.5 rounded {isUnlocked ? 'bg-amber-400/20 text-amber-300' : 'bg-slate-800 text-slate-500'}">
+										Lvl {lvl.id}
+									</span>
+								</div>
+								<p class="text-[10px] text-slate-400 leading-snug line-clamp-2">
+									{isUnlocked
+										? (lvl.achievement?.description || 'Berhasil menuntaskan level!')
+										: `Selesaikan Level ${lvl.id} (${lvl.title}) untuk membuka lencana ini.`}
+								</p>
+							</div>
+						</div>
+					{/each}
+				</div>
 			</div>
 		</div>
 	</div>

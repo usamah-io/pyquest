@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { authStore } from '$lib/stores/authStore';
 	import Icon from './Icon.svelte';
 
@@ -15,10 +14,6 @@
 
 	let googleButtonContainer = $state<HTMLDivElement | null>(null);
 	let errorMessage = $state<string | null>(null);
-	let isGisLoaded = $state(false);
-	let customClientIdInput = $state('');
-	let showClientIdConfig = $state(false);
-
 	let activeClientId = $state('');
 
 	function checkGisReady(): boolean {
@@ -50,7 +45,6 @@
 		}
 
 		if (checkGisReady()) {
-			isGisLoaded = true;
 			try {
 				(window as any).google.accounts.id.initialize({
 					client_id: activeClientId,
@@ -72,7 +66,7 @@
 				}
 			} catch (err) {
 				console.error('Error initializing Google GIS:', err);
-				errorMessage = 'Gagal memuat Google Sign-In. Pastikan Client ID valid.';
+				errorMessage = 'Gagal memuat Google Sign-In. Silakan coba sesaat lagi.';
 			}
 		}
 	}
@@ -81,10 +75,7 @@
 		if (isOpen) {
 			errorMessage = null;
 			activeClientId = authStore.getGoogleClientId();
-			if (!activeClientId) {
-				showClientIdConfig = true;
-			} else {
-				showClientIdConfig = false;
+			if (activeClientId) {
 				setTimeout(() => {
 					initGoogleIdentity();
 				}, 100);
@@ -94,7 +85,6 @@
 
 	function handleTriggerPrompt() {
 		if (!activeClientId) {
-			showClientIdConfig = true;
 			return;
 		}
 
@@ -109,24 +99,8 @@
 				console.error('Google prompt error:', e);
 			}
 		} else {
-			errorMessage = 'Layanan Google Identity sedang dimuat. Silakan tunggu sebentar atau periksa koneksi internet.';
+			errorMessage = 'Layanan Google Identity sedang dimuat. Silakan periksa koneksi internet.';
 		}
-	}
-
-	function handleSaveCustomClientId(e: SubmitEvent) {
-		e.preventDefault();
-		const trimmed = customClientIdInput.trim();
-		if (!trimmed) {
-			errorMessage = 'Masukkan Google Client ID yang valid.';
-			return;
-		}
-		authStore.setGoogleClientId(trimmed);
-		activeClientId = trimmed;
-		showClientIdConfig = false;
-		errorMessage = null;
-		setTimeout(() => {
-			initGoogleIdentity();
-		}, 100);
 	}
 </script>
 
@@ -149,14 +123,18 @@
 
 			<!-- Header -->
 			<div class="text-center mb-6">
-				<div class="w-14 h-14 mx-auto rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3">
-					<Icon name="user" size={28} />
+				<div class="w-16 h-16 mx-auto rounded-2xl bg-indigo-500/10 border border-indigo-500/20 p-2 mb-3 flex items-center justify-center">
+					<img
+						src="/mascot/pybot-front-idle.png"
+						alt="PyBot"
+						class="w-full h-full object-contain"
+					/>
 				</div>
 				<h3 class="text-xl sm:text-2xl font-black text-white mb-1.5">
 					Masuk ke PyQuest
 				</h3>
 				<p class="text-xs sm:text-sm text-slate-400 max-w-xs mx-auto leading-relaxed">
-					Hubungkan akun Google kamu untuk menyimpan progres misi, XP, dan petualangan koding.
+					Hubungkan akun Google kamu untuk menyimpan progres misi, XP, dan petualangan kodingmu.
 				</p>
 			</div>
 
@@ -169,7 +147,7 @@
 
 			<!-- Google OAuth Section -->
 			<div class="space-y-4">
-				{#if activeClientId && !showClientIdConfig}
+				{#if activeClientId}
 					<!-- Primary Google OAuth Trigger -->
 					<div class="flex flex-col items-center gap-3">
 						<button
@@ -202,51 +180,22 @@
 						<!-- Official GIS rendered container (if loaded) -->
 						<div bind:this={googleButtonContainer} class="flex justify-center w-full min-h-[44px]"></div>
 					</div>
-
-					<div class="text-center pt-2">
+				{:else}
+					<!-- Clean, student-friendly message without exposing any API keys or technical details -->
+					<div class="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 text-center space-y-3">
+						<div class="w-10 h-10 mx-auto rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+							<Icon name="shield" size={20} />
+						</div>
+						<p class="text-xs text-slate-300 leading-relaxed">
+							Mode Siswa aktif secara otomatis. Seluruh capaian misi, perolehan XP, dan lencana petualangan tersimpan aman di peramban ini.
+						</p>
 						<button
 							type="button"
-							onclick={() => (showClientIdConfig = true)}
-							class="text-[11px] text-slate-500 hover:text-slate-400 underline cursor-pointer"
+							onclick={onClose}
+							class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 border border-indigo-400/40 text-white font-black text-xs rounded-xl shadow-lg shadow-indigo-600/20 cursor-pointer transition-all active:scale-95"
 						>
-							Atur Google Client ID ({activeClientId.substring(0, 12)}...)
+							Lanjutkan Bermain & Belajar
 						</button>
-					</div>
-				{:else}
-					<!-- Client ID Configuration Box when VITE_GOOGLE_CLIENT_ID is not configured yet -->
-					<div class="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
-						<div class="flex items-center gap-2 text-indigo-400 font-bold text-xs">
-							<Icon name="settings" size={15} />
-							<span>Hubungkan Google Cloud Console</span>
-						</div>
-						<p class="text-[11px] text-slate-400 leading-relaxed">
-							Masukkan <strong>Google OAuth 2.0 Client ID</strong> dari Google Cloud Console kamu (atau atur <code>VITE_GOOGLE_CLIENT_ID</code> di file <code>.env</code>):
-						</p>
-						<form onsubmit={handleSaveCustomClientId} class="space-y-2.5">
-							<input
-								type="text"
-								bind:value={customClientIdInput}
-								placeholder="contoh: 123456789-xyz.apps.googleusercontent.com"
-								class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
-							/>
-							<div class="flex gap-2">
-								<button
-									type="submit"
-									class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer"
-								>
-									Simpan & Aktifkan Google Sign-In
-								</button>
-								{#if activeClientId}
-									<button
-										type="button"
-										onclick={() => (showClientIdConfig = false)}
-										class="px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition-all cursor-pointer"
-									>
-										Batal
-									</button>
-								{/if}
-							</div>
-						</form>
 					</div>
 				{/if}
 			</div>

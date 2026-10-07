@@ -100,7 +100,7 @@
 	</div>
 
 	<!-- Bottom Sidebar User Card -->
-	<div class="p-3 rounded-2xl bg-gradient-to-b from-indigo-950/60 to-slate-950/90 border border-indigo-500/25 relative overflow-hidden group">
+	<div class="p-3 rounded-2xl bg-slate-900 border border-indigo-500/25 relative overflow-hidden group">
 		<button
 			type="button"
 			onclick={() => onOpenProfile && onOpenProfile()}

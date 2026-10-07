@@ -9,6 +9,7 @@ const INITIAL_PROGRESS: UserProgress = {
 	completedChallenges: [],
 	completedLevels: [],
 	completedLearningLevels: [],
+	learningLevelScores: {},
 	streak: 1
 };
 
@@ -25,7 +26,8 @@ function createProgressStore() {
 				initial = {
 					...INITIAL_PROGRESS,
 					...parsed,
-					completedLearningLevels: parsed.completedLearningLevels || []
+					completedLearningLevels: parsed.completedLearningLevels || [],
+					learningLevelScores: parsed.learningLevelScores || {}
 				};
 			} catch {
 				initial = INITIAL_PROGRESS;
@@ -91,19 +93,42 @@ function createProgressStore() {
 				return updated;
 			});
 		},
-		completeLearningLevel: (levelId: number, bonusXp = 50) => {
+		completeLearningLevel: (
+			levelId: number,
+			bonusXp = 50,
+			stats?: { correctAnswers: number; totalQuestions: number; isPerfect: boolean }
+		) => {
 			let isFirstCompletion = false;
 			update((p) => {
 				const existing = p.completedLearningLevels || [];
-				if (existing.includes(levelId)) {
-					return p; // No duplicate XP on replay
+				isFirstCompletion = !existing.includes(levelId);
+
+				const updatedScores = {
+					...(p.learningLevelScores || {})
+				};
+				if (stats) {
+					const prevScore = updatedScores[levelId];
+					if (!prevScore || stats.correctAnswers >= prevScore.correctAnswers) {
+						updatedScores[levelId] = stats;
+					}
 				}
-				isFirstCompletion = true;
+
+				if (!isFirstCompletion) {
+					// On replay: update score if improved, but do not re-award bonus XP
+					const updated = {
+						...p,
+						learningLevelScores: updatedScores
+					};
+					if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+					return updated;
+				}
+
 				const updated = {
 					...p,
 					xp: p.xp + bonusXp,
 					score: p.score + bonusXp * 10,
-					completedLearningLevels: [...existing, levelId]
+					completedLearningLevels: [...existing, levelId],
+					learningLevelScores: updatedScores
 				};
 				if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 				return updated;

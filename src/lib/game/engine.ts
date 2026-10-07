@@ -47,19 +47,45 @@ export interface SimulationStep {
 	message: string;
 }
 
+export interface SimulationOptions {
+	maxMoves?: number;
+	maxActions?: number;
+}
+
 /**
  * Runs a deterministic simulation of commands over the grid with strict termination conditions:
  * 1. Target reached -> SUCCESS & STOP immediately
  * 2. Obstacle collision -> FAILED & STOP immediately
  * 3. Out of bounds -> OUT_OF_BOUNDS & STOP immediately
- * 4. maxActions limit reached -> FAILED & STOP immediately (no infinite loops)
- * 5. All commands finished without target -> FAILED & STOP
+ * 4. maxMoves limit reached on MOVE action -> FAILED & STOP (only actual moves consume movement energy)
+ * 5. maxActions safety limit reached -> FAILED & STOP immediately (no infinite loops)
+ * 6. All commands finished without target -> FAILED & STOP
  */
 export function simulateCommands(
 	grid: ChallengeGrid,
 	commands: AtomicCommand[],
-	maxActions = 30
+	maxMovesOrOptions: number | SimulationOptions = 30
 ): SimulationStep[] {
+	let maxMoves: number;
+	let maxActions: number;
+
+	if (typeof maxMovesOrOptions === 'object' && maxMovesOrOptions !== null) {
+		maxMoves = maxMovesOrOptions.maxMoves ?? 30;
+		maxActions = maxMovesOrOptions.maxActions ?? 150;
+	} else {
+		// When called as a number:
+		// If commands contain MOVE commands, maxMovesOrOptions represents the move quota
+		// If commands contain only turns (e.g. infinite turn loop test), it represents maxActions
+		const hasMoves = commands.some((c) => c === 'MOVE');
+		if (hasMoves) {
+			maxMoves = maxMovesOrOptions;
+			maxActions = Math.max(120, maxMoves * 15);
+		} else {
+			maxMoves = maxMovesOrOptions;
+			maxActions = maxMovesOrOptions;
+		}
+	}
+
 	const steps: SimulationStep[] = [];
 
 	let currentPos: GridCoord = { ...grid.startPos };
@@ -89,10 +115,11 @@ export function simulateCommands(
 		return steps;
 	}
 
+	let executedMoveCount = 0;
 	let executedActionCount = 0;
 
 	for (let i = 0; i < commands.length; i++) {
-		// Enforce max actions limit before executing next action
+		// Enforce max actions safety ceiling before executing next action
 		if (executedActionCount >= maxActions) {
 			steps.push({
 				playerPos: { ...currentPos },
@@ -129,6 +156,21 @@ export function simulateCommands(
 				message: 'PyBot berputar 90° ke kanan.'
 			});
 		} else if (cmd === 'MOVE') {
+			executedMoveCount++;
+
+			// Enforce maxMoves limit strictly on actual MOVE actions
+			if (executedMoveCount > maxMoves) {
+				steps.push({
+					playerPos: { ...currentPos },
+					playerDirection: currentDir,
+					collectedCoins: [...collectedCoins],
+					command: cmd,
+					status: 'FAILED',
+					message: `Batas maksimum ${maxMoves} langkah tercapai! PyBot kehabisan energi langkah.`
+				});
+				return steps;
+			}
+
 			const nextPos = getNextCoord(currentPos, currentDir);
 
 			// 1. Check out of bounds -> STOP immediately

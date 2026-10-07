@@ -2,6 +2,8 @@ import { describe, it, expect } from 'bun:test';
 import { get } from 'svelte/store';
 import { compileBlocksToCommands, blocksToPythonCode, hasForeverBlock, type AtomicCommand } from '../src/lib/game/compiler';
 import { simulateCommands } from '../src/lib/game/engine';
+import { validateChallenge, validateAllChallenges, findShortestMovementPath } from '../src/lib/game/validator';
+import { gradeQuestionAnswer, recordQuizAnswer, calculateQuizSummary } from '../src/lib/questions/quizEvaluator';
 import { challengesData, levelsData } from '../src/lib/challenges/challengesData';
 import {
 	questionsData,
@@ -320,7 +322,18 @@ describe('Question Bank (50 Questions Minimum, Topics, & Variety)', () => {
 });
 
 describe('Movement Safety, Termination Conditions & Anti-Loop (10 Required Test Cases)', () => {
-	const ch1 = challengesData[0]; // startPos: { x: 1, y: 2 }, targetPos: { x: 3, y: 2 }, startDirection: 'RIGHT'
+	const ch1 = {
+		id: 'test-ch1',
+		grid: {
+			cols: 5,
+			rows: 5,
+			startPos: { x: 1, y: 2 },
+			targetPos: { x: 3, y: 2 },
+			startDirection: 'RIGHT' as const,
+			obstacles: [{ x: 1, y: 1 }],
+			coins: [{ x: 2, y: 2 }]
+		}
+	};
 
 	// Test 1: PyBot reaches goal -> SUCCESS and terminates immediately
 	it('Test 1: should immediately terminate with SUCCESS when PyBot reaches target', () => {
@@ -553,4 +566,212 @@ describe('Movement Safety, Termination Conditions & Anti-Loop (10 Required Test 
 			expect(pathFound).toBe(true);
 		}
 	});
+
+	it('should programmatically validate that all 30 challenges satisfy minMoves <= maxMoves with zero errors', () => {
+		const validation = validateAllChallenges(challengesData);
+		if (!validation.allValid) {
+			console.error('Failed challenges:', validation.failedChallenges);
+		}
+		expect(validation.allValid).toBe(true);
+		expect(validation.failedChallenges.length).toBe(0);
+	});
+
+	it('should verify Level 5 has maxMoves <= 9 and optimal movement path <= 9 for all 3 challenges', () => {
+		const lvl5 = levelsData.find((l) => l.id === 5);
+		expect(lvl5).toBeDefined();
+		if (!lvl5) return;
+
+		for (const ch of lvl5.challenges) {
+			expect(ch.maxMoves).toBeDefined();
+			expect(ch.maxMoves!).toBeLessThanOrEqual(9);
+
+			const pathRes = findShortestMovementPath(ch.grid);
+			expect(pathRes.reachable).toBe(true);
+			expect(pathRes.minMoves).toBeLessThanOrEqual(ch.maxMoves!);
+			expect(pathRes.minMoves).toBeLessThanOrEqual(9);
+
+			// Test canonical solution
+			if (ch.canonicalCommands) {
+				const steps = simulateCommands(ch.grid, ch.canonicalCommands, { maxMoves: ch.maxMoves! });
+				const lastStep = steps[steps.length - 1];
+				expect(lastStep.status).toBe('SUCCESS');
+				expect(lastStep.playerPos).toEqual(ch.grid.targetPos);
+			}
+		}
+	});
+
+	it('should verify movement limit distinguishes actual MOVE vs rotations and does not penalize turns', () => {
+		const lvl5ch1 = challengesData.find((c) => c.id === 'lvl5-ch1');
+		expect(lvl5ch1).toBeDefined();
+		if (!lvl5ch1) return;
+
+		// 4 moves + 4 turns = 8 actions total, maxMoves = 6
+		// If turns counted against maxMoves, this would fail at action 6.
+		// Since turns do not consume move energy, it succeeds!
+		const commands: AtomicCommand[] = [
+			'MOVE', 'TURN_LEFT', 'MOVE', 'TURN_RIGHT',
+			'MOVE', 'TURN_LEFT', 'MOVE', 'TURN_RIGHT'
+		];
+		const steps = simulateCommands(lvl5ch1.grid, commands, { maxMoves: lvl5ch1.maxMoves! });
+		const lastStep = steps[steps.length - 1];
+		expect(lastStep.status).toBe('SUCCESS');
+		expect(lastStep.playerPos).toEqual(lvl5ch1.grid.targetPos);
+	});
 });
+
+describe('Quiz Scoring & Question Evaluation System (Tests 1-6)', () => {
+	const level1Questions = getQuestionsByLevel(1);
+
+	// TEST 1: 5 soal, 5 benar -> 5/5 benar, perfect = true
+	it('TEST 1: should correctly score 5/5 correct answers and flag perfect = true', () => {
+		let answers: Record<string, any> = {};
+		for (const q of level1Questions) {
+			const res = recordQuizAnswer(answers, q, q.correctAnswerId);
+			answers = res.updatedAnswers;
+			expect(res.isCorrect).toBe(true);
+		}
+
+		const summary = calculateQuizSummary(answers, 5, 50);
+		expect(summary.totalQuestions).toBe(5);
+		expect(summary.answeredQuestions).toBe(5);
+		expect(summary.correctAnswers).toBe(5);
+		expect(summary.wrongAnswers).toBe(0);
+		expect(summary.scorePercentage).toBe(100);
+		expect(summary.isCompleted).toBe(true);
+		expect(summary.isPerfect).toBe(true);
+		expect(summary.earnedLevelXp).toBe(50); // Full reward for perfect
+	});
+
+	// TEST 2: 5 soal, 4 benar, 1 salah -> 4/5 benar, perfect = false
+	it('TEST 2: should correctly score 4/5 correct answers and flag perfect = false', () => {
+		let answers: Record<string, any> = {};
+		// Answer first 4 correctly, last one incorrectly
+		for (let i = 0; i < 4; i++) {
+			const q = level1Questions[i];
+			const res = recordQuizAnswer(answers, q, q.correctAnswerId);
+			answers = res.updatedAnswers;
+		}
+		// Answer 5th question with a wrong option
+		const lastQ = level1Questions[4];
+		const wrongOpt = lastQ.options.find((opt) => opt.id !== lastQ.correctAnswerId)!;
+		const resWrong = recordQuizAnswer(answers, lastQ, wrongOpt.id);
+		answers = resWrong.updatedAnswers;
+		expect(resWrong.isCorrect).toBe(false);
+
+		const summary = calculateQuizSummary(answers, 5, 50);
+		expect(summary.totalQuestions).toBe(5);
+		expect(summary.answeredQuestions).toBe(5);
+		expect(summary.correctAnswers).toBe(4);
+		expect(summary.wrongAnswers).toBe(1);
+		expect(summary.scorePercentage).toBe(80);
+		expect(summary.isCompleted).toBe(true);
+		expect(summary.isPerfect).toBe(false);
+		expect(summary.earnedLevelXp).toBe(40); // Proportional reward (4/5 * 50)
+	});
+
+	// TEST 3: 5 soal, 3 benar, 2 salah -> 3/5 benar
+	it('TEST 3: should correctly score 3/5 correct answers', () => {
+		let answers: Record<string, any> = {};
+		for (let i = 0; i < 3; i++) {
+			const q = level1Questions[i];
+			const res = recordQuizAnswer(answers, q, q.correctAnswerId);
+			answers = res.updatedAnswers;
+		}
+		for (let i = 3; i < 5; i++) {
+			const q = level1Questions[i];
+			const wrongOpt = q.options.find((opt) => opt.id !== q.correctAnswerId)!;
+			const res = recordQuizAnswer(answers, q, wrongOpt.id);
+			answers = res.updatedAnswers;
+		}
+
+		const summary = calculateQuizSummary(answers, 5, 50);
+		expect(summary.totalQuestions).toBe(5);
+		expect(summary.answeredQuestions).toBe(5);
+		expect(summary.correctAnswers).toBe(3);
+		expect(summary.wrongAnswers).toBe(2);
+		expect(summary.scorePercentage).toBe(60);
+		expect(summary.isCompleted).toBe(true);
+		expect(summary.isPerfect).toBe(false);
+		expect(summary.earnedLevelXp).toBe(30);
+	});
+
+	// TEST 4: 5 soal, 0 benar, 5 salah -> 0/5 benar
+	it('TEST 4: should correctly score 0/5 correct answers', () => {
+		let answers: Record<string, any> = {};
+		for (const q of level1Questions) {
+			const wrongOpt = q.options.find((opt) => opt.id !== q.correctAnswerId)!;
+			const res = recordQuizAnswer(answers, q, wrongOpt.id);
+			answers = res.updatedAnswers;
+			expect(res.isCorrect).toBe(false);
+		}
+
+		const summary = calculateQuizSummary(answers, 5, 50);
+		expect(summary.totalQuestions).toBe(5);
+		expect(summary.answeredQuestions).toBe(5);
+		expect(summary.correctAnswers).toBe(0);
+		expect(summary.wrongAnswers).toBe(5);
+		expect(summary.scorePercentage).toBe(0);
+		expect(summary.isCompleted).toBe(true);
+		expect(summary.isPerfect).toBe(false);
+		expect(summary.earnedLevelXp).toBe(0); // 0 XP if 0 correct
+	});
+
+	// TEST 5: Double-count protection when component rerenders or user clicks again
+	it('TEST 5: should protect strictly against double counting when re-grading same question', () => {
+		const q1 = level1Questions[0];
+		let answers: Record<string, any> = {};
+
+		// First answer
+		const firstAttempt = recordQuizAnswer(answers, q1, q1.correctAnswerId);
+		expect(firstAttempt.isNewAnswer).toBe(true);
+		expect(firstAttempt.isCorrect).toBe(true);
+		answers = firstAttempt.updatedAnswers;
+
+		// Second answer or rerender on same question
+		const secondAttempt = recordQuizAnswer(answers, q1, q1.correctAnswerId);
+		expect(secondAttempt.isNewAnswer).toBe(false);
+		expect(secondAttempt.xpEarned).toBe(0);
+		expect(Object.keys(secondAttempt.updatedAnswers).length).toBe(1);
+
+		// Third attempt with wrong answer should not overwrite existing graded answer
+		const wrongOpt = q1.options.find((opt) => opt.id !== q1.correctAnswerId)!;
+		const thirdAttempt = recordQuizAnswer(answers, q1, wrongOpt.id);
+		expect(thirdAttempt.isNewAnswer).toBe(false);
+		expect(Object.keys(thirdAttempt.updatedAnswers).length).toBe(1);
+	});
+
+	// TEST 6: State persistence & accurate score tracking in progressStore
+	it('TEST 6: should persist actual level score in progressStore and handle replay without false perfect', () => {
+		progressStore.reset();
+		const testLevelId = 99;
+
+		// First run: 4/5 correct
+		const firstAwarded = progressStore.completeLearningLevel(testLevelId, 40, {
+			correctAnswers: 4,
+			totalQuestions: 5,
+			isPerfect: false
+		});
+		expect(firstAwarded).toBe(true);
+		const score1 = get(progressStore).learningLevelScores?.[testLevelId];
+		expect(score1).toEqual({
+			correctAnswers: 4,
+			totalQuestions: 5,
+			isPerfect: false
+		});
+
+		// Replay run: improves to 5/5 (perfect)
+		const replayAwarded = progressStore.completeLearningLevel(testLevelId, 50, {
+			correctAnswers: 5,
+			totalQuestions: 5,
+			isPerfect: true
+		});
+		expect(replayAwarded).toBe(false); // No duplicate bonus XP on replay
+		const score2 = get(progressStore).learningLevelScores?.[testLevelId];
+		expect(score2).toEqual({
+			correctAnswers: 5,
+			totalQuestions: 5,
+			isPerfect: true
+		});
+	});
+});
+

@@ -192,15 +192,14 @@
 	<section
 		class="relative w-full rounded-3xl overflow-hidden border border-slate-800/80 bg-slate-900/90 shadow-2xl backdrop-blur-md"
 	>
-		<!-- Background Panorama Artwork with Cinematic Gradients -->
+		<!-- Background Panorama Artwork -->
 		<div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
 			<img
 				src="/art/hero_banner_panorama.png"
 				alt="Dunia Petualangan Python"
 				class="w-full h-full object-cover object-right md:object-center opacity-40 mix-blend-screen scale-105"
 			/>
-			<div class="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-transparent"></div>
-			<div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
+			<div class="absolute inset-0 bg-slate-950/60"></div>
 		</div>
 
 		<!-- Hero Content Grid -->
@@ -213,9 +212,7 @@
 						<span>Selamat datang kembali,</span>
 					</div>
 					<h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
-						<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 via-cyan-200 to-white">
-							{$dashboardUserStore.firstName}!
-						</span>
+						{$dashboardUserStore.firstName}!
 					</h1>
 					<p class="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
 						Teruskan petualanganmu, kuasai logika pemrograman, dan jadilah programmer hebat!
@@ -290,7 +287,7 @@
 		<!-- Background Artwork Layer -->
 		<div class="absolute inset-0 z-0 opacity-20 pointer-events-none overflow-hidden">
 			<img src="/art/adventure_maze_thumb.png" alt="" class="w-full h-full object-cover filter blur-xs scale-105" />
-			<div class="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-900/70"></div>
+			<div class="absolute inset-0 bg-slate-900/90"></div>
 		</div>
 
 		<!-- Left Thumbnail Artwork + Mission Info -->
@@ -302,7 +299,7 @@
 					alt="Thumbnail Labirin Petualangan"
 					class="w-full h-full object-cover"
 				/>
-				<div class="absolute inset-0 bg-gradient-to-t from-slate-950/60 to-transparent"></div>
+				<div class="absolute inset-0 bg-slate-950/20"></div>
 			</div>
 
 			<!-- Mission Info & Progress -->
@@ -323,7 +320,7 @@
 				<div class="mt-2.5 flex items-center gap-3">
 					<div class="flex-1 h-2 rounded-full bg-slate-950 border border-slate-800 overflow-hidden max-w-xs">
 						<div
-							class="h-full bg-gradient-to-r from-teal-400 to-cyan-400 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(34,211,238,0.5)]"
+							class="h-full bg-cyan-400 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(34,211,238,0.5)]"
 							style="width: {nextCodingAdventure.progressPercent}%;"
 						></div>
 					</div>
@@ -364,7 +361,7 @@
 			<!-- Ambient Card Art Overlay -->
 			<div class="absolute inset-0 z-0 opacity-15 pointer-events-none overflow-hidden">
 				<img src="/art/module_learn_art.png" alt="" class="w-full h-full object-cover filter blur-[2px] scale-105" />
-				<div class="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/90 to-transparent"></div>
+				<div class="absolute inset-0 bg-slate-900/80"></div>
 			</div>
 
 			<div class="flex items-start justify-between gap-4 relative z-10">
@@ -429,7 +426,7 @@
 			<!-- Ambient Card Art Overlay -->
 			<div class="absolute inset-0 z-0 opacity-15 pointer-events-none overflow-hidden">
 				<img src="/art/coding_game_art.png" alt="" class="w-full h-full object-cover filter blur-[2px] scale-105" />
-				<div class="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-900/90 to-transparent"></div>
+				<div class="absolute inset-0 bg-slate-900/80"></div>
 			</div>
 
 			<div class="flex items-start justify-between gap-4 relative z-10">

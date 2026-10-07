@@ -36,6 +36,7 @@
 		startX: number;
 		startY: number;
 		pointerId: number;
+		isHandle: boolean;
 	}
 
 	let pendingDrag = $state<PendingDrag | null>(null);
@@ -179,6 +180,43 @@
 		workspaceBlocks = insertAfter(workspaceBlocks);
 	}
 
+	function moveBlock(id: string, direction: 'UP' | 'DOWN') {
+		if (isRunning) return;
+		function moveInList(list: CodingBlock[]): CodingBlock[] {
+			const idx = list.findIndex((b) => b.id === id);
+			if (idx !== -1) {
+				const targetIdx = direction === 'UP' ? idx - 1 : idx + 1;
+				if (targetIdx < 0 || targetIdx >= list.length) return list;
+				const copy = [...list];
+				const [item] = copy.splice(idx, 1);
+				copy.splice(targetIdx, 0, item);
+				return copy;
+			}
+			return list.map((b) => (b.children ? { ...b, children: moveInList(b.children) } : b));
+		}
+		workspaceBlocks = moveInList(workspaceBlocks);
+		if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+			try { navigator.vibrate(10); } catch {}
+		}
+	}
+
+	let lastTapBlockTime = 0;
+	let lastTapBlockType: BlockType | null = null;
+	function handleTapPaletteBlock(type: BlockType) {
+		if (isRunning) return;
+		const now = performance.now();
+		// Only ignore immediate synthetic duplicates of the same block from pointerup+click (< 60ms)
+		if (now - lastTapBlockTime < 60 && lastTapBlockType === type) return;
+		lastTapBlockTime = now;
+		lastTapBlockType = type;
+
+		const newBlock = createDefaultBlock(type);
+		workspaceBlocks = [...workspaceBlocks, newBlock];
+		if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+			try { navigator.vibrate(15); } catch {}
+		}
+	}
+
 	// Block visual and semantic metadata
 	function getBlockMeta(type: BlockType) {
 		switch (type) {
@@ -189,7 +227,7 @@
 					icon: 'arrow-up',
 					category: 'Gerak',
 					accentColor: 'emerald',
-					bgClass: 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 border-emerald-400 text-white shadow-emerald-950/40 border-b-[3px] border-b-emerald-800',
+					bgClass: 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400 text-white shadow-emerald-950/40 border-b-[3px] border-b-emerald-800',
 					tabColor: 'bg-emerald-600',
 					pyBadge: 'pybot.move()'
 				};
@@ -200,7 +238,7 @@
 					icon: 'corner-up-left',
 					category: 'Putar',
 					accentColor: 'amber',
-					bgClass: 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 border-amber-400 text-white shadow-amber-950/40 border-b-[3px] border-b-amber-900',
+					bgClass: 'bg-amber-600 hover:bg-amber-500 border-amber-400 text-white shadow-amber-950/40 border-b-[3px] border-b-amber-900',
 					tabColor: 'bg-amber-600',
 					pyBadge: 'pybot.turn_left()'
 				};
@@ -211,7 +249,7 @@
 					icon: 'corner-up-right',
 					category: 'Putar',
 					accentColor: 'orange',
-					bgClass: 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-500 hover:to-orange-600 border-orange-400 text-white shadow-orange-950/40 border-b-[3px] border-b-orange-900',
+					bgClass: 'bg-orange-600 hover:bg-orange-500 border-orange-400 text-white shadow-orange-950/40 border-b-[3px] border-b-orange-900',
 					tabColor: 'bg-orange-600',
 					pyBadge: 'pybot.turn_right()'
 				};
@@ -222,7 +260,7 @@
 					icon: 'repeat',
 					category: 'Loop',
 					accentColor: 'indigo',
-					bgClass: 'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 border-indigo-400 text-white shadow-indigo-950/40 border-b-[3px] border-b-indigo-900',
+					bgClass: 'bg-indigo-600 hover:bg-indigo-500 border-indigo-400 text-white shadow-indigo-950/40 border-b-[3px] border-b-indigo-900',
 					tabColor: 'bg-indigo-600',
 					pyBadge: 'for _ in range(n):'
 				};
@@ -233,8 +271,8 @@
 					icon: 'refresh-cw',
 					category: 'Loop',
 					accentColor: 'purple',
-					bgClass: 'bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600 border-violet-400 text-white shadow-purple-950/40 border-b-[3px] border-b-purple-900',
-					tabColor: 'bg-violet-600',
+					bgClass: 'bg-purple-600 hover:bg-purple-500 border-purple-400 text-white shadow-purple-950/40 border-b-[3px] border-b-purple-900',
+					tabColor: 'bg-purple-600',
 					pyBadge: 'while True:'
 				};
 		}
@@ -253,6 +291,33 @@
 	// ==========================================
 	// POINTER EVENT HANDLERS (DESKTOP + MOBILE)
 	// ==========================================
+	let holdTimer: ReturnType<typeof setTimeout> | null = null;
+
+	function clearHoldTimer() {
+		if (holdTimer) {
+			clearTimeout(holdTimer);
+			holdTimer = null;
+		}
+	}
+
+	function startDrag() {
+		if (!pendingDrag || isDragging) return;
+		isDragging = true;
+		dragInfo = {
+			source: pendingDrag.source,
+			type: pendingDrag.type,
+			blockId: pendingDrag.blockId,
+			parentId: pendingDrag.parentId,
+			index: pendingDrag.index,
+			data: pendingDrag.data
+		};
+		if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+			try {
+				navigator.vibrate(20);
+			} catch {}
+		}
+	}
+
 	function handlePointerDown(
 		e: PointerEvent,
 		source: 'palette' | 'workspace',
@@ -269,6 +334,13 @@
 		const targetEl = e.target as HTMLElement;
 		if (targetEl.closest('input, button')) return;
 
+		clearHoldTimer();
+
+		const isHandle =
+			source === 'palette' ||
+			e.pointerType === 'mouse' ||
+			Boolean(targetEl.closest('[data-drag-handle]'));
+
 		pendingDrag = {
 			source,
 			type,
@@ -278,10 +350,21 @@
 			data,
 			startX: e.clientX,
 			startY: e.clientY,
-			pointerId: e.pointerId
+			pointerId: e.pointerId,
+			isHandle
 		};
 
 		pointerPos = { x: e.clientX, y: e.clientY };
+
+		if (!isHandle && e.pointerType === 'touch') {
+			// On touch outside handle, wait for a short hold (180ms) before activating drag,
+			// allowing normal scroll gestures to proceed without delay if user swipes vertically.
+			holdTimer = setTimeout(() => {
+				if (pendingDrag && !isDragging) {
+					startDrag();
+				}
+			}, 180);
+		}
 
 		window.addEventListener('pointermove', onGlobalPointerMove, { passive: false });
 		window.addEventListener('pointerup', onGlobalPointerUp);
@@ -295,17 +378,44 @@
 		pointerPos = { x: e.clientX, y: e.clientY };
 
 		if (!isDragging) {
-			const dist = Math.hypot(e.clientX - pendingDrag.startX, e.clientY - pendingDrag.startY);
-			if (dist > 5) {
-				isDragging = true;
-				dragInfo = {
-					source: pendingDrag.source,
-					type: pendingDrag.type,
-					blockId: pendingDrag.blockId,
-					parentId: pendingDrag.parentId,
-					index: pendingDrag.index,
-					data: pendingDrag.data
-				};
+			const dx = e.clientX - pendingDrag.startX;
+			const dy = e.clientY - pendingDrag.startY;
+
+			if (pendingDrag.source === 'palette') {
+				if (e.pointerType === 'touch') {
+					// On touch: allow natural horizontal scroll of the palette
+					if (Math.abs(dx) > Math.abs(dy) && Math.abs(dy) < 16) {
+						return;
+					}
+					// Only start dragging down into workspace if gesture is downwards and intentional
+					if (dy > 16 || Math.hypot(dx, dy) > 25) {
+						startDrag();
+					}
+				} else {
+					// Mouse drag threshold
+					if (Math.hypot(dx, dy) > 8) {
+						startDrag();
+					}
+				}
+			} else if (pendingDrag.isHandle) {
+				// Immediate drag detection for handle or mouse in workspace
+				if (Math.hypot(dx, dy) > 8) {
+					startDrag();
+				}
+			} else {
+				// Touch on block body without handle:
+				// If user moves primarily vertically, it's an intentional vertical scroll gesture!
+				if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 7) {
+					clearHoldTimer();
+					cleanupPointerListeners();
+					pendingDrag = null;
+					return;
+				}
+				// If moved horizontally significantly, initiate drag
+				if (Math.abs(dx) > 12) {
+					clearHoldTimer();
+					startDrag();
+				}
 			}
 		}
 
@@ -391,6 +501,7 @@
 	}
 
 	function cleanupPointerListeners() {
+		clearHoldTimer();
 		window.removeEventListener('pointermove', onGlobalPointerMove);
 		window.removeEventListener('pointerup', onGlobalPointerUp);
 		window.removeEventListener('pointercancel', onGlobalPointerCancel);
@@ -400,7 +511,9 @@
 		cleanupPointerListeners();
 
 		if (!isDragging) {
-			// Strict true drag-and-drop: clicking or tapping without moving does nothing
+			if (pendingDrag && pendingDrag.source === 'palette') {
+				handleTapPaletteBlock(pendingDrag.type);
+			}
 			pendingDrag = null;
 			return;
 		}
@@ -429,11 +542,19 @@
 					}
 				}
 			} else {
-				// Dragged completely outside workspace area -> delete from sequence
-				const elements = document.elementsFromPoint(e.clientX, e.clientY);
-				const isInsideWorkspace = elements.some((el) => el.closest('[data-workspace-root]'));
-				if (!isInsideWorkspace && dragInfo.source === 'workspace' && dragInfo.blockId) {
-					workspaceBlocks = removeBlockById(workspaceBlocks, dragInfo.blockId);
+				if (dragInfo.source === 'palette') {
+					// Fallback: If drag was initiated from palette but released near origin or without target, treat as tap-to-add
+					const dist = pendingDrag ? Math.hypot(e.clientX - pendingDrag.startX, e.clientY - pendingDrag.startY) : 0;
+					if (dist < 36) {
+						handleTapPaletteBlock(dragInfo.type);
+					}
+				} else if (dragInfo.source === 'workspace' && dragInfo.blockId) {
+					// Dragged completely outside workspace area -> delete from sequence
+					const elements = document.elementsFromPoint(e.clientX, e.clientY);
+					const isInsideWorkspace = elements.some((el) => el.closest('[data-workspace-root]'));
+					if (!isInsideWorkspace) {
+						workspaceBlocks = removeBlockById(workspaceBlocks, dragInfo.blockId);
+					}
 				}
 			}
 		}
@@ -457,7 +578,7 @@
 
 <div
 	data-workspace-root
-	class="flex flex-col h-full bg-slate-900/95 border border-slate-800 rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 landscape:p-2.5 shadow-2xl overflow-hidden backdrop-blur-md select-none relative"
+	class="flex flex-col portrait:h-auto portrait:overflow-visible landscape:h-full md:h-full bg-slate-900/95 border border-slate-800 rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 landscape:p-2.5 shadow-2xl overflow-hidden portrait:overflow-visible backdrop-blur-md select-none relative"
 >
 	<!-- Workspace Header -->
 	<div class="flex items-center justify-between pb-2 sm:pb-3 landscape:pb-1.5 border-b border-slate-800 shrink-0">
@@ -505,29 +626,32 @@
 		</div>
 	{/if}
 
-	<!-- PALETTE BLOK KODING (DRAGGABLE) -->
+	<!-- PALETTE BLOK KODING (DRAGGABLE + TAP TO ADD) -->
 	<div class="py-2 sm:py-3 landscape:py-1.5 border-b border-slate-800 shrink-0">
 		<div class="flex items-center justify-between mb-1.5 sm:mb-2">
 			<span class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
 				<Icon name="layout-grid" size={12} class="text-indigo-400" />
 				<span>Palet Balok Kode</span>
 			</span>
-			<span class="text-[10px] text-cyan-400 font-semibold hidden sm:inline flex items-center gap-1">
-				<Icon name="grip-vertical" size={11} />
-				<span>Tarik & lepas balok ke kanvas</span>
+			<span class="text-[10px] text-cyan-400 font-semibold flex items-center gap-1">
+				<Icon name="touch" size={11} class="sm:hidden text-cyan-400" />
+				<Icon name="grip-vertical" size={11} class="hidden sm:inline" />
+				<span class="sm:hidden">Ketuk / Tarik untuk menambah</span>
+				<span class="hidden sm:inline">Ketuk atau tarik balok ke kanvas</span>
 			</span>
 		</div>
 
-		<div class="flex flex-wrap gap-1.5 sm:gap-2">
+		<div class="flex flex-nowrap overflow-x-auto pb-2 scrollbar-none sm:flex-wrap gap-1.5 sm:gap-2">
 			{#each fullPalette as bType}
 				{@const meta = getBlockMeta(bType)}
-				<div
-					role="button"
+				<button
+					type="button"
 					tabindex="0"
-					style="touch-action: none;"
+					style="touch-action: pan-x;"
 					onpointerdown={(e) => handlePointerDown(e, 'palette', bType)}
-					class="group relative select-none rounded-xl border px-2.5 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-black shadow-md cursor-grab active:cursor-grabbing transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lg active:scale-95 disabled:opacity-50 {meta.bgClass} flex items-center gap-1.5 sm:gap-2"
-					title="Tarik dan letakkan balok ke kanvas editor"
+					onclick={() => handleTapPaletteBlock(bType)}
+					class="group relative shrink-0 select-none rounded-xl border px-3 sm:px-3 py-2 sm:py-2 text-[11px] sm:text-xs font-black shadow-md cursor-grab active:cursor-grabbing transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lg active:scale-95 disabled:opacity-50 {meta.bgClass} flex items-center gap-1.5 sm:gap-2 min-h-[44px] touch-manipulation"
+					title="Ketuk atau tarik balok ini ke kanvas"
 				>
 					<!-- Puzzle connector hints on palette piece -->
 					<div class="absolute -top-[2px] left-4 w-5 h-1 bg-slate-900/90 rounded-b-sm border-x border-b border-black/40 pointer-events-none"></div>
@@ -539,7 +663,7 @@
 					<span class="hidden sm:inline text-[9px] font-mono text-white/75 bg-black/20 px-1 py-0.5 rounded border border-white/10">
 						{meta.pyBadge}
 					</span>
-				</div>
+				</button>
 			{/each}
 		</div>
 	</div>
@@ -547,7 +671,8 @@
 	<!-- WORKSPACE SEQUENCE CANVAS -->
 	<div
 		data-workspace-area
-		class="flex-1 flex flex-col pt-3 overflow-y-auto min-h-0 relative"
+		class="flex-1 flex flex-col pt-2.5 sm:pt-3 portrait:overflow-visible portrait:min-h-[160px] overflow-y-auto landscape:min-h-[220px] md:min-h-[220px] pb-16 sm:pb-2.5 relative rounded-xl sm:rounded-2xl p-2 sm:p-2.5 border border-slate-800/80 bg-slate-950/40 backdrop-blur-sm"
+		style="touch-action: pan-y;"
 	>
 		<!-- DRAG-TO-DELETE DROP ZONE (Appears dynamically while dragging from workspace) -->
 		{#if isDragging && dragInfo?.source === 'workspace'}
@@ -568,25 +693,29 @@
 				data-empty-canvas
 				data-slot-parent="root"
 				data-slot-index="0"
-				class="flex-1 flex flex-col items-center justify-center text-center p-6 text-slate-500 text-xs sm:text-sm border-2 border-dashed rounded-2xl transition-all {isDragging
-					? 'border-cyan-400 bg-cyan-950/30 text-cyan-300 shadow-[0_0_25px_rgba(34,211,238,0.25)]'
-					: 'border-slate-800 bg-slate-900/30'}"
+				class="flex-1 flex flex-col items-center justify-center text-center p-4 sm:p-6 text-slate-500 text-xs sm:text-sm border-2 border-dashed rounded-2xl transition-all duration-200 {isDragging
+					? 'border-cyan-400 bg-cyan-950/40 text-cyan-300 shadow-[0_0_25px_rgba(34,211,238,0.25)]'
+					: 'border-slate-800/80 bg-slate-900/40 hover:border-slate-700/80'}"
 			>
-				<div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3">
-					<Icon name="puzzle" size={24} />
+				<div class="relative mb-3 flex items-center justify-center">
+					<img
+						src="/mascot/pybot-front-idle.png"
+						alt="PyBot Mascot"
+						class="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-[0_8px_16px_rgba(6,182,212,0.3)] animate-pulse"
+					/>
 				</div>
-				<p class="font-bold text-slate-300 mb-1">
-					{isDragging ? 'LEPAS BLOK DI SINI' : 'Kanvas Koding Masih Kosong'}
+				<p class="font-bold text-white text-sm sm:text-base mb-1">
+					{isDragging ? 'LEPAS BLOK DI SINI!' : 'Mulai Program PyBot'}
 				</p>
-				<p class="text-xs text-slate-500 max-w-xs leading-relaxed">
+				<p class="text-xs text-slate-400 max-w-xs leading-relaxed">
 					{isDragging
-						? 'Lepaskan balok sekarang untuk menambahkannya ke alur program.'
-						: 'Tarik balok dari palet di atas ke sini untuk mulai memprogram PyBot.'}
+						? 'Lepaskan balok sekarang untuk menyusun langkah pertama PyBot.'
+						: 'Tarik balok dari palet di atas ke kanvas ini untuk memprogram robot.'}
 				</p>
 				{#if isDragging}
-					<div class="mt-3 px-3.5 py-1 rounded-full bg-cyan-500/20 border border-cyan-400 text-cyan-300 text-xs font-black animate-pulse flex items-center gap-1.5 shadow-md shadow-cyan-500/20">
+					<div class="mt-3 px-3.5 py-1.5 rounded-full bg-cyan-500/20 border border-cyan-400 text-cyan-300 text-xs font-black animate-bounce flex items-center gap-1.5 shadow-md shadow-cyan-500/30">
 						<Icon name="corner-down-left" size={13} />
-						<span>LEPAS BLOK DI SINI</span>
+						<span>LEPASKAN DI SINI</span>
 					</div>
 				{/if}
 			</div>
@@ -600,13 +729,13 @@
 						data-slot-index="0"
 						class="my-1.5 py-1 px-3 rounded-xl border-2 border-dashed border-cyan-400 bg-cyan-950/60 shadow-[0_0_20px_rgba(34,211,238,0.4)] flex items-center justify-center gap-2 text-[11px] font-black text-cyan-300 animate-pulse select-none"
 					>
-						<div class="h-0.5 flex-1 bg-gradient-to-r from-transparent via-cyan-400 to-cyan-400"></div>
+						<div class="h-0.5 flex-1 bg-cyan-400"></div>
 						<div class="flex items-center gap-1.5 shrink-0">
 							<Icon name="arrow-down" size={13} class="text-cyan-300" />
 							<span>DROP DI SINI</span>
 							<Icon name="arrow-down" size={13} class="text-cyan-300" />
 						</div>
-						<div class="h-0.5 flex-1 bg-gradient-to-l from-transparent via-cyan-400 to-cyan-400"></div>
+						<div class="h-0.5 flex-1 bg-cyan-400"></div>
 					</div>
 				{/if}
 
@@ -619,7 +748,7 @@
 							data-block-id={block.id}
 							data-block-parent="root"
 							data-block-index={i}
-							style="touch-action: none;"
+							style="touch-action: pan-y;"
 							onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
 							class="relative rounded-2xl border-2 shadow-lg overflow-visible transition-all duration-150 {block.type === 'REPEAT'
 								? 'border-indigo-500 bg-indigo-950/40 shadow-indigo-900/20'
@@ -633,11 +762,17 @@
 							<!-- C-Block Top Header -->
 							<div
 								class="px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-t-[14px] flex items-center justify-between text-xs sm:text-sm font-black text-white cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
-									? 'bg-gradient-to-r from-indigo-600 to-indigo-700'
-									: 'bg-gradient-to-r from-violet-600 to-purple-700'}"
+									? 'bg-indigo-600'
+									: 'bg-purple-600'}"
 							>
 								<div class="flex items-center gap-2 flex-wrap">
-									<Icon name="grip-vertical" size={13} class="text-white/60 shrink-0" />
+									<div
+										data-drag-handle
+										class="p-1 -m-1 cursor-grab active:cursor-grabbing text-white/70 hover:text-white touch-none flex items-center justify-center shrink-0"
+										title="Tarik untuk memindahkan loop"
+									>
+										<Icon name="grip-vertical" size={13} class="shrink-0" />
+									</div>
 									<div class="w-6 h-6 rounded-lg bg-black/20 border border-white/20 flex items-center justify-center shrink-0">
 										<Icon name={block.type === 'REPEAT' ? 'repeat' : 'refresh-cw'} size={14} />
 									</div>
@@ -693,10 +828,36 @@
 										type="button"
 										onclick={(e) => {
 											e.stopPropagation();
+											moveBlock(block.id, 'UP');
+										}}
+										disabled={isRunning || i === 0}
+										class="p-1 text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors disabled:opacity-20 cursor-pointer"
+										title="Geser loop ke atas"
+										aria-label="Geser loop ke atas"
+									>
+										<Icon name="arrow-up" size={13} />
+									</button>
+									<button
+										type="button"
+										onclick={(e) => {
+											e.stopPropagation();
+											moveBlock(block.id, 'DOWN');
+										}}
+										disabled={isRunning || i === workspaceBlocks.length - 1}
+										class="p-1 text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors disabled:opacity-20 cursor-pointer"
+										title="Geser loop ke bawah"
+										aria-label="Geser loop ke bawah"
+									>
+										<Icon name="arrow-down" size={13} />
+									</button>
+									<button
+										type="button"
+										onclick={(e) => {
+											e.stopPropagation();
 											handleDuplicate(block.id);
 										}}
 										disabled={isRunning}
-										class="p-1 text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors"
+										class="p-1 text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors cursor-pointer"
 										title="Duplikasi loop"
 										aria-label="Duplikasi loop"
 									>
@@ -709,7 +870,7 @@
 											workspaceBlocks = removeBlockById(workspaceBlocks, block.id);
 										}}
 										disabled={isRunning}
-										class="p-1 text-rose-200 hover:text-white hover:bg-rose-500/30 rounded transition-colors"
+										class="p-1 text-rose-200 hover:text-white hover:bg-rose-500/30 rounded transition-colors cursor-pointer"
 										title="Hapus loop"
 										aria-label="Hapus loop"
 									>
@@ -754,7 +915,7 @@
 											data-block-id={child.id}
 											data-block-parent={block.id}
 											data-block-index={ci}
-											style="touch-action: none;"
+											style="touch-action: pan-y;"
 											onpointerdown={(e) => handlePointerDown(e, 'workspace', child.type, child.id, block.id, ci, child)}
 											class="relative flex items-center justify-between px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border text-xs font-bold shadow-md cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-0.5 {childMeta.bgClass} {isDragging && dragInfo?.blockId === child.id
 												? 'opacity-40 border-dashed scale-95'
@@ -765,7 +926,13 @@
 											<div class="absolute -bottom-1.5 left-5 w-5 h-1.5 rounded-b-sm border-x border-b border-black/30 shadow-xs pointer-events-none {childMeta.tabColor}"></div>
 
 											<div class="flex items-center gap-2">
-												<Icon name="grip-vertical" size={11} class="text-white/60 shrink-0" />
+												<div
+													data-drag-handle
+													class="p-1 -m-1 cursor-grab active:cursor-grabbing text-white/70 hover:text-white touch-none flex items-center justify-center shrink-0"
+													title="Tarik untuk memindahkan balok"
+												>
+													<Icon name="grip-vertical" size={11} class="shrink-0" />
+												</div>
 												<div class="w-5 h-5 rounded bg-black/20 border border-white/20 flex items-center justify-center shrink-0">
 													<Icon name={childMeta.icon} size={13} class="text-white" />
 												</div>
@@ -779,10 +946,36 @@
 													type="button"
 													onclick={(e) => {
 														e.stopPropagation();
+														moveBlock(child.id, 'UP');
+													}}
+													disabled={isRunning || ci === 0}
+													class="p-0.5 text-white/70 hover:text-white rounded hover:bg-white/10 disabled:opacity-20 cursor-pointer"
+													title="Geser ke atas"
+													aria-label="Geser ke atas"
+												>
+													<Icon name="arrow-up" size={12} />
+												</button>
+												<button
+													type="button"
+													onclick={(e) => {
+														e.stopPropagation();
+														moveBlock(child.id, 'DOWN');
+													}}
+													disabled={isRunning || ci === block.children.length - 1}
+													class="p-0.5 text-white/70 hover:text-white rounded hover:bg-white/10 disabled:opacity-20 cursor-pointer"
+													title="Geser ke bawah"
+													aria-label="Geser ke bawah"
+												>
+													<Icon name="arrow-down" size={12} />
+												</button>
+												<button
+													type="button"
+													onclick={(e) => {
+														e.stopPropagation();
 														workspaceBlocks = removeBlockById(workspaceBlocks, child.id);
 													}}
 													disabled={isRunning}
-													class="p-0.5 text-white/70 hover:text-white rounded hover:bg-white/10"
+													class="p-0.5 text-rose-200 hover:text-white rounded hover:bg-rose-500/30 cursor-pointer"
 													title="Hapus aksi"
 													aria-label="Hapus aksi"
 												>
@@ -791,6 +984,21 @@
 											</div>
 										</div>
 									{/each}
+
+									<!-- Quick Add Action to Loop Button -->
+									<button
+										type="button"
+										disabled={isRunning}
+										onclick={(e) => {
+											e.stopPropagation();
+											const m = createDefaultBlock('MOVE');
+											workspaceBlocks = insertBlockAt(workspaceBlocks, m, block.id, block.children?.length || 0);
+										}}
+										class="mt-1 text-[10px] font-bold text-cyan-300 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-cyan-500/30 hover:border-cyan-400 py-1 px-2.5 rounded-lg w-fit transition-colors cursor-pointer flex items-center gap-1 self-start shadow-sm"
+									>
+										<Icon name="plus" size={11} />
+										<span>+ Tambah Gerak ke Loop</span>
+									</button>
 
 									<!-- Inner trailing indicator -->
 									{#if isDragging && dropTarget?.parentId === block.id && dropTarget?.index === block.children.length}
@@ -822,7 +1030,7 @@
 							data-block-id={block.id}
 							data-block-parent="root"
 							data-block-index={i}
-							style="touch-action: none;"
+							style="touch-action: pan-y;"
 							onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
 							class="group relative flex items-center justify-between px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-2xl border text-xs sm:text-sm font-black shadow-lg cursor-grab active:cursor-grabbing transition-all duration-150 hover:-translate-y-0.5 hover:shadow-xl {meta.bgClass} {isDragging && dragInfo?.blockId === block.id
 								? 'opacity-40 border-dashed scale-95'
@@ -836,7 +1044,13 @@
 
 							<!-- Left: Grab handle + Direction Icon + Name + Subtext -->
 							<div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
-								<Icon name="grip-vertical" size={13} class="text-white/60 shrink-0" />
+								<div
+									data-drag-handle
+									class="p-1 -m-1 cursor-grab active:cursor-grabbing text-white/70 hover:text-white touch-none flex items-center justify-center shrink-0"
+									title="Tarik untuk memindahkan balok"
+								>
+									<Icon name="grip-vertical" size={13} class="shrink-0" />
+								</div>
 								<div class="w-6 h-6 rounded-lg bg-black/20 border border-white/20 flex items-center justify-center shrink-0 shadow-inner">
 									<Icon name={meta.icon} size={15} class="text-white" />
 								</div>
@@ -855,10 +1069,36 @@
 									type="button"
 									onclick={(e) => {
 										e.stopPropagation();
+										moveBlock(block.id, 'UP');
+									}}
+									disabled={isRunning || i === 0}
+									class="p-1 text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors disabled:opacity-20 cursor-pointer"
+									title="Geser balok ke atas"
+									aria-label="Geser balok ke atas"
+								>
+									<Icon name="arrow-up" size={13} />
+								</button>
+								<button
+									type="button"
+									onclick={(e) => {
+										e.stopPropagation();
+										moveBlock(block.id, 'DOWN');
+									}}
+									disabled={isRunning || i === workspaceBlocks.length - 1}
+									class="p-1 text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors disabled:opacity-20 cursor-pointer"
+									title="Geser balok ke bawah"
+									aria-label="Geser balok ke bawah"
+								>
+									<Icon name="arrow-down" size={13} />
+								</button>
+								<button
+									type="button"
+									onclick={(e) => {
+										e.stopPropagation();
 										handleDuplicate(block.id);
 									}}
 									disabled={isRunning}
-									class="p-1 text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors"
+									class="p-1 text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors cursor-pointer"
 									title="Duplikasi balok"
 									aria-label="Duplikasi balok"
 								>
@@ -871,7 +1111,7 @@
 										workspaceBlocks = removeBlockById(workspaceBlocks, block.id);
 									}}
 									disabled={isRunning}
-									class="p-1 text-rose-200 hover:text-white hover:bg-rose-500/30 rounded transition-colors"
+									class="p-1 text-rose-200 hover:text-white hover:bg-rose-500/30 rounded transition-colors cursor-pointer"
 									title="Hapus balok"
 									aria-label="Hapus balok"
 								>
@@ -888,13 +1128,13 @@
 							data-slot-index={i + 1}
 							class="my-1.5 py-1 px-3 rounded-xl border-2 border-dashed border-cyan-400 bg-cyan-950/60 shadow-[0_0_20px_rgba(34,211,238,0.4)] flex items-center justify-center gap-2 text-[11px] font-black text-cyan-300 animate-pulse select-none"
 						>
-							<div class="h-0.5 flex-1 bg-gradient-to-r from-transparent via-cyan-400 to-cyan-400"></div>
+							<div class="h-0.5 flex-1 bg-cyan-400"></div>
 							<div class="flex items-center gap-1.5 shrink-0">
 								<Icon name="arrow-down" size={13} class="text-cyan-300" />
 								<span>DROP DI SINI</span>
 								<Icon name="arrow-down" size={13} class="text-cyan-300" />
 							</div>
-							<div class="h-0.5 flex-1 bg-gradient-to-l from-transparent via-cyan-400 to-cyan-400"></div>
+							<div class="h-0.5 flex-1 bg-cyan-400"></div>
 						</div>
 					{/if}
 				{/each}
@@ -902,30 +1142,34 @@
 		{/if}
 	</div>
 
-	<!-- Bottom Section: Run & Reset Buttons -->
-	<div class="flex items-center gap-2 sm:gap-3 pt-2 sm:pt-3 landscape:pt-1.5 border-t border-slate-800 mt-1 sm:mt-2 landscape:mt-1 shrink-0">
+	<!-- Bottom Section: Run & Reset Buttons (Sticky on mobile portrait) -->
+	<div class="flex items-center gap-2 sm:gap-3 pt-2 sm:pt-3 landscape:pt-1.5 border-t border-slate-800 mt-1 sm:mt-2 landscape:mt-1 shrink-0 sticky bottom-0 z-20 bg-slate-900/95 backdrop-blur-md p-2 -mx-2.5 -mb-2.5 rounded-b-2xl sm:static sm:bg-transparent sm:p-0 sm:m-0 sm:border-t">
 		<button
 			type="button"
 			onclick={onReset}
 			disabled={isRunning}
-			class="px-3 sm:px-4 py-2 sm:py-3 landscape:py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 active:scale-95"
-			title="Kembalikan posisi awal robot"
+			class="group px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-800/90 hover:bg-slate-700/90 active:bg-slate-800 border border-slate-700/80 hover:border-amber-500/50 text-slate-300 hover:text-amber-300 font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm hover:shadow-amber-500/10 active:scale-95"
+			title="Kembalikan posisi PyBot ke titik awal"
 		>
-			<Icon name="rotate-ccw" size={14} />
-			<span>Reset</span>
+			<Icon name="rotate-ccw" size={15} class="text-amber-400 group-hover:-rotate-45 transition-transform duration-200" />
+			<span class="hidden sm:inline">Reset Posisi</span>
+			<span class="sm:hidden">Reset</span>
 		</button>
 
 		<button
 			type="button"
 			onclick={onRun}
 			disabled={workspaceBlocks.length === 0 || isRunning}
-			class="flex-1 py-2 sm:py-3 landscape:py-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-xs sm:text-base landscape:text-xs rounded-xl shadow-lg shadow-emerald-500/25 transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+			class="flex-1 py-2 sm:py-2.5 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-black text-xs sm:text-sm tracking-wide rounded-xl shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-40 disabled:pointer-events-none flex items-center justify-center gap-2 border-b-2 border-emerald-700 uppercase"
 		>
 			{#if isRunning}
-				<Icon name="refresh-cw" size={16} class="animate-spin text-slate-950" />
-				<span>Menjalankan Urutan Blok...</span>
+				<span class="relative flex h-3 w-3">
+					<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-950 opacity-75"></span>
+					<span class="relative inline-flex rounded-full h-3 w-3 bg-slate-950"></span>
+				</span>
+				<span class="animate-pulse">Menjalankan Kode...</span>
 			{:else}
-				<Icon name="play" size={16} class="text-slate-950" />
+				<Icon name="play" size={15} class="fill-current text-slate-950" />
 				<span>JALANKAN KODE (RUN)</span>
 			{/if}
 		</button>

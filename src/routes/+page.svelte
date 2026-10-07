@@ -22,6 +22,7 @@
 
 	import { learningLevelsData } from '$lib/questions/learningLevelsData';
 	import { questionsData, getQuestionsByLevel } from '$lib/questions/questionsData';
+	import { recordQuizAnswer, calculateQuizSummary, type QuizAnswerRecord } from '$lib/questions/quizEvaluator';
 	import { levelsData } from '$lib/challenges/levelsData';
 	import { compileBlocksToCommands, hasForeverBlock } from '$lib/game/compiler';
 	import { simulateCommands, type SimulationStep } from '$lib/game/engine';
@@ -53,6 +54,9 @@
 	let currentQuestionInLevelIndex = $state(0);
 	let earnedLearningXpThisRun = $state(0);
 	let userSelectedOptionId = $state<string | null>(null);
+
+	// Quiz Session State (Single source of truth for current quiz run)
+	let quizSessionAnswers = $state<Record<string, QuizAnswerRecord>>({});
 
 	// Pointers for Coding Game (10-Level System)
 	let currentLevelIndex = $state(0);
@@ -89,6 +93,9 @@
 	let activeLearningLevel = $derived(learningLevelsData[currentLearningLevelIndex] || learningLevelsData[0]);
 	let activeLevelQuestions = $derived(getQuestionsByLevel(activeLearningLevel.id));
 	let activeQuestion = $derived(activeLevelQuestions[currentQuestionInLevelIndex] || activeLevelQuestions[0] || questionsData[0]);
+	let currentQuizStats = $derived(
+		calculateQuizSummary(quizSessionAnswers, activeLevelQuestions.length || 5, activeLearningLevel.xpReward)
+	);
 
 	// Current Active Coding Level & Challenge
 	let activeLevel = $derived(levelsData[currentLevelIndex] || levelsData[0]);
@@ -101,63 +108,10 @@
 		)
 	);
 
-	// Focus Mode Pause Overlay & Anti-Cheat detection
-	let isFocusPauseOverlayOpen = $state(false);
-	let focusWarning = $state<string | null>(null);
-	let focusWarningTimeout = $state<any>(null);
-
-	function showFocusAlert(msg: string) {
-		focusWarning = msg;
-		if (focusWarningTimeout) clearTimeout(focusWarningTimeout);
-		focusWarningTimeout = setTimeout(() => {
-			focusWarning = null;
-		}, 4500);
-	}
-
-	async function handleResumeFocusMode() {
-		await requestAppFullscreen();
-		isFocusPauseOverlayOpen = false;
-	}
-
-	function handleExitFocus() {
-		stopSimulation();
-		isFocusPauseOverlayOpen = false;
-		if (currentScreen === 'CHALLENGE') {
-			currentScreen = 'LEVEL_SELECT';
-		} else {
-			currentScreen = 'LEARN_SELECT';
-		}
-	}
-
-	// Browser listeners for automatic focus / anti-cheat detection
+	// Simulation cleanup on lifecycle unmount
 	$effect(() => {
-		function onFullscreenChange() {
-			if ((currentScreen === 'CHALLENGE' || currentScreen === 'QUESTION') && !isFullscreenActive()) {
-				isFocusPauseOverlayOpen = true;
-			}
-		}
-
-		function onVisibilityChange() {
-			if ((currentScreen === 'CHALLENGE' || currentScreen === 'QUESTION') && document.hidden) {
-				showFocusAlert('Peringatan: Kamu berpindah tab browser saat sesi aktif.');
-			}
-		}
-
-		function onWindowBlur() {
-			if ((currentScreen === 'CHALLENGE' || currentScreen === 'QUESTION') && !isFocusPauseOverlayOpen) {
-				showFocusAlert('Perhatian: Jendela kehilangan fokus. Silakan klik kembali area permainan/kuis.');
-			}
-		}
-
-		document.addEventListener('fullscreenchange', onFullscreenChange);
-		document.addEventListener('visibilitychange', onVisibilityChange);
-		window.addEventListener('blur', onWindowBlur);
-
 		return () => {
 			stopSimulation();
-			document.removeEventListener('fullscreenchange', onFullscreenChange);
-			document.removeEventListener('visibilitychange', onVisibilityChange);
-			window.removeEventListener('blur', onWindowBlur);
 		};
 	});
 
@@ -217,16 +171,25 @@
 		currentQuestionInLevelIndex = 0;
 		userSelectedOptionId = null;
 		earnedLearningXpThisRun = 0;
-		isFocusPauseOverlayOpen = false;
+		quizSessionAnswers = {}; // Reset session answers for new quiz run
 		currentScreen = 'QUESTION';
 		requestAppFullscreen();
 	}
 
 	function handleAnswerQuestion(selectedOptionId: string) {
 		userSelectedOptionId = selectedOptionId;
-		if (selectedOptionId === activeQuestion.correctAnswerId) {
-			progressStore.completeQuestion(activeQuestion.id, activeQuestion.xp || 15);
+		const q = activeQuestion;
+
+		// Deterministically record and grade with strict double-count guard
+		const result = recordQuizAnswer(quizSessionAnswers, q, selectedOptionId);
+		if (result.isNewAnswer) {
+			quizSessionAnswers = result.updatedAnswers;
+			if (result.isCorrect) {
+				// completeQuestion returns true only on first time question is solved
+				progressStore.completeQuestion(q.id, q.xp || 15);
+			}
 		}
+
 		currentScreen = 'FEEDBACK';
 	}
 
@@ -236,9 +199,24 @@
 			userSelectedOptionId = null;
 			currentScreen = 'QUESTION';
 		} else {
-			// All 5 questions in level finished
-			const isFirst = progressStore.completeLearningLevel(activeLearningLevel.id, activeLearningLevel.xpReward);
-			earnedLearningXpThisRun = isFirst ? activeLearningLevel.xpReward : 0;
+			// All questions in level finished
+			const summary = calculateQuizSummary(
+				quizSessionAnswers,
+				activeLevelQuestions.length,
+				activeLearningLevel.xpReward
+			);
+
+			const isFirst = progressStore.completeLearningLevel(
+				activeLearningLevel.id,
+				summary.earnedLevelXp,
+				{
+					correctAnswers: summary.correctAnswers,
+					totalQuestions: summary.totalQuestions,
+					isPerfect: summary.isPerfect
+				}
+			);
+
+			earnedLearningXpThisRun = isFirst ? summary.earnedLevelXp : 0;
 			currentScreen = 'LEARN_SUCCESS';
 		}
 	}
@@ -249,6 +227,7 @@
 			currentQuestionInLevelIndex = 0;
 			userSelectedOptionId = null;
 			earnedLearningXpThisRun = 0;
+			quizSessionAnswers = {}; // Reset session answers for next level
 			currentScreen = 'QUESTION';
 			requestAppFullscreen();
 		} else {
@@ -260,6 +239,7 @@
 		currentQuestionInLevelIndex = 0;
 		userSelectedOptionId = null;
 		earnedLearningXpThisRun = 0;
+		quizSessionAnswers = {}; // Reset session answers for replay
 		currentScreen = 'QUESTION';
 		requestAppFullscreen();
 	}
@@ -271,7 +251,6 @@
 		currentChallengeIndex = chIdx;
 		attemptsCount = 0;
 		earnedXpThisRun = 0;
-		isFocusPauseOverlayOpen = false;
 		syncChallengeArena();
 		currentScreen = 'MISSION_BRIEFING';
 	}
@@ -294,6 +273,13 @@
 		isRunning = true;
 		attemptsCount++;
 
+		// Instantly reset PyBot visual position to startPos
+		if (activeChallenge) {
+			playerPos = { ...activeChallenge.grid.startPos };
+			playerDirection = activeChallenge.grid.startDirection;
+			collectedCoins = [];
+		}
+
 		const { commands, error } = compileBlocksToCommands(workspaceBlocks);
 		if (error) {
 			isRunning = false;
@@ -309,11 +295,22 @@
 			return;
 		}
 
-		const effectiveMaxActions = activeChallenge.maxMoves || 30;
-		const steps: SimulationStep[] = simulateCommands(activeChallenge.grid, commands, effectiveMaxActions);
+		const effectiveMaxMoves = activeChallenge.maxMoves || 30;
+		const steps: SimulationStep[] = simulateCommands(activeChallenge.grid, commands, {
+			maxMoves: effectiveMaxMoves,
+			maxActions: 150
+		});
 
 		gameStatus = 'RUNNING';
 		let stepIdx = 0;
+
+		// Smoothly scroll to top on mobile portrait so player can watch PyBot run the maze
+		if (typeof window !== 'undefined' && window.innerWidth < 768) {
+			const mainEl = document.querySelector('main');
+			if (mainEl && mainEl.scrollTop > 40) {
+				mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+			}
+		}
 
 		simulationTimer = setInterval(() => {
 			if (stepIdx >= steps.length) {
@@ -395,6 +392,7 @@
 		attemptsCount = 0;
 		earnedXpThisRun = 0;
 		earnedLearningXpThisRun = 0;
+		quizSessionAnswers = {};
 		currentScreen = 'LANDING';
 	}
 </script>
@@ -403,12 +401,7 @@
 	<title>PyQuest — Petualangan Logika Python</title>
 </svelte:head>
 
-<div class="bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white {currentScreen === 'CHALLENGE' ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'min-h-screen'}">
-	<!-- Mobile Orientation Guard (Active during Coding Game mode in portrait) -->
-	{#if currentScreen === 'CHALLENGE'}
-		<OrientationGuard />
-	{/if}
-
+<div class="bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white {currentScreen === 'CHALLENGE' ? 'min-h-screen portrait:h-auto portrait:overflow-visible landscape:h-[100dvh] landscape:max-h-[100dvh] landscape:overflow-hidden md:h-[100dvh] md:max-h-[100dvh] md:overflow-hidden' : 'min-h-screen'}">
 	<!-- Top Nav with Mode Switcher -->
 	{#if currentScreen === 'CHALLENGE'}
 		<div class="hidden md:block">
@@ -424,60 +417,6 @@
 		/>
 	{/if}
 
-	<!-- Focus Mode / Anti-Cheat Warning Toast Banner -->
-	{#if focusWarning}
-		<div class="fixed top-14 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-lg bg-amber-950/90 border border-amber-500 text-amber-200 px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 backdrop-blur-md animate-fade-in">
-			<Icon name="alert-triangle" size={20} class="text-amber-400 shrink-0" />
-			<div class="text-xs sm:text-sm font-medium flex-1">
-				{focusWarning}
-			</div>
-			<button
-				type="button"
-				onclick={() => (focusWarning = null)}
-				class="text-amber-400 hover:text-white p-1 rounded-lg"
-			>
-				<Icon name="x" size={14} />
-			</button>
-		</div>
-	{/if}
-
-	<!-- Dedicated Pause Overlay When Fullscreen Focus is Exited in Challenge or Quiz Mode -->
-	{#if isFocusPauseOverlayOpen && (currentScreen === 'CHALLENGE' || currentScreen === 'QUESTION')}
-		<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
-			<div class="w-full max-w-md bg-slate-900 border-2 border-amber-500/60 rounded-3xl p-6 sm:p-7 shadow-2xl shadow-amber-500/10 text-center relative overflow-hidden">
-				<div class="w-16 h-16 mx-auto rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-4 border border-amber-500/30">
-					<Icon name="maximize" size={32} />
-				</div>
-
-				<h3 class="text-xl sm:text-2xl font-black text-white mb-2">
-					MODE FOKUS BERHENTI
-				</h3>
-				<p class="text-xs sm:text-sm text-slate-300 mb-6 leading-relaxed">
-					Sesi dijeda karena jendela keluar dari Mode Layar Penuh. Kembalikan mode fokus untuk melanjutkan {currentScreen === 'CHALLENGE' ? 'tantangan koding' : 'soal latihan'} tanpa kehilangan progresmu.
-				</p>
-
-				<div class="space-y-2.5">
-					<button
-						type="button"
-						onclick={handleResumeFocusMode}
-						class="w-full py-3 bg-gradient-to-r from-amber-400 to-emerald-400 hover:from-amber-300 hover:to-emerald-300 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-400/20 transition-all cursor-pointer flex items-center justify-center gap-2"
-					>
-						<Icon name="play" size={16} class="text-slate-950" />
-						<span>Kembali ke Permainan</span>
-					</button>
-
-					<button
-						type="button"
-						onclick={handleExitFocus}
-						class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
-					>
-						<Icon name="arrow-left" size={14} />
-						<span>{currentScreen === 'CHALLENGE' ? 'Keluar ke Menu Game' : 'Keluar ke Menu Level'}</span>
-					</button>
-				</div>
-			</div>
-		</div>
-	{/if}
 
 	<!-- Google Authentication Modal -->
 	<GoogleAuthModal
@@ -491,7 +430,7 @@
 	/>
 
 	<!-- Body Layout with Desktop Sidebar -->
-	<div class="flex-1 flex overflow-hidden min-h-0">
+	<div class="flex-1 flex {currentScreen === 'CHALLENGE' ? 'portrait:h-auto portrait:overflow-visible landscape:overflow-hidden md:overflow-hidden' : 'overflow-hidden'} min-h-0">
 		{#if currentScreen === 'LANDING' || currentScreen === 'LEARN_SELECT' || currentScreen === 'LEVEL_SELECT' || currentScreen === 'PROFILE'}
 			<Sidebar
 				currentMode={activeNavbarMode}
@@ -501,7 +440,7 @@
 		{/if}
 
 		<!-- Main Stage -->
-		<main class="flex-1 flex flex-col {currentScreen === 'CHALLENGE' ? 'p-1.5 sm:p-2.5 landscape:p-1 overflow-hidden h-full max-h-full' : 'p-2 sm:p-4 md:p-6 pb-20 lg:pb-6 overflow-y-auto'} min-h-0">
+		<main class="flex-1 flex flex-col {currentScreen === 'CHALLENGE' ? 'p-1.5 sm:p-2.5 landscape:p-1 portrait:h-auto portrait:overflow-y-auto portrait:pb-24 landscape:h-full landscape:max-h-full landscape:overflow-hidden md:h-full md:max-h-full md:overflow-hidden' : 'p-2 sm:p-4 md:p-6 pb-20 lg:pb-6 overflow-y-auto'} min-h-0">
 			<!-- 1. LANDING / HOME -->
 			{#if currentScreen === 'LANDING'}
 				<LandingHero
@@ -543,6 +482,8 @@
 				<LearningSuccessModal
 					level={activeLearningLevel}
 					xpEarned={earnedLearningXpThisRun}
+					correctAnswers={currentQuizStats.correctAnswers}
+					totalQuestions={currentQuizStats.totalQuestions}
 					isLastLevel={currentLearningLevelIndex === learningLevelsData.length - 1}
 					onNextLevel={handleNextLearningLevel}
 					onReplayLevel={handleReplayLearningLevel}
@@ -570,7 +511,8 @@
 
 			<!-- 8. CODING GAME CHALLENGE -->
 			{:else if currentScreen === 'CHALLENGE'}
-				<div class="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto w-full h-full overflow-hidden">
+				<OrientationGuard />
+				<div class="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto w-full portrait:h-auto portrait:overflow-visible landscape:h-full landscape:overflow-hidden md:h-full md:overflow-hidden">
 					<ChallengeHeader
 						title={`${activeLevel.title} — ${activeChallenge.title}`}
 						objective={activeChallenge.objective}
@@ -582,8 +524,8 @@
 						}}
 					/>
 
-					<div class="flex-1 grid grid-cols-1 landscape:grid-cols-2 md:grid-cols-2 gap-2 sm:gap-3 landscape:gap-2 min-h-0 h-full overflow-hidden">
-						<div class="h-full min-h-0 overflow-hidden">
+					<div class="flex-1 flex flex-col md:grid md:grid-cols-2 landscape:grid landscape:grid-cols-2 gap-2 sm:gap-3 landscape:gap-2 min-h-0 portrait:h-auto landscape:h-full md:h-full overflow-hidden portrait:overflow-visible">
+						<div class="w-full max-w-md mx-auto portrait:h-[280px] sm:portrait:h-[320px] landscape:h-full md:h-full min-h-0 overflow-hidden shrink-0">
 							<GameCanvas
 								grid={activeChallenge.grid}
 								{playerPos}
@@ -594,7 +536,7 @@
 							/>
 						</div>
 
-						<div class="h-full min-h-0 overflow-hidden">
+						<div class="w-full portrait:h-auto portrait:min-h-0 portrait:overflow-visible landscape:h-full md:h-full min-h-0 overflow-hidden">
 							<BlockWorkspace
 								bind:workspaceBlocks
 								availableBlocks={activeChallenge.availableBlocks}
@@ -644,6 +586,7 @@
 	<!-- Success Reward Modal Popup (Coding Game Mode) -->
 	{#if currentScreen === 'REWARD'}
 		<ChallengeSuccessModal
+			level={activeLevel}
 			challenge={activeChallenge}
 			xpEarned={earnedXpThisRun}
 			{attemptsCount}

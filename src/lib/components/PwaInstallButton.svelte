@@ -33,7 +33,7 @@
 			<button
 				type="button"
 				onclick={handleInstallClick}
-				class="w-full flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-2xl bg-gradient-to-r from-indigo-950/80 to-slate-900 border border-indigo-500/30 hover:border-indigo-400 text-slate-200 hover:text-white font-bold text-xs transition-all cursor-pointer shadow-md group active:scale-98"
+				class="w-full flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-indigo-500/30 hover:border-indigo-400 text-slate-200 hover:text-white font-bold text-xs transition-all cursor-pointer shadow-md group active:scale-98"
 			>
 				<div class="flex items-center gap-2.5">
 					<div class="w-7 h-7 rounded-lg bg-indigo-500/20 border border-indigo-500/40 text-cyan-400 flex items-center justify-center">

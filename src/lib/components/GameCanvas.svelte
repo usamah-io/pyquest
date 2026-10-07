@@ -19,6 +19,20 @@
 		status: 'IDLE' | 'READY' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'OUT_OF_BOUNDS';
 	} = $props();
 
+	// History of tiles visited in current run for active path illumination
+	let visitedHistory = $state<GridCoord[]>([]);
+
+	$effect(() => {
+		const pos = playerPos;
+		if (status === 'IDLE' || status === 'READY') {
+			visitedHistory = [{ x: pos.x, y: pos.y }];
+		} else {
+			if (!visitedHistory.some((v) => isCoordEqual(v, pos))) {
+				visitedHistory = [...visitedHistory, { x: pos.x, y: pos.y }];
+			}
+		}
+	});
+
 	function getPlayerRotation(dir: Direction): number {
 		switch (dir) {
 			case 'UP':
@@ -45,138 +59,204 @@
 		}
 	}
 	.animate-pybot-float {
-		animation: pybotFloat 2.4s ease-in-out infinite;
+		animation: pybotFloat 2.2s ease-in-out infinite;
 	}
 
 	@keyframes starPulse {
 		0%, 100% {
 			transform: scale(1);
-			filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.7));
+			filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.8));
 		}
 		50% {
-			transform: scale(1.12);
-			filter: drop-shadow(0 0 16px rgba(251, 191, 36, 1));
+			transform: scale(1.14);
+			filter: drop-shadow(0 0 20px rgba(251, 191, 36, 1));
 		}
 	}
 	.animate-star-pulse {
 		animation: starPulse 2s ease-in-out infinite;
 	}
+
+	@keyframes victorySparkle {
+		0%, 100% {
+			opacity: 0.3;
+			transform: scale(0.9);
+		}
+		50% {
+			opacity: 1;
+			transform: scale(1.15);
+		}
+	}
+	.animate-victory-sparkle {
+		animation: victorySparkle 1.2s ease-in-out infinite;
+	}
 </style>
 
-<div class="flex flex-col h-full bg-slate-900/90 border border-slate-800 rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 landscape:p-2.5 shadow-xl overflow-hidden backdrop-blur-md">
-	<!-- Grid Header / Status Message -->
-	<div class="flex items-center justify-between pb-2 sm:pb-3 landscape:pb-1.5 border-b border-slate-800 shrink-0">
+<div class="flex flex-col h-full bg-slate-900 border border-cyan-500/25 rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 landscape:p-2.5 shadow-2xl shadow-indigo-950/40 overflow-hidden relative backdrop-blur-md">
+	<!-- Game Panel Header -->
+	<div class="flex items-center justify-between pb-2 sm:pb-3 landscape:pb-1.5 border-b border-cyan-500/15 shrink-0 relative z-10">
 		<div class="flex items-center gap-2">
-			<Icon name="target" size={17} class="text-indigo-400" />
-			<h3 class="font-black text-white text-xs sm:text-base landscape:text-xs tracking-wide">Arena Labirin 2D</h3>
+			<div class="w-6 h-6 sm:w-7 sm:h-7 rounded-xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 flex items-center justify-center shadow-xs shadow-cyan-500/20">
+				<Icon name="gamepad" size={14} />
+			</div>
+			<div class="flex items-center gap-1.5">
+				<h3 class="font-black text-white text-xs sm:text-base landscape:text-xs tracking-wide">Arena Labirin 2D</h3>
+				<div class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></div>
+			</div>
 		</div>
-		<div class="text-[11px] sm:text-xs px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full font-bold flex items-center gap-1.5 {status === 'SUCCESS' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : status === 'FAILED' || status === 'OUT_OF_BOUNDS' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : status === 'RUNNING' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-slate-800 text-slate-300'}">
+
+		<!-- Status Badge -->
+		<div class="text-[10px] sm:text-xs px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full font-black flex items-center gap-1.5 shadow-sm {status === 'SUCCESS' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 shadow-emerald-500/20' : status === 'FAILED' || status === 'OUT_OF_BOUNDS' ? 'bg-rose-500/20 text-rose-300 border border-rose-400/50 shadow-rose-500/20' : status === 'RUNNING' ? 'bg-amber-500/20 text-amber-300 border border-amber-400/50 shadow-amber-500/20' : 'bg-slate-800/90 text-slate-300 border border-slate-700'}">
 			{#if status === 'SUCCESS'}
-				<Icon name="check" size={12} />
+				<Icon name="check" size={12} class="text-emerald-400" />
 				<span>BERHASIL</span>
 			{:else if status === 'RUNNING'}
-				<Icon name="repeat" size={12} class="animate-spin" />
+				<div class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></div>
 				<span>MENJALANKAN</span>
 			{:else if status === 'FAILED' || status === 'OUT_OF_BOUNDS'}
-				<Icon name="alert-triangle" size={12} />
+				<Icon name="alert-triangle" size={12} class="text-rose-400" />
 				<span>BELUM TEPAT</span>
 			{:else}
+				<div class="w-1.5 h-1.5 rounded-full bg-cyan-400"></div>
 				<span>SIAP</span>
 			{/if}
 		</div>
 	</div>
 
 	<!-- Arena Canvas / Tile Grid Area -->
-	<div class="flex-1 flex items-center justify-center p-1.5 sm:p-3 landscape:p-1 relative min-h-0 overflow-hidden">
-		<!-- The Grid Map with elevated tile textures -->
+	<div class="flex-1 flex items-center justify-center p-1 sm:p-2.5 landscape:p-1 relative min-h-0 overflow-hidden z-10">
+		<!-- The Game World Floor with elevated depth & environmental details -->
 		<div
-			class="grid gap-1 sm:gap-1.5 landscape:gap-1 p-2 sm:p-3 landscape:p-1.5 rounded-2xl bg-slate-950 border border-slate-800/90 shadow-2xl relative select-none max-h-full"
-			style="grid-template-columns: repeat({grid.cols}, minmax(0, 1fr)); width: min(100%, 340px); aspect-ratio: {grid.cols} / {grid.rows};"
+			class="relative p-2 sm:p-3 landscape:p-1.5 rounded-2xl bg-[#0c1830] border-2 border-cyan-500/30 shadow-[0_15px_35px_rgba(0,0,0,0.6),inset_0_2px_4px_rgba(255,255,255,0.08)] select-none max-h-full"
+			style="width: min(100%, 350px); aspect-ratio: {grid.cols} / {grid.rows};"
 		>
-			{#each Array(grid.rows) as _, r}
-				{#each Array(grid.cols) as _, c}
-					{@const currentCoord = { x: c, y: r }}
-					{@const isPlayer = isCoordEqual(playerPos, currentCoord)}
-					{@const isTarget = isCoordEqual(grid.targetPos, currentCoord)}
-					{@const isObstacle = grid.obstacles.some((o: GridCoord) => isCoordEqual(o, currentCoord))}
-					{@const isCoin = grid.coins && grid.coins.some((coin: GridCoord) => isCoordEqual(coin, currentCoord))}
-					{@const isCoinCollected = collectedCoins.some((coin: GridCoord) => isCoordEqual(coin, currentCoord))}
+			<!-- Decorative Corner Sci-Fi LED Nodes -->
+			<div class="absolute top-1.5 left-1.5 w-1.5 h-1.5 rounded-full bg-cyan-400/60 shadow-[0_0_6px_rgba(34,211,238,0.8)]"></div>
+			<div class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-cyan-400/60 shadow-[0_0_6px_rgba(34,211,238,0.8)]"></div>
+			<div class="absolute bottom-1.5 left-1.5 w-1.5 h-1.5 rounded-full bg-indigo-400/60 shadow-[0_0_6px_rgba(129,140,248,0.8)]"></div>
+			<div class="absolute bottom-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-indigo-400/60 shadow-[0_0_6px_rgba(129,140,248,0.8)]"></div>
 
-					<div
-						class="relative rounded-xl flex items-center justify-center transition-all duration-300 overflow-hidden {isObstacle
-							? 'bg-gradient-to-b from-slate-700 to-slate-800 border-t border-t-slate-500 border-b-2 border-b-slate-950 shadow-[0_4px_6px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.15)]'
-							: 'bg-gradient-to-b from-slate-900/90 to-slate-950 border border-slate-800/80 border-t-slate-700/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_2px_4px_rgba(0,0,0,0.4)] hover:border-slate-600/60'}"
-					>
-						<!-- Subtle Grid Line Accents -->
-						<div class="absolute inset-0 bg-radial from-transparent to-black/20 pointer-events-none"></div>
+			<!-- Grid Tiles Map -->
+			<div
+				class="grid gap-1 sm:gap-1.5 landscape:gap-1 w-full h-full relative"
+				style="grid-template-columns: repeat({grid.cols}, minmax(0, 1fr)); grid-template-rows: repeat({grid.rows}, minmax(0, 1fr));"
+			>
+				{#each Array(grid.rows) as _, r}
+					{#each Array(grid.cols) as _, c}
+						{@const currentCoord = { x: c, y: r }}
+						{@const isTarget = isCoordEqual(grid.targetPos, currentCoord)}
+						{@const isObstacle = grid.obstacles.some((o: GridCoord) => isCoordEqual(o, currentCoord))}
+						{@const isCoin = grid.coins && grid.coins.some((coin: GridCoord) => isCoordEqual(coin, currentCoord))}
+						{@const isCoinCollected = collectedCoins.some((coin: GridCoord) => isCoordEqual(coin, currentCoord))}
+						{@const isVisited = visitedHistory.some((v) => isCoordEqual(v, currentCoord))}
+						{@const isStartTile = isCoordEqual(grid.startPos, currentCoord)}
 
-						<!-- Coordinate hint (subtle) -->
-						<span class="absolute bottom-0.5 right-1 text-[7px] sm:text-[8px] font-mono text-slate-700/70 pointer-events-none select-none">
-							{c},{r}
-						</span>
+						<div
+							class="relative rounded-xl flex items-center justify-center transition-all duration-300 overflow-hidden {isObstacle
+								? 'bg-slate-800 border border-slate-600/60 border-t-slate-500/80 border-b-[3px] border-b-slate-950 shadow-[0_5px_8px_rgba(0,0,0,0.6)]'
+								: isTarget
+									? 'bg-[#1b2214] border-2 border-amber-400/60 shadow-[0_0_15px_rgba(251,191,36,0.3)]'
+									: isVisited
+										? 'bg-[#132c45] border border-cyan-400/50 shadow-[0_0_10px_rgba(34,211,238,0.25)]'
+										: isStartTile
+											? 'bg-[#13233c] border border-cyan-500/40 shadow-[inset_0_0_8px_rgba(34,211,238,0.2)]'
+											: 'bg-[#142138] border border-cyan-500/20 border-t-cyan-300/30 border-b-2 border-b-[#0a1220] shadow-[0_3px_5px_rgba(0,0,0,0.4)] hover:border-cyan-400/40'}"
+						>
+							<!-- Subtle Tile Grid Intersection Dots / Circuit Details -->
+							<div class="absolute top-1 left-1 w-1 h-1 rounded-full bg-cyan-400/15 pointer-events-none"></div>
 
-						<!-- Obstacle Rock / Barrier (3D block with texture) -->
-						{#if isObstacle}
-							<div class="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-b from-slate-600 to-slate-800 border border-slate-500/60 flex items-center justify-center text-slate-300 shadow-inner">
-								<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-none stroke-current stroke-2">
-									<path d="M4 18h16l-3-11-5 4-4-5z" />
-								</svg>
-							</div>
-						{/if}
+							<!-- Start Launchpad Corner Bracket Accent -->
+							{#if isStartTile && !isObstacle}
+								<div class="absolute inset-1 border border-cyan-400/25 border-dashed rounded-lg pointer-events-none"></div>
+							{/if}
 
-						<!-- Target Goal (Gold Star with Pulse & Glow Aura) -->
-						{#if isTarget}
-							<div class="relative flex items-center justify-center">
-								<div class="absolute w-8 h-8 rounded-full bg-amber-400/20 blur-md pointer-events-none"></div>
-								<div class="animate-star-pulse text-amber-300">
-									<Icon name="star" size={24} class="sm:hidden" />
-									<Icon name="star" size={28} class="hidden sm:inline" />
+							<!-- Tile Coordinate Label -->
+							<span class="absolute bottom-0.5 right-1 text-[7px] sm:text-[8px] font-mono text-cyan-300/30 pointer-events-none select-none">
+								{c},{r}
+							</span>
+
+							<!-- Obstacle Rock / 3D Barrier Block -->
+							{#if isObstacle}
+								<div class="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-slate-700 border border-slate-500/50 flex items-center justify-center text-slate-200 shadow-md">
+									<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 fill-slate-500/40 stroke-slate-200 stroke-2">
+										<path d="M4 18h16l-3-11-5 4-4-5z" />
+									</svg>
 								</div>
-							</div>
-						{/if}
+							{/if}
 
-						<!-- Collectible Coin (Zap Coin) -->
-						{#if isCoin && !isCoinCollected && !isTarget}
-							<div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-amber-400/20 border border-amber-400 text-amber-400 flex items-center justify-center animate-bounce shadow-sm">
-								<Icon name="zap" size={12} />
-							</div>
-						{/if}
+							<!-- Target Goal (Pulsating Golden Star + Target Rings) -->
+							{#if isTarget}
+								<div class="relative flex items-center justify-center">
+									<!-- Target floor ring -->
+									<div class="absolute w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-amber-400/30 animate-ping pointer-events-none"></div>
+									<div class="absolute w-6 h-6 rounded-full bg-amber-400/25 blur-sm pointer-events-none"></div>
 
-						<!-- Player Robot (Alive Floating PyBot Mascot + Direction Indicator) -->
-						{#if isPlayer}
-							<div
-								class="absolute inset-0 flex items-center justify-center transition-transform duration-300 z-10"
-								style="transform: rotate({getPlayerRotation(playerDirection)}deg);"
-							>
-								<div class="animate-pybot-float relative flex items-center justify-center">
-									<!-- Aura glow behind PyBot -->
-									<div class="absolute -inset-1 rounded-2xl bg-cyan-400/20 blur-sm pointer-events-none"></div>
-
-									<!-- PyBot Sprite Container -->
-									<div class="w-7 h-7 sm:w-9 sm:h-9 landscape:w-7 landscape:h-7 rounded-xl bg-slate-900 border-2 border-cyan-400 p-0.5 sm:p-1 flex items-center justify-center shadow-lg shadow-cyan-500/40 relative">
-										<div style="transform: rotate({-getPlayerRotation(playerDirection)}deg);" class="w-full h-full flex items-center justify-center">
-											<img
-												src="/mascot/pybot-front-idle.png"
-												alt="PyBot"
-												class="w-full h-full object-contain filter drop-shadow"
-											/>
-										</div>
+									<!-- Floating Star Vector -->
+									<div class="animate-star-pulse text-amber-300">
+										<Icon name="star" size={24} class="sm:hidden fill-amber-300" />
+										<Icon name="star" size={28} class="hidden sm:inline fill-amber-300" />
 									</div>
 
-									<!-- Direction Heading Indicator Triangle -->
-									<div class="absolute -right-2.5 w-0 h-0 border-y-[5px] border-y-transparent border-l-[8px] border-l-cyan-300 filter drop-shadow-[0_0_4px_rgba(34,211,238,0.9)] animate-pulse"></div>
+									{#if status === 'SUCCESS'}
+										<div class="absolute -inset-2 rounded-full bg-amber-400/40 blur-md animate-victory-sparkle pointer-events-none"></div>
+									{/if}
 								</div>
-							</div>
-						{/if}
-					</div>
+							{/if}
+
+							<!-- Collectible Energy Coin -->
+							{#if isCoin && !isCoinCollected && !isTarget}
+								<div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-amber-400 border-2 border-yellow-200 text-slate-950 flex items-center justify-center animate-bounce shadow-[0_0_12px_rgba(251,191,36,0.8)]">
+									<Icon name="zap" size={12} class="fill-current" />
+								</div>
+							{/if}
+						</div>
+					{/each}
 				{/each}
-			{/each}
+
+				<!-- ======================================================== -->
+				<!-- SMOOTHLY GLIDING PYBOT MASCOT OVERLAY                    -->
+				<!-- (Transitions smoothly between coordinates without teleport) -->
+				<!-- ======================================================== -->
+				<div
+					class="absolute z-20 pointer-events-none flex items-center justify-center transition-all duration-300 ease-out"
+					style="
+						width: calc(100% / {grid.cols});
+						height: calc(100% / {grid.rows});
+						left: calc({playerPos.x} * 100% / {grid.cols});
+						top: calc({playerPos.y} * 100% / {grid.rows});
+					"
+				>
+					<div class="animate-pybot-float relative flex items-center justify-center w-full h-full">
+						<!-- Moving cyan under-glow underneath PyBot -->
+						<div class="absolute -inset-1.5 rounded-full bg-cyan-400/35 blur-md pointer-events-none animate-pulse"></div>
+
+						<!-- Ground contact shadow -->
+						<div class="absolute bottom-1 w-6 h-1.5 rounded-full bg-black/60 blur-[1px]"></div>
+
+						<!-- PyBot Mascot Card -->
+						<div class="w-7 h-7 sm:w-9 sm:h-9 landscape:w-7 landscape:h-7 rounded-xl bg-slate-900 border-2 border-cyan-400 p-0.5 sm:p-1 flex items-center justify-center shadow-[0_0_16px_rgba(34,211,238,0.6)] relative">
+							<img
+								src="/mascot/pybot-front-idle.png"
+								alt="PyBot"
+								class="w-full h-full object-contain filter drop-shadow"
+							/>
+						</div>
+
+						<!-- Smoothly Rotating Direction Heading Triangle Indicator -->
+						<div
+							class="absolute -right-2.5 transition-transform duration-300 origin-[-4px_center]"
+							style="transform: rotate({getPlayerRotation(playerDirection)}deg);"
+						>
+							<div class="w-0 h-0 border-y-[5px] border-y-transparent border-l-[8px] border-l-cyan-300 filter drop-shadow-[0_0_5px_rgba(34,211,238,1)] animate-pulse"></div>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 
 	<!-- Status Message Bar at Bottom -->
-	<div class="pt-1.5 sm:pt-2 landscape:pt-1 border-t border-slate-800 shrink-0">
-		<div class="p-2 sm:p-2.5 landscape:p-1.5 rounded-xl bg-slate-950/80 border border-slate-800 text-[11px] sm:text-xs text-center font-medium truncate sm:whitespace-normal {status === 'SUCCESS' ? 'text-emerald-400 font-bold' : status === 'FAILED' || status === 'OUT_OF_BOUNDS' ? 'text-rose-400 font-bold' : 'text-slate-300'}">
+	<div class="pt-1.5 sm:pt-2 landscape:pt-1 border-t border-cyan-500/15 shrink-0 relative z-10">
+		<div class="p-2 sm:p-2.5 landscape:p-1.5 rounded-xl bg-[#09152b]/90 border border-cyan-500/25 text-[11px] sm:text-xs text-center font-bold truncate sm:whitespace-normal {status === 'SUCCESS' ? 'text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.2)]' : status === 'FAILED' || status === 'OUT_OF_BOUNDS' ? 'text-rose-300 shadow-[0_0_10px_rgba(244,63,94,0.2)]' : status === 'RUNNING' ? 'text-amber-200' : 'text-cyan-200'}">
 			{statusMessage || 'Susun balok instruksi lalu tekan tombol JALANKAN KODE.'}
 		</div>
 	</div>

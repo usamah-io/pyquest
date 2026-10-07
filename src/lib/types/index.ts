@@ -51,12 +51,27 @@ export interface Question {
 	xp: number;
 }
 
+export interface LevelAchievement {
+	id: string;
+	levelId: number;
+	title: string;
+	description: string;
+	icon: string;
+	xpReward: number;
+}
+
 export interface LearningLevel {
 	id: number;
+	unitId?: number;
+	unitTitle?: string;
 	title: string;
 	topic: string;
 	description: string;
+	objective?: string;
+	quickTip?: string;
+	concepts?: string[];
 	concept: string;
+	achievement?: LevelAchievement;
 	difficulty: QuestionDifficulty;
 	questionIds: string[];
 	xpReward: number;
@@ -86,13 +101,20 @@ export interface Challenge {
 	xp?: number;
 	hints: string[];
 	concept?: string;
+	canonicalCommands?: ('MOVE' | 'TURN_LEFT' | 'TURN_RIGHT')[];
 }
 
 export interface GameLevel {
 	id: number;
+	unitId?: number;
+	unitTitle?: string;
 	title: string;
 	description: string;
+	objective?: string;
+	quickTip?: string;
+	concepts?: string[];
 	concept: string;
+	achievement?: LevelAchievement;
 	difficulty: 1 | 2 | 3 | 4 | 5;
 	challenges: Challenge[];
 }
@@ -117,6 +139,7 @@ export interface UserProgress {
 	completedChallenges: string[];
 	completedLevels: number[]; // Coding game levels
 	completedLearningLevels: number[]; // Learning module levels
+	learningLevelScores?: Record<number, { correctAnswers: number; totalQuestions: number; isPerfect: boolean }>;
 	streak: number;
 }
 

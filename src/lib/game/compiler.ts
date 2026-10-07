@@ -15,7 +15,11 @@ export function compileBlocksToCommands(
 
 	function processBlock(block: CodingBlock) {
 		if (commands.length >= maxInstructions) {
-			throw new Error('PyBot berhenti dulu karena perintahnya berulang terlalu lama.');
+			throw new Error(
+				inForever
+					? 'Kodenya berjalan terlalu lama. Coba periksa blok SELAMANYA.'
+					: 'PyBot berhenti dulu karena perintahnya berulang terlalu lama.'
+			);
 		}
 
 		if (block.type === 'MOVE') {

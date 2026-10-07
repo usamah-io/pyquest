@@ -16,7 +16,7 @@
 <div class="flex-1 flex flex-col justify-center items-center p-4 sm:p-8 max-w-2xl mx-auto w-full text-center">
 	<div class="w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-indigo-500/10">
 		<!-- Award Badge Icon -->
-		<div class="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-3xl bg-gradient-to-tr from-amber-400 to-indigo-500 p-1 mb-6 shadow-xl shadow-indigo-500/30">
+		<div class="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-3xl bg-amber-500/20 border-2 border-amber-400 p-1 mb-6 shadow-xl shadow-amber-500/20">
 			<div class="w-full h-full bg-slate-900 rounded-[22px] flex items-center justify-center text-amber-400">
 				<Icon name="trophy" size={44} />
 			</div>

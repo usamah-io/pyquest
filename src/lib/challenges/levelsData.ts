@@ -6,9 +6,22 @@ export const levelsData: GameLevel[] = [
 	// ==========================================
 	{
 		id: 1,
+		unitId: 1,
+		unitTitle: 'Unit 1: Langkah Dasar & Orientasi',
 		title: 'Level 1: Langkah & Belokan',
-		description: 'Pahami cara melangkah dan mengarahkan belokan PyBot di jalur sudut sederhana.',
+		description: 'Pahami urutan langkah dan belokan pertama PyBot.',
+		objective: 'Belajar urutan perintah dasar.',
+		quickTip: 'PyBot menjalankan perintah satu per satu dari atas ke bawah mengikuti urutan balokmu.',
+		concepts: ['MAJU', 'BELOK KANAN'],
 		concept: 'Sekuensial & Arah: Instruksi langkah dan rotasi dieksekusi berurutan menuju target.',
+		achievement: {
+			id: 'ach-lvl-1',
+			levelId: 1,
+			title: 'Ahli Langkah',
+			description: 'Kuasai urutan langkah dan belokan pertama robot.',
+			icon: 'compass',
+			xpReward: 25
+		},
 		difficulty: 1,
 		challenges: [
 			{
@@ -102,9 +115,22 @@ export const levelsData: GameLevel[] = [
 	// ==========================================
 	{
 		id: 2,
-		title: 'Level 2: Belokan Pertama',
-		description: 'Pelajari rotasi arah hadap robot menggunakan BELOK KANAN dan KIRI.',
+		unitId: 1,
+		unitTitle: 'Unit 1: Langkah Dasar & Orientasi',
+		title: 'Level 2: Belok Kiri & Kanan',
+		description: 'Kuasai arah hadap PyBot dengan belok kiri dan kanan.',
+		objective: 'Belajar belok kiri & kanan.',
+		quickTip: 'Perhatikan arah hadap robot sebelum memilih belok kiri atau kanan.',
+		concepts: ['BELOK KIRI', 'BELOK KANAN'],
 		concept: 'Rotasi Arah: Memutar arah hadap tanpa berpindah koordinat.',
+		achievement: {
+			id: 'ach-lvl-2',
+			levelId: 2,
+			title: 'Navigator PyBot',
+			description: 'Kuasai kontrol arah hadap robot di tikungan lorong.',
+			icon: 'corner-up-right',
+			xpReward: 30
+		},
 		difficulty: 1,
 		challenges: [
 			{
@@ -193,9 +219,22 @@ export const levelsData: GameLevel[] = [
 	// ==========================================
 	{
 		id: 3,
+		unitId: 1,
+		unitTitle: 'Unit 1: Langkah Dasar & Orientasi',
 		title: 'Level 3: Labirin Rintangan',
-		description: 'Pilih jalur alternatif untuk menghindari rintangan batu yang menghalangi jalan.',
+		description: 'Pilih jalur alternatif untuk menghindari rintangan batu.',
+		objective: 'Belajar memilih jalur aman.',
+		quickTip: 'Hindari rintangan batu dengan memilih belokan lebih awal.',
+		concepts: ['PILIH RUTE', 'HINDARI BATU'],
 		concept: 'Pencegahan Tabrakan: Mengecek rintangan sebelum melangkah.',
+		achievement: {
+			id: 'ach-lvl-3',
+			levelId: 3,
+			title: 'Penemu Rute',
+			description: 'Temukan jalan aman tanpa menabrak rintangan batu.',
+			icon: 'shield',
+			xpReward: 35
+		},
 		difficulty: 2,
 		challenges: [
 			{
@@ -285,9 +324,22 @@ export const levelsData: GameLevel[] = [
 	// ==========================================
 	{
 		id: 4,
-		title: 'Level 4: Kekuatan Looping',
-		description: 'Gunakan balok REPEAT untuk mengeksekusi aksi berulang dengan ringkas.',
+		unitId: 2,
+		unitTitle: 'Unit 2: Pola Iterasi & Looping',
+		title: 'Level 4: Loop Pengulangan',
+		description: 'Gunakan balok REPEAT untuk aksi berulang dengan ringkas.',
+		objective: 'Belajar mengulang aksi dengan loop.',
+		quickTip: 'Gunakan REPEAT agar perintah yang sama tidak perlu disusun ulang berkali-kali.',
+		concepts: ['REPEAT', 'LOOP'],
 		concept: 'Looping: for i in range(n) mempersingkat kode yang berulang.',
+		achievement: {
+			id: 'ach-lvl-4',
+			levelId: 4,
+			title: 'Master Loop',
+			description: 'Persingkat kode menggunakan blok perulangan REPEAT.',
+			icon: 'repeat',
+			xpReward: 40
+		},
 		difficulty: 2,
 		challenges: [
 			{
@@ -377,9 +429,22 @@ export const levelsData: GameLevel[] = [
 	// ==========================================
 	{
 		id: 5,
+		unitId: 2,
+		unitTitle: 'Unit 2: Pola Iterasi & Looping',
 		title: 'Level 5: Pola Tangga & Zig-zag',
-		description: 'Kombinasikan belokan dan langkah yang berulang membentuk pola geometris.',
+		description: 'Pola berulang pada rute geometris: kombinasikan belokan dan loop.',
+		objective: 'Temukan pola. Gunakan loop.',
+		quickTip: 'Anak tangga punya pola sama: maju & belok yang berulang secara teratur.',
+		concepts: ['ZIG-ZAG', 'LOOP'],
 		concept: 'Pola Algoritmik: Mengidentifikasi bagian langkah yang berulang teratur.',
+		achievement: {
+			id: 'ach-lvl-5',
+			levelId: 5,
+			title: 'Arsitek Pola',
+			description: 'Eksekusi pola gerak berulang pada lintasan tangga.',
+			icon: 'git-commit',
+			xpReward: 45
+		},
 		difficulty: 3,
 		challenges: [
 			{
@@ -388,51 +453,61 @@ export const levelsData: GameLevel[] = [
 				objective: 'Naik 2 anak tangga dengan pola: Maju -> Belok Kiri -> Maju -> Belok Kanan.',
 				pythonContext: 'for step in range(2):\n    pybot.move()\n    pybot.turn_left()\n    pybot.move()\n    pybot.turn_right()',
 				grid: {
-					cols: 6,
-					rows: 6,
-					startPos: { x: 1, y: 4 },
+					cols: 5,
+					rows: 5,
+					startPos: { x: 1, y: 3 },
 					startDirection: 'RIGHT',
-					targetPos: { x: 3, y: 2 },
+					targetPos: { x: 3, y: 1 },
 					obstacles: [
-						{ x: 1, y: 3 }, { x: 2, y: 4 }, { x: 3, y: 4 },
-						{ x: 2, y: 2 }, { x: 3, y: 3 }, { x: 4, y: 3 }
+						{ x: 1, y: 1 }, { x: 2, y: 1 }, { x: 4, y: 1 },
+						{ x: 1, y: 2 }, { x: 4, y: 2 },
+						{ x: 3, y: 3 },
+						{ x: 1, y: 4 }, { x: 2, y: 4 }, { x: 3, y: 4 }
 					],
-					coins: [{ x: 2, y: 3 }]
+					coins: [{ x: 2, y: 2 }]
 				},
 				availableBlocks: ['MOVE', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
 				maxBlocks: 6,
-				maxMoves: 9,
+				maxMoves: 6,
 				xpReward: 50,
 				hints: [
 					'Setiap anak tangga memiliki pola pergerakan identik: melangkah, berputar, melangkah, lalu kembali ke arah semula.',
 					'Temukan satu siklus anak tangga utuh, lalu masukkan ke dalam blok perulangan.'
+				],
+				canonicalCommands: [
+					'MOVE', 'TURN_LEFT', 'MOVE', 'TURN_RIGHT',
+					'MOVE', 'TURN_LEFT', 'MOVE', 'TURN_RIGHT'
 				]
 			},
 			{
 				id: 'lvl5-ch2',
 				title: 'Pola Zig-Zag Sungai',
-				objective: 'Lintasi sungai dengan berbelok kanan dan kiri secara bergantian.',
-				pythonContext: 'pybot.move()\npybot.turn_right()\npybot.move()\npybot.turn_left()\npybot.move()\npybot.turn_right()\npybot.move()',
+				objective: 'Lintasi sungai zig-zag dengan pola: Maju -> Belok Kanan -> Maju -> Belok Kiri.',
+				pythonContext: 'for step in range(2):\n    pybot.move()\n    pybot.turn_right()\n    pybot.move()\n    pybot.turn_left()',
 				grid: {
-					cols: 6,
-					rows: 6,
+					cols: 5,
+					rows: 5,
 					startPos: { x: 1, y: 1 },
 					startDirection: 'RIGHT',
 					targetPos: { x: 3, y: 3 },
 					obstacles: [
-						{ x: 2, y: 1 }, { x: 1, y: 2 },
-						{ x: 3, y: 2 }, { x: 2, y: 3 },
-						{ x: 4, y: 3 }
+						{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 1 },
+						{ x: 1, y: 2 }, { x: 2, y: 3 }, { x: 4, y: 2 },
+						{ x: 3, y: 4 }, { x: 4, y: 3 }
 					],
 					coins: [{ x: 2, y: 2 }]
 				},
 				availableBlocks: ['MOVE', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
-				maxBlocks: 8,
-				maxMoves: 8,
+				maxBlocks: 6,
+				maxMoves: 6,
 				xpReward: 50,
 				hints: [
 					'Perhatikan lekukan sungai: robot harus berganti arah hadap secara teratur di setiap persimpangan.',
-					'Pastikan kamu tidak melangkah maju saat robot masih menghadap dinding sungai.'
+					'Gunakan perulangan untuk mengeksekusi lekukan berulang tanpa perlu menyusun banyak balok manual.'
+				],
+				canonicalCommands: [
+					'MOVE', 'TURN_RIGHT', 'MOVE', 'TURN_LEFT',
+					'MOVE', 'TURN_RIGHT', 'MOVE', 'TURN_LEFT'
 				]
 			},
 			{
@@ -447,19 +522,24 @@ export const levelsData: GameLevel[] = [
 					startDirection: 'RIGHT',
 					targetPos: { x: 4, y: 1 },
 					obstacles: [
-						{ x: 1, y: 3 }, { x: 2, y: 4 }, { x: 3, y: 4 },
-						{ x: 2, y: 2 }, { x: 3, y: 3 }, { x: 4, y: 3 },
-						{ x: 3, y: 1 }, { x: 4, y: 2 }, { x: 5, y: 2 }
+						{ x: 1, y: 3 }, { x: 2, y: 2 }, { x: 3, y: 1 },
+						{ x: 3, y: 4 }, { x: 4, y: 3 }, { x: 5, y: 1 }, { x: 5, y: 2 },
+						{ x: 1, y: 5 }, { x: 2, y: 5 }, { x: 3, y: 5 }, { x: 4, y: 5 }
 					],
 					coins: [{ x: 2, y: 3 }, { x: 3, y: 2 }]
 				},
 				availableBlocks: ['REPEAT', 'MOVE', 'TURN_LEFT', 'TURN_RIGHT'],
-				maxBlocks: 7,
-				maxMoves: 14,
+				maxBlocks: 6,
+				maxMoves: 8,
 				xpReward: 55,
 				hints: [
 					'Tiga anak tangga berarti pola gerakan tangga yang sama dilakukan berulang tiga kali.',
 					'Susun satu siklus tangga yang tepat di dalam blok REPEAT untuk menghemat kuota balok.'
+				],
+				canonicalCommands: [
+					'MOVE', 'TURN_LEFT', 'MOVE', 'TURN_RIGHT',
+					'MOVE', 'TURN_LEFT', 'MOVE', 'TURN_RIGHT',
+					'MOVE', 'TURN_LEFT', 'MOVE', 'TURN_RIGHT'
 				]
 			}
 		]
@@ -470,9 +550,22 @@ export const levelsData: GameLevel[] = [
 	// ==========================================
 	{
 		id: 6,
+		unitId: 2,
+		unitTitle: 'Unit 2: Pola Iterasi & Looping',
 		title: 'Level 6: Jalur Bercabang',
-		description: 'Analisis percabangan jalan dan pilih rute teraman menuju tujuan.',
+		description: 'Pilih cabang rute yang aman menuju bintang.',
+		objective: 'Pilih cabang rute yang tepat.',
+		quickTip: 'Jangan masuk lorong buntu; cari cabang jalan yang tembus ke target.',
+		concepts: ['PILIH JALUR', 'S-CURVE'],
 		concept: 'Pengambilan Keputusan: Menentukan lintasan yang tidak berujung buntu.',
+		achievement: {
+			id: 'ach-lvl-6',
+			levelId: 6,
+			title: 'Perintis Cabang',
+			description: 'Pilih jalur terbuka di persimpangan jalan.',
+			icon: 'git-branch',
+			xpReward: 50
+		},
 		difficulty: 3,
 		challenges: [
 			{
@@ -562,9 +655,22 @@ export const levelsData: GameLevel[] = [
 	// ==========================================
 	{
 		id: 7,
-		title: 'Level 7: Lintasan Strategis',
-		description: 'Susun instruksi lebih dari 10 langkah dengan efisiensi balok yang tinggi.',
-		concept: 'Optimasi Rute: Merencanakan urutan aksi terpendek tanpa pemborosan balok.',
+		unitId: 3,
+		unitTitle: 'Unit 3: Navigasi Kompleks & Algoritma',
+		title: 'Level 7: Langkah Efisien',
+		description: 'Susun instruksi lintasan panjang dengan efisiensi balok tinggi.',
+		objective: 'Susun langkah paling hemat.',
+		quickTip: 'Manfaatkan loop pada lintasan panjang agar hemat kuota balok.',
+		concepts: ['EFISIENSI', 'HEMAT BALOK'],
+		concept: 'Efisiensi Kode: Menyelesaikan masalah dengan instruksi seminimal mungkin.',
+		achievement: {
+			id: 'ach-lvl-7',
+			levelId: 7,
+			title: 'Peretas Efisien',
+			description: 'Capai target dengan jumlah balok paling sedikit.',
+			icon: 'target',
+			xpReward: 55
+		},
 		difficulty: 4,
 		challenges: [
 			{
@@ -654,9 +760,22 @@ export const levelsData: GameLevel[] = [
 	// ==========================================
 	{
 		id: 8,
-		title: 'Level 8: Algoritma Siklus',
-		description: 'Kombinasikan loop dengan beberapa sub-instruksi di dalamnya.',
+		unitId: 3,
+		unitTitle: 'Unit 3: Navigasi Kompleks & Algoritma',
+		title: 'Level 8: Siklus Berulang',
+		description: 'Kombinasikan loop dan rotasi untuk menavigasi lorong berbentuk siklus.',
+		objective: 'Pecah rute jadi pola siklus.',
+		quickTip: 'Satu loop teratur bisa membersihkan seluruh lorong simetris.',
+		concepts: ['SIKLUS', 'MULTI-LOOP'],
 		concept: 'Iterasi Majemuk: Mengulangi kumpulan instruksi majemuk dalam 1 loop.',
+		achievement: {
+			id: 'ach-lvl-8',
+			levelId: 8,
+			title: 'Pelacak Jalur',
+			description: 'Selesaikan koridor melingkar dengan pola siklus.',
+			icon: 'refresh-cw',
+			xpReward: 60
+		},
 		difficulty: 4,
 		challenges: [
 			{
@@ -745,9 +864,22 @@ export const levelsData: GameLevel[] = [
 	// ==========================================
 	{
 		id: 9,
-		title: 'Level 9: Penjelajah Ulung',
-		description: 'Pecahkan teka-teki labirin dengan kombinasi multi-belokan dan rintangan rapat.',
+		unitId: 3,
+		unitTitle: 'Unit 3: Navigasi Kompleks & Algoritma',
+		title: 'Level 9: Spiral & Lorong Sempit',
+		description: 'Pecahkan teka-teki labirin dengan kombinasi multi-belokan rapat.',
+		objective: 'Kuasai navigasi lorong sempit.',
+		quickTip: 'Perhatikan perubahan arah hadap di setiap sudut lintasan spiral.',
+		concepts: ['SPIRAL', 'ORIENTASI'],
 		concept: 'Struktur Kontrol Kompleks: Gabungan rangkaian panjang dengan evaluasi posisi.',
+		achievement: {
+			id: 'ach-lvl-9',
+			levelId: 9,
+			title: 'Penjelajah Spiral',
+			description: 'Taklukkan lorong sempit berputar.',
+			icon: 'map-pin',
+			xpReward: 70
+		},
 		difficulty: 5,
 		challenges: [
 			{
@@ -836,9 +968,22 @@ export const levelsData: GameLevel[] = [
 	// ==========================================
 	{
 		id: 10,
+		unitId: 3,
+		unitTitle: 'Unit 3: Navigasi Kompleks & Algoritma',
 		title: 'Level 10: Master PyQuest',
-		description: 'Puncak ujian logika pemrograman: tantangan terpadu dengan perencanaan algoritma penuh.',
+		description: 'Puncak ujian logika pemrograman: tantangan terpadu algoritma penuh.',
+		objective: 'Rancang algoritma lengkap ke puncak!',
+		quickTip: 'Gabungkan semua jurus: langkah sekuensial, belokan presisi, dan loop hemat.',
+		concepts: ['ALGORITMA', 'MASTER'],
 		concept: 'Algoritma Komprehensif: Menggabungkan efisiensi balok, loop, dan navigasi presisi.',
+		achievement: {
+			id: 'ach-lvl-10',
+			levelId: 10,
+			title: 'Grandmaster PyQuest',
+			description: 'Menuntaskan seluruh petualangan koding PyQuest!',
+			icon: 'award',
+			xpReward: 100
+		},
 		difficulty: 5,
 		challenges: [
 			{

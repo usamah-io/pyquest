@@ -45,7 +45,7 @@
 				alt="Arena Misi Labirin"
 				class="w-full h-full object-cover object-center transform hover:scale-105 transition-transform duration-700 opacity-90"
 			/>
-			<div class="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
+			<div class="absolute inset-0 bg-slate-950/40"></div>
 
 			<!-- Floating PyBot Mascot Badge -->
 			<div class="absolute bottom-4 left-4 sm:left-6 flex items-center gap-3">
@@ -120,7 +120,7 @@
 				<button
 					type="button"
 					onclick={onStartMission}
-					class="w-full py-4 px-6 bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-slate-950 font-black text-base sm:text-lg rounded-2xl shadow-xl shadow-cyan-500/20 transition-all cursor-pointer flex items-center justify-center gap-2 group hover:scale-[1.01] active:scale-[0.99]"
+					class="w-full py-4 px-6 bg-cyan-400 hover:bg-cyan-300 active:bg-cyan-500 text-slate-950 font-black text-base sm:text-lg rounded-2xl shadow-xl shadow-cyan-400/20 transition-all cursor-pointer flex items-center justify-center gap-2 group hover:scale-[1.01] active:scale-[0.99]"
 				>
 					<span>MULAI MISI</span>
 					<Icon name="arrow-right" size={20} class="group-hover:translate-x-1 transition-transform" />
