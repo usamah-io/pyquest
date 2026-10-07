@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { authStore } from '$lib/stores/authStore';
+	import { onDestroy } from 'svelte';
+	import { authStore, getGoogleClientId } from '$lib/stores/authStore';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -15,6 +16,11 @@
 	let googleButtonContainer = $state<HTMLDivElement | null>(null);
 	let errorMessage = $state<string | null>(null);
 	let activeClientId = $state('');
+	let isButtonRendered = $state(false);
+	let isGisFailed = $state(false);
+
+	let pollInterval: any = null;
+	let timeoutTimer: any = null;
 
 	function checkGisReady(): boolean {
 		return typeof window !== 'undefined' && !!(window as any).google?.accounts?.id;
@@ -27,20 +33,39 @@
 		}
 
 		errorMessage = null;
-		const loginResult = await authStore.loginWithGoogleCredential(response.credential);
-		if (loginResult && loginResult.success) {
-			if (onLoginSuccess) {
-				onLoginSuccess(loginResult.needsSetup ?? false);
+		try {
+			const loginResult = await authStore.loginWithGoogleCredential(response.credential);
+			if (loginResult && loginResult.success) {
+				if (onLoginSuccess) {
+					onLoginSuccess(loginResult.needsSetup ?? false);
+				}
+				onClose();
+			} else {
+				errorMessage = loginResult?.error || 'Login Google gagal. Coba lagi.';
 			}
-			onClose();
-		} else {
-			errorMessage = loginResult?.error || 'Login Google gagal. Coba lagi.';
+		} catch (err) {
+			console.error('Google modal login error:', err);
+			errorMessage = 'Koneksi bermasalah. Coba lagi.';
 		}
 	}
 
-	function initGoogleIdentity() {
-		activeClientId = authStore.getGoogleClientId();
+	function clearTimers() {
+		if (pollInterval) {
+			clearInterval(pollInterval);
+			pollInterval = null;
+		}
+		if (timeoutTimer) {
+			clearTimeout(timeoutTimer);
+			timeoutTimer = null;
+		}
+	}
+
+	function renderGisButton() {
+		if (isButtonRendered || !googleButtonContainer) return;
+
+		activeClientId = getGoogleClientId();
 		if (!activeClientId) {
+			isGisFailed = true;
 			return;
 		}
 
@@ -53,20 +78,23 @@
 					cancel_on_tap_outside: true
 				});
 
-				if (googleButtonContainer) {
-					googleButtonContainer.innerHTML = '';
-					(window as any).google.accounts.id.renderButton(googleButtonContainer, {
-						theme: 'filled_black',
-						size: 'large',
-						shape: 'pill',
-						width: 320,
-						text: 'continue_with',
-						logo_alignment: 'left'
-					});
-				}
+				// Strictly ensure container is empty so only ONE button can exist
+				googleButtonContainer.innerHTML = '';
+				(window as any).google.accounts.id.renderButton(googleButtonContainer, {
+					theme: 'outline',
+					size: 'large',
+					shape: 'pill',
+					width: 300,
+					text: 'continue_with',
+					logo_alignment: 'left'
+				});
+
+				isButtonRendered = true;
+				isGisFailed = false;
+				clearTimers();
 			} catch (err) {
-				console.error('Error initializing Google GIS:', err);
-				errorMessage = 'Gagal memuat Google Sign-In. Silakan coba sesaat lagi.';
+				console.error('Error initializing Google GIS in modal:', err);
+				isGisFailed = true;
 			}
 		}
 	}
@@ -74,25 +102,54 @@
 	$effect(() => {
 		if (isOpen) {
 			errorMessage = null;
-			activeClientId = authStore.getGoogleClientId();
-			if (activeClientId) {
-				setTimeout(() => {
-					initGoogleIdentity();
+			isButtonRendered = false;
+			isGisFailed = false;
+			activeClientId = getGoogleClientId();
+
+			if (checkGisReady()) {
+				setTimeout(renderGisButton, 50);
+			} else {
+				pollInterval = setInterval(() => {
+					if (checkGisReady()) {
+						renderGisButton();
+					}
 				}, 100);
+
+				timeoutTimer = setTimeout(() => {
+					if (!isButtonRendered) {
+						clearTimers();
+						if (checkGisReady()) {
+							renderGisButton();
+						} else {
+							isGisFailed = true;
+						}
+					}
+				}, 4000);
 			}
+		} else {
+			clearTimers();
+			isButtonRendered = false;
 		}
 	});
 
-	function handleTriggerPrompt() {
-		if (!activeClientId) {
-			return;
-		}
+	onDestroy(() => {
+		clearTimers();
+	});
+
+	function handleFallbackPrompt() {
+		if (!activeClientId) return;
 
 		if (checkGisReady()) {
 			try {
+				(window as any).google.accounts.id.initialize({
+					client_id: activeClientId,
+					callback: handleCredentialResponse,
+					auto_select: false,
+					cancel_on_tap_outside: true
+				});
 				(window as any).google.accounts.id.prompt((notification: any) => {
 					if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-						console.log('Google Prompt dismissed or suppressed, render button is used.');
+						renderGisButton();
 					}
 				});
 			} catch (e) {
@@ -145,18 +202,37 @@
 				</div>
 			{/if}
 
-			<!-- Google OAuth Section -->
-			<div class="space-y-4">
-				{#if activeClientId}
-					<!-- Primary Google OAuth Trigger -->
-					<div class="flex flex-col items-center gap-3">
+			<!-- Google OAuth Section (EXACTLY ONE BUTTON) -->
+			<div class="space-y-3.5">
+				<div class="flex flex-col items-center justify-center min-h-[44px]">
+					<!-- Official GIS Button Container (Only entry point) -->
+					<div
+						bind:this={googleButtonContainer}
+						class="flex justify-center w-full min-h-[44px] {isButtonRendered ? 'block' : 'hidden'}"
+					></div>
+
+					<!-- Loading placeholder only while GIS script initializes -->
+					{#if !isButtonRendered && !isGisFailed}
+						<div
+							class="w-full max-w-[300px] h-[44px] rounded-full bg-slate-800 border border-slate-700/60 flex items-center justify-center gap-2.5 text-slate-400 text-xs font-semibold animate-pulse"
+						>
+							<svg class="w-4 h-4 animate-spin text-slate-400" viewBox="0 0 24 24" fill="none">
+								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+							</svg>
+							<span>Memuat Google Sign-In...</span>
+						</div>
+					{/if}
+
+					<!-- Fallback trigger ONLY if GIS script completely fails to load -->
+					{#if isGisFailed}
 						<button
 							type="button"
-							onclick={handleTriggerPrompt}
-							class="w-full py-3.5 px-4 bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm rounded-2xl shadow-lg transition-all flex items-center justify-center gap-3 cursor-pointer group hover:scale-[1.01] active:scale-[0.99]"
+							onclick={handleFallbackPrompt}
+							class="w-full max-w-[300px] py-3 px-4 bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm rounded-full shadow-lg transition-all flex items-center justify-center gap-3 cursor-pointer"
+							title="Lanjutkan dengan Google"
 						>
-							<!-- Google G SVG Logo -->
-							<svg class="w-5 h-5" viewBox="0 0 24 24">
+							<svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
 								<path
 									fill="#4285F4"
 									d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -176,28 +252,8 @@
 							</svg>
 							<span>Lanjutkan dengan Google</span>
 						</button>
-
-						<!-- Official GIS rendered container (if loaded) -->
-						<div bind:this={googleButtonContainer} class="flex justify-center w-full min-h-[44px]"></div>
-					</div>
-				{:else}
-					<!-- Clean, student-friendly message without exposing any API keys or technical details -->
-					<div class="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 text-center space-y-3">
-						<div class="w-10 h-10 mx-auto rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
-							<Icon name="shield" size={20} />
-						</div>
-						<p class="text-xs text-slate-300 leading-relaxed">
-							Mode Siswa aktif secara otomatis. Seluruh capaian misi, perolehan XP, dan lencana petualangan tersimpan aman di peramban ini.
-						</p>
-						<button
-							type="button"
-							onclick={onClose}
-							class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 border border-indigo-400/40 text-white font-black text-xs rounded-xl shadow-lg shadow-indigo-600/20 cursor-pointer transition-all active:scale-95"
-						>
-							Lanjutkan Bermain & Belajar
-						</button>
-					</div>
-				{/if}
+					{/if}
+				</div>
 			</div>
 		</div>
 	</div>

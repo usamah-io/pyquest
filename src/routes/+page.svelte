@@ -461,7 +461,7 @@
 
 	<!-- Google Authentication Modal -->
 	<GoogleAuthModal
-		isOpen={$authStore.isGoogleModalOpen}
+		isOpen={$authStore.isGoogleModalOpen && currentScreen !== 'LOGIN'}
 		onClose={() => authStore.closeGoogleModal()}
 		onLoginSuccess={(needsSetup) => {
 			if (needsSetup) {
