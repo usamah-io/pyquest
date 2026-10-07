@@ -67,31 +67,40 @@ function createProgressStore() {
 		completeChallenge: (challengeId: string, xpGain = 35) => {
 			let isFirstCompletion = false;
 			update((p) => {
-				if (p.completedChallenges.includes(challengeId)) {
+				const existing = p.completedChallenges || [];
+				if (existing.includes(challengeId)) {
 					return p; // No duplicate XP on replay
 				}
 				isFirstCompletion = true;
+				const safeGain = Math.max(0, Math.round(Number(xpGain)) || 0);
 				const updated = {
 					...p,
-					xp: p.xp + xpGain,
-					score: p.score + xpGain * 10,
-					completedChallenges: [...p.completedChallenges, challengeId]
+					xp: (Number(p.xp) || 0) + safeGain,
+					score: (Number(p.score) || 0) + safeGain * 10,
+					completedChallenges: [...existing, challengeId]
 				};
 				if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 				return updated;
 			});
 			return isFirstCompletion;
 		},
-		completeLevel: (levelId: number) => {
+		completeLevel: (levelId: number, achievementXp = 0) => {
+			let isFirstLevelCompletion = false;
 			update((p) => {
-				if (p.completedLevels && p.completedLevels.includes(levelId)) return p;
+				const existing = p.completedLevels || [];
+				if (existing.includes(levelId)) return p;
+				isFirstLevelCompletion = true;
+				const safeBonus = Math.max(0, Math.round(Number(achievementXp)) || 0);
 				const updated = {
 					...p,
-					completedLevels: [...(p.completedLevels || []), levelId]
+					xp: (Number(p.xp) || 0) + safeBonus,
+					score: (Number(p.score) || 0) + safeBonus * 10,
+					completedLevels: [...existing, levelId]
 				};
 				if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
 				return updated;
 			});
+			return isFirstLevelCompletion;
 		},
 		completeLearningLevel: (
 			levelId: number,

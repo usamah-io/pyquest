@@ -5,6 +5,7 @@ import type { Challenge } from '../types';
 export const challengesData: Challenge[] = levelsData.flatMap((lvl) =>
 	lvl.challenges.map((ch) => ({
 		...ch,
+		xp: ch.xpReward,
 		topic: lvl.title,
 		concept: lvl.concept
 	}))

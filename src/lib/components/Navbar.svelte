@@ -45,6 +45,15 @@
 		<!-- PWA Install Button (Subtle, visible when installable) -->
 		<PwaInstallButton compact={true} />
 
+		<!-- Live Real-Time XP Badge in Navbar -->
+		<div
+			class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono font-black text-xs sm:text-sm shadow-sm select-none"
+			title="Total XP Kamu Saat Ini"
+		>
+			<Icon name="zap" size={14} class="text-amber-400 fill-current shrink-0" />
+			<span>{$dashboardUserStore.xp} XP</span>
+		</div>
+
 		<!-- Dynamic Profile Button -->
 		<button
 			type="button"

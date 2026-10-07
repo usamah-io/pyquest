@@ -335,14 +335,19 @@
 			if (frame.status === 'SUCCESS') {
 				stopSimulation();
 
-				const isFirst = progressStore.completeChallenge(activeChallenge.id, activeChallenge.xpReward);
-				earnedXpThisRun = isFirst ? activeChallenge.xpReward : 0;
+				const targetChallenge = activeChallenge;
+				const targetLevel = activeLevel;
+				const challengeXp = Math.max(0, Math.round(Number(targetChallenge.xpReward ?? targetChallenge.xp)) || 30);
 
-				const levelNowFinished = activeLevel.challenges.every(
-					(c) => c.id === activeChallenge.id || $progressStore.completedChallenges.includes(c.id)
+				const isFirst = progressStore.completeChallenge(targetChallenge.id, challengeXp);
+				earnedXpThisRun = isFirst ? challengeXp : 0;
+
+				const levelNowFinished = targetLevel.challenges.every(
+					(c) => c.id === targetChallenge.id || $progressStore.completedChallenges.includes(c.id)
 				);
 				if (levelNowFinished) {
-					progressStore.completeLevel(activeLevel.id);
+					const achXp = Math.max(0, Math.round(Number(targetLevel.achievement?.xpReward)) || 0);
+					progressStore.completeLevel(targetLevel.id, achXp);
 				}
 
 				rewardModalTimer = setTimeout(() => {
@@ -401,9 +406,9 @@
 	<title>PyQuest — Petualangan Logika Python</title>
 </svelte:head>
 
-<div class="bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white {currentScreen === 'CHALLENGE' ? 'min-h-screen portrait:h-auto portrait:overflow-visible landscape:h-[100dvh] landscape:max-h-[100dvh] landscape:overflow-hidden md:h-[100dvh] md:max-h-[100dvh] md:overflow-hidden' : 'min-h-screen'}">
+<div class="bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'min-h-screen portrait:h-auto portrait:overflow-visible landscape:h-[100dvh] landscape:max-h-[100dvh] landscape:overflow-hidden md:h-[100dvh] md:max-h-[100dvh] md:overflow-hidden' : 'min-h-screen'}">
 	<!-- Top Nav with Mode Switcher -->
-	{#if currentScreen === 'CHALLENGE'}
+	{#if currentScreen === 'CHALLENGE' || currentScreen === 'REWARD'}
 		<div class="hidden md:block">
 			<Navbar
 				onSelectMode={handleSelectNavbarMode}
@@ -430,7 +435,7 @@
 	/>
 
 	<!-- Body Layout with Desktop Sidebar -->
-	<div class="flex-1 flex {currentScreen === 'CHALLENGE' ? 'portrait:h-auto portrait:overflow-visible landscape:overflow-hidden md:overflow-hidden' : 'overflow-hidden'} min-h-0">
+	<div class="flex-1 flex {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'portrait:h-auto portrait:overflow-visible landscape:overflow-hidden md:overflow-hidden' : 'overflow-hidden'} min-h-0">
 		{#if currentScreen === 'LANDING' || currentScreen === 'LEARN_SELECT' || currentScreen === 'LEVEL_SELECT' || currentScreen === 'PROFILE'}
 			<Sidebar
 				currentMode={activeNavbarMode}
@@ -440,7 +445,7 @@
 		{/if}
 
 		<!-- Main Stage -->
-		<main class="flex-1 flex flex-col {currentScreen === 'CHALLENGE' ? 'p-1.5 sm:p-2.5 landscape:p-1 portrait:h-auto portrait:overflow-y-auto portrait:pb-24 landscape:h-full landscape:max-h-full landscape:overflow-hidden md:h-full md:max-h-full md:overflow-hidden' : 'p-2 sm:p-4 md:p-6 pb-20 lg:pb-6 overflow-y-auto'} min-h-0">
+		<main class="flex-1 flex flex-col {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'p-1.5 sm:p-2.5 landscape:p-1 portrait:h-auto portrait:overflow-y-auto portrait:pb-24 landscape:h-full landscape:max-h-full landscape:overflow-hidden md:h-full md:max-h-full md:overflow-hidden' : 'p-2 sm:p-4 md:p-6 pb-20 lg:pb-6 overflow-y-auto'} min-h-0">
 			<!-- 1. LANDING / HOME -->
 			{#if currentScreen === 'LANDING'}
 				<LandingHero
@@ -510,7 +515,7 @@
 				/>
 
 			<!-- 8. CODING GAME CHALLENGE -->
-			{:else if currentScreen === 'CHALLENGE'}
+			{:else if currentScreen === 'CHALLENGE' || currentScreen === 'REWARD'}
 				<OrientationGuard />
 				<div class="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto w-full portrait:h-auto portrait:overflow-visible landscape:h-full landscape:overflow-hidden md:h-full md:overflow-hidden">
 					<ChallengeHeader
@@ -518,6 +523,8 @@
 						objective={activeChallenge.objective}
 						topic={`Level ${activeLevel.id} • Misi ${currentChallengeIndex + 1}/${activeLevel.challenges.length}`}
 						hints={activeChallenge.hints}
+						playerXp={$progressStore.xp}
+						rewardXp={activeChallenge.xpReward || activeChallenge.xp || 30}
 						onBackToModes={() => {
 							stopSimulation();
 							currentScreen = 'LEVEL_SELECT';
@@ -574,7 +581,7 @@
 	</div>
 
 	<!-- Mobile Fixed Bottom Navigation Bar -->
-	{#if currentScreen !== 'CHALLENGE' && currentScreen !== 'QUESTION' && currentScreen !== 'PROFILE_SETUP'}
+	{#if currentScreen !== 'CHALLENGE' && currentScreen !== 'REWARD' && currentScreen !== 'QUESTION' && currentScreen !== 'PROFILE_SETUP'}
 		<BottomNav
 			currentMode={activeNavbarMode}
 			onSelectMode={handleSelectNavbarMode}

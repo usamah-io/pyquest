@@ -775,3 +775,116 @@ describe('Quiz Scoring & Question Evaluation System (Tests 1-6)', () => {
 	});
 });
 
+describe('Coding Game Challenge XP Rewards & Level Progression System', () => {
+	it('should ensure all challenges have positive xpReward and xp aliases configured', () => {
+		for (const lvl of levelsData) {
+			for (const ch of lvl.challenges) {
+				expect(ch.xpReward).toBeGreaterThanOrEqual(20);
+			}
+		}
+		for (const ch of challengesData) {
+			expect(ch.xpReward).toBeGreaterThanOrEqual(20);
+			expect(ch.xp).toBe(ch.xpReward);
+		}
+	});
+
+	it('should ensure all 10 game levels have achievement bonus xp configured', () => {
+		for (const lvl of levelsData) {
+			expect(lvl.achievement).toBeDefined();
+			expect(lvl.achievement?.xpReward).toBeGreaterThanOrEqual(25);
+		}
+	});
+
+	it('should award exact challenge XP on first completion and record challenge ID', () => {
+		progressStore.reset();
+		const initialXP = get(progressStore).xp;
+		const initialScore = get(progressStore).score;
+
+		const ch1 = levelsData[0].challenges[0];
+		const isFirst = progressStore.completeChallenge(ch1.id, ch1.xpReward);
+
+		expect(isFirst).toBe(true);
+		const progress = get(progressStore);
+		expect(progress.xp).toBe(initialXP + ch1.xpReward);
+		expect(progress.score).toBe(initialScore + ch1.xpReward * 10);
+		expect(progress.completedChallenges).toContain(ch1.id);
+	});
+
+	it('should protect strictly against duplicate XP on challenge replay', () => {
+		const ch1 = levelsData[0].challenges[0];
+		const xpBefore = get(progressStore).xp;
+		const scoreBefore = get(progressStore).score;
+
+		// Replaying already completed challenge
+		const isFirstAgain = progressStore.completeChallenge(ch1.id, ch1.xpReward);
+
+		expect(isFirstAgain).toBe(false);
+		const progress = get(progressStore);
+		expect(progress.xp).toBe(xpBefore);
+		expect(progress.score).toBe(scoreBefore);
+	});
+
+	it('should accumulate XP additively across multiple different challenges', () => {
+		progressStore.reset();
+		let runningXp = 0;
+
+		const sampleChallenges = [
+			levelsData[0].challenges[0],
+			levelsData[0].challenges[1],
+			levelsData[1].challenges[0]
+		];
+
+		for (const ch of sampleChallenges) {
+			const earned = progressStore.completeChallenge(ch.id, ch.xpReward);
+			expect(earned).toBe(true);
+			runningXp += ch.xpReward;
+			expect(get(progressStore).xp).toBe(runningXp);
+		}
+
+		expect(get(progressStore).completedChallenges.length).toBe(3);
+	});
+
+	it('should award achievement bonus XP when completing an entire level for the first time', () => {
+		progressStore.reset();
+		const lvl1 = levelsData[0];
+		const achXp = lvl1.achievement?.xpReward || 25;
+
+		// Complete all challenges in level 1
+		for (const ch of lvl1.challenges) {
+			progressStore.completeChallenge(ch.id, ch.xpReward);
+		}
+
+		const xpBeforeLevelBonus = get(progressStore).xp;
+
+		// Complete level with achievement bonus XP
+		const isFirstLevel = progressStore.completeLevel(lvl1.id, achXp);
+		expect(isFirstLevel).toBe(true);
+		expect(get(progressStore).xp).toBe(xpBeforeLevelBonus + achXp);
+		expect(get(progressStore).completedLevels).toContain(lvl1.id);
+
+		// Replay level completion gives 0 extra bonus
+		const isFirstLevelAgain = progressStore.completeLevel(lvl1.id, achXp);
+		expect(isFirstLevelAgain).toBe(false);
+		expect(get(progressStore).xp).toBe(xpBeforeLevelBonus + achXp);
+	});
+
+	it('should award XP and persist state after completing simulation of a real challenge', () => {
+		progressStore.reset();
+		const ch = levelsData[0].challenges[0]; // Level 1 Challenge 1: MOVE, TURN_RIGHT, MOVE
+		const commands: AtomicCommand[] = ['MOVE', 'TURN_RIGHT', 'MOVE'];
+
+		const steps = simulateCommands(ch.grid, commands, { maxMoves: 30, maxActions: 100 });
+		const lastFrame = steps[steps.length - 1];
+		expect(lastFrame.status).toBe('SUCCESS');
+
+		// Simulating the SUCCESS handling flow from +page.svelte
+		const challengeXp = Math.max(0, Math.round(Number(ch.xpReward ?? ch.xp)) || 30);
+		const isFirst = progressStore.completeChallenge(ch.id, challengeXp);
+
+		expect(isFirst).toBe(true);
+		expect(get(progressStore).xp).toBe(challengeXp);
+		expect(get(progressStore).completedChallenges).toContain(ch.id);
+	});
+});
+
+

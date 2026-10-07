@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Challenge, GameLevel } from '$lib/types';
+	import { progressStore } from '$lib/stores/progressStore';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -23,6 +24,12 @@
 		onReplay?: () => void;
 		onBackToLevelSelect?: () => void;
 	} = $props();
+
+	let completedInLevel = $derived(
+		level ? level.challenges.filter((c) => $progressStore.completedChallenges.includes(c.id)).length : 0
+	);
+	let totalInLevel = $derived(level ? level.challenges.length : 3);
+	let challengeXpReward = $derived(challenge.xpReward || challenge.xp || 30);
 </script>
 
 <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in overflow-y-auto">
@@ -61,30 +68,57 @@
 		</p>
 
 		<!-- Rewards Summary Box -->
-		<div class="grid grid-cols-2 gap-2 sm:gap-3 bg-slate-950/80 border border-slate-800 rounded-xl sm:rounded-2xl p-2.5 sm:p-3 mb-3 text-left">
+		<div class="grid grid-cols-2 gap-2 sm:gap-3 bg-slate-950/80 border border-slate-800 rounded-xl sm:rounded-2xl p-2.5 sm:p-3 mb-2.5 text-left">
+			<!-- Reward XP -->
 			<div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
 				<div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl {xpEarned > 0 ? 'bg-amber-400/20 text-amber-400' : 'bg-slate-800 text-slate-400'} flex items-center justify-center shrink-0">
 					<Icon name="zap" size={17} />
 				</div>
 				<div class="min-w-0">
-					<div class="text-[9px] sm:text-[10px] text-slate-500 uppercase font-bold truncate">Reward XP</div>
+					<div class="text-[9px] sm:text-[10px] text-slate-500 uppercase font-bold truncate">Reward Misi</div>
 					{#if xpEarned > 0}
 						<div class="text-base sm:text-lg font-black text-amber-400 truncate">+{xpEarned} XP</div>
+						<div class="text-[9px] text-emerald-400 font-bold truncate">Klaim Berhasil!</div>
 					{:else}
-						<div class="text-xs sm:text-sm font-black text-slate-300 truncate">
-							+0 XP
+						<div class="text-xs sm:text-sm font-black text-slate-300 truncate">+0 XP</div>
+						<div class="text-[9px] text-slate-400 truncate" title="Hadiah +{challengeXpReward} XP sudah diklaim sebelumnya">
+							(Misi Diulang)
 						</div>
 					{/if}
 				</div>
 			</div>
+
+			<!-- Live Total Account XP -->
 			<div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
-				<div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">
-					<Icon name="repeat" size={16} />
+				<div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0">
+					<Icon name="star" size={16} class="fill-current text-amber-400" />
 				</div>
 				<div class="min-w-0">
-					<div class="text-[9px] sm:text-[10px] text-slate-500 uppercase font-bold truncate">Percobaan</div>
-					<div class="text-xs sm:text-base font-black text-slate-200 truncate">{attemptsCount}x RUN</div>
+					<div class="text-[9px] sm:text-[10px] text-slate-500 uppercase font-bold truncate">Total XP Akun</div>
+					<div class="text-xs sm:text-base font-black text-amber-300 font-mono truncate">
+						{$progressStore.xp} XP
+					</div>
+					<div class="text-[9px] text-slate-400 truncate font-mono">{attemptsCount}x RUN</div>
 				</div>
+			</div>
+		</div>
+
+		<!-- Level Progression Progress Bar Pill -->
+		<div class="p-2.5 sm:p-3 bg-slate-950/60 border border-slate-800/80 rounded-xl mb-3 text-left">
+			<div class="flex items-center justify-between text-xs font-bold mb-1.5">
+				<span class="text-slate-300 flex items-center gap-1.5 text-[11px] sm:text-xs">
+					<Icon name="compass" size={13} class="text-cyan-400 shrink-0" />
+					<span class="truncate">Progress Level {level?.id || 1}</span>
+				</span>
+				<span class="text-cyan-300 font-mono text-[11px] sm:text-xs shrink-0">
+					{completedInLevel} / {totalInLevel} Selesai
+				</span>
+			</div>
+			<div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+				<div
+					class="h-full bg-cyan-400 rounded-full transition-all duration-500"
+					style="width: {Math.min(100, Math.round((completedInLevel / totalInLevel) * 100))}%;"
+				></div>
 			</div>
 		</div>
 

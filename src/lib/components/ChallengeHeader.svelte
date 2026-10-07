@@ -6,12 +6,16 @@
 		objective,
 		topic,
 		hints = [],
+		playerXp = 0,
+		rewardXp = 0,
 		onBackToModes
 	}: {
 		title: string;
 		objective: string;
 		topic: string;
 		hints: string[];
+		playerXp?: number;
+		rewardXp?: number;
 		onBackToModes?: () => void;
 	} = $props();
 
@@ -75,18 +79,37 @@
 		</div>
 	</div>
 
-	<!-- Right: Compact Hint Button -->
-	<div class="flex items-center gap-2 shrink-0">
+	<!-- Right: Mission Reward, Live Player XP & Hint Button -->
+	<div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+		{#if rewardXp > 0}
+			<div
+				class="hidden md:flex items-center gap-1 px-2.5 py-1 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[11px] font-bold select-none"
+				title="Hadiah jika misi ini berhasil diselesaikan"
+			>
+				<Icon name="zap" size={13} class="text-indigo-400 shrink-0" />
+				<span>+{rewardXp} XP</span>
+			</div>
+		{/if}
+
+		<!-- Live Player XP Badge -->
+		<div
+			class="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono font-black text-xs shadow-sm select-none"
+			title="Total XP Kamu Saat Ini"
+		>
+			<Icon name="zap" size={13} class="text-amber-400 fill-current shrink-0" />
+			<span>{playerXp} XP</span>
+		</div>
+
 		{#if hints && hints.length > 0}
 			<button
 				type="button"
 				onclick={handleOpenHintModal}
-				class="px-2.5 sm:px-3 py-1 sm:py-1.5 landscape:py-1 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+				class="px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
 				title="Lihat Petunjuk PyBot"
 			>
-				<Icon name="lightbulb" size={14} class="text-amber-400" />
-				<span class="hidden sm:inline">Petunjuk</span>
-				<span class="text-[10px] bg-amber-400/20 text-amber-200 px-1.5 py-0.2 rounded-full font-mono">
+				<Icon name="lightbulb" size={13} class="text-amber-400" />
+				<span class="hidden sm:inline">Tips</span>
+				<span class="text-[10px] bg-amber-400/20 text-amber-200 px-1 py-0.2 rounded-full font-mono">
 					{remainingQuota}
 				</span>
 			</button>
