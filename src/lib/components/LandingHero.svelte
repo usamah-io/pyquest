@@ -212,7 +212,7 @@
 						<span>Selamat datang kembali,</span>
 					</div>
 					<h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
-						{$dashboardUserStore.firstName}!
+						Hi, {$dashboardUserStore.firstName || $dashboardUserStore.name}!
 					</h1>
 					<p class="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
 						Teruskan petualanganmu, kuasai logika pemrograman, dan jadilah programmer hebat!

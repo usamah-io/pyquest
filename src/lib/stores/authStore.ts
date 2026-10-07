@@ -3,6 +3,7 @@ import { progressStore } from './progressStore';
 
 export interface UserProfile {
 	id: string;
+	googleSub?: string;
 	name: string;
 	firstName: string;
 	email?: string;
@@ -12,80 +13,88 @@ export interface UserProfile {
 	hasCompletedProfileSetup: boolean;
 }
 
-const DEFAULT_USER: UserProfile = {
+const DEFAULT_GUEST_USER: UserProfile = {
 	id: 'guest-1',
 	name: 'Penjelajah Kode',
 	firstName: 'Penjelajah',
-	email: 'student@pyquest.dev',
+	email: '',
 	avatar: '/mascot/pybot-front-idle.png',
 	provider: 'guest',
 	createdAt: new Date().toISOString(),
-	hasCompletedProfileSetup: true
+	hasCompletedProfileSetup: false
 };
 
-const USER_STORAGE_KEY = 'pyquest_user_v3';
-const CLIENT_ID_STORAGE_KEY = 'pyquest_google_client_id';
+const CURRENT_USER_KEY = 'pyquest_current_user_v4';
+const USERS_REGISTRY_KEY = 'pyquest_users_registry_v4';
+export const GOOGLE_CLIENT_ID_FALLBACK =
+	'823254379418-71l1aq5ushc1u4j57eccdlvsl3m4rjgs.apps.googleusercontent.com';
 
-// Helper to decode Google JWT token
-export function parseJwt(token: string) {
-	try {
-		const base64Url = token.split('.')[1];
-		if (!base64Url) return null;
-		const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-		const jsonPayload = decodeURIComponent(
-			atob(base64)
-				.split('')
-				.map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-				.join('')
-		);
-		return JSON.parse(jsonPayload);
-	} catch (err) {
-		console.error('Failed to parse Google JWT token:', err);
-		return null;
+export function getGoogleClientId(): string {
+	const metaEnv = (import.meta as any).env;
+	const envId = metaEnv?.PUBLIC_GOOGLE_CLIENT_ID || metaEnv?.VITE_GOOGLE_CLIENT_ID;
+	if (envId && typeof envId === 'string' && envId.trim().length > 0) {
+		return envId.trim();
 	}
+	return GOOGLE_CLIENT_ID_FALLBACK;
 }
 
-function createAuthStore() {
-	let initialUser = DEFAULT_USER;
-	let initialIsAuth = false;
-
+function loadInitialAuthState(): { user: UserProfile; isAuthenticated: boolean } {
 	if (typeof window !== 'undefined') {
-		const saved = localStorage.getItem(USER_STORAGE_KEY);
+		const saved = localStorage.getItem(CURRENT_USER_KEY);
 		if (saved) {
 			try {
 				const parsed = JSON.parse(saved);
-				initialUser = parsed.user || DEFAULT_USER;
-				initialIsAuth = parsed.isAuthenticated ?? false;
-			} catch {
-				initialUser = DEFAULT_USER;
-				initialIsAuth = false;
-			}
+				if (parsed?.user && parsed.isAuthenticated) {
+					return {
+						user: parsed.user,
+						isAuthenticated: true
+					};
+				}
+			} catch {}
 		}
 	}
+	return {
+		user: DEFAULT_GUEST_USER,
+		isAuthenticated: false
+	};
+}
+
+function createAuthStore() {
+	const initial = loadInitialAuthState();
 
 	const state = writable<{
 		isAuthenticated: boolean;
 		user: UserProfile;
 		isGoogleModalOpen: boolean;
+		isLoading: boolean;
 	}>({
-		isAuthenticated: initialIsAuth,
-		user: initialUser,
-		isGoogleModalOpen: false
+		isAuthenticated: initial.isAuthenticated,
+		user: initial.user,
+		isGoogleModalOpen: false,
+		isLoading: false
 	});
 
-	function saveToStorage(user: UserProfile, isAuth: boolean) {
+	function saveCurrentSession(user: UserProfile, isAuth: boolean) {
 		if (typeof window !== 'undefined') {
-			localStorage.setItem(
-				USER_STORAGE_KEY,
-				JSON.stringify({ user, isAuthenticated: isAuth })
-			);
+			if (isAuth) {
+				localStorage.setItem(CURRENT_USER_KEY, JSON.stringify({ user, isAuthenticated: true }));
+				// Update registry of persistent accounts
+				try {
+					const registryRaw = localStorage.getItem(USERS_REGISTRY_KEY);
+					const registry: Record<string, UserProfile> = registryRaw ? JSON.parse(registryRaw) : {};
+					registry[user.id] = user;
+					localStorage.setItem(USERS_REGISTRY_KEY, JSON.stringify(registry));
+				} catch {}
+			} else {
+				localStorage.removeItem(CURRENT_USER_KEY);
+			}
 		}
 	}
 
 	return {
 		subscribe: state.subscribe,
 
-		// Open Google OAuth / Sign In Modal
+		// Open / Close Google Auth Modal if used
 		openGoogleModal: () => {
 			state.update((s) => ({ ...s, isGoogleModalOpen: true }));
 		},
@@ -94,116 +103,213 @@ function createAuthStore() {
 			state.update((s) => ({ ...s, isGoogleModalOpen: false }));
 		},
 
-		// Authenticate with Google ID Token credential
-		loginWithGoogleCredential: (credential: string): { user: UserProfile; needsSetup: boolean } | null => {
-			const payload = parseJwt(credential);
-			if (!payload) return null;
+		// Client ID getter (always returns verified Developer configuration, never prompts user)
+		getGoogleClientId,
 
-			const googleId = payload.sub || String(Date.now());
-			const googleName = payload.name || 'Siswa PyQuest';
-			const googleEmail = payload.email || '';
-			const googleAvatar = payload.picture || '/mascot/pybot-front-idle.png';
+		// Initialize & verify session with backend on startup
+		initAuth: async () => {
+			if (typeof window === 'undefined') return;
 
-			// Check if this Google user has previously set up their profile
-			let existingSetup = false;
-			let currentName = googleName;
-			let currentAvatar = googleAvatar;
-
-			if (typeof window !== 'undefined') {
-				const saved = localStorage.getItem(USER_STORAGE_KEY);
-				if (saved) {
-					try {
-						const parsed = JSON.parse(saved);
-						if (parsed.user && parsed.user.id === 'google-' + googleId) {
-							existingSetup = parsed.user.hasCompletedProfileSetup === true;
-							if (parsed.user.name) currentName = parsed.user.name;
-							if (parsed.user.avatar) currentAvatar = parsed.user.avatar;
-						}
-					} catch {}
-				}
+			// Initialize user-keyed progress if already authenticated in localStorage
+			const initial = loadInitialAuthState();
+			if (initial.isAuthenticated && initial.user?.id) {
+				progressStore.loadForUser(initial.user.id);
 			}
 
-			const firstName = currentName.trim().split(' ')[0] || currentName;
-			const user: UserProfile = {
-				id: 'google-' + googleId,
-				name: currentName,
-				firstName,
-				email: googleEmail,
-				avatar: currentAvatar,
-				provider: 'google',
-				createdAt: new Date().toISOString(),
-				hasCompletedProfileSetup: existingSetup
-			};
+			// Validate with backend session cookie
+			try {
+				const res = await fetch('/api/auth/session');
+				if (res.ok) {
+					const data = await res.json();
+					if (data.authenticated && data.user) {
+						// Session valid on server
+						const verified = data.user;
+						let userProfile: UserProfile;
 
-			saveToStorage(user, true);
-			state.update((s) => ({
-				...s,
-				isAuthenticated: true,
-				user,
-				isGoogleModalOpen: false
-			}));
+						// Check local registry for saved display name / avatar preferences
+						const registryRaw = localStorage.getItem(USERS_REGISTRY_KEY);
+						const registry: Record<string, UserProfile> = registryRaw ? JSON.parse(registryRaw) : {};
+						const existing = registry[verified.id];
 
-			return { user, needsSetup: !existingSetup };
+						if (existing) {
+							userProfile = {
+								...verified,
+								name: existing.name || verified.name,
+								firstName: existing.firstName || verified.firstName,
+								avatar: existing.avatar || verified.avatar,
+								hasCompletedProfileSetup: existing.hasCompletedProfileSetup
+							};
+						} else {
+							userProfile = {
+								...verified,
+								hasCompletedProfileSetup: false
+							};
+						}
+
+						saveCurrentSession(userProfile, true);
+						progressStore.loadForUser(userProfile.id);
+
+						state.update((s) => ({
+							...s,
+							isAuthenticated: true,
+							user: userProfile
+						}));
+					}
+				}
+			} catch (err) {
+				console.warn('Session check warning:', err);
+			}
 		},
 
-		// Update profile details (photo, username)
-		updateProfile: (data: { name?: string; avatar?: string }) => {
-			state.update((s) => {
-				const trimmed = data.name !== undefined ? data.name.trim() : s.user.name;
-				const firstName = trimmed.split(' ')[0] || trimmed;
-				const updatedUser: UserProfile = {
-					...s.user,
-					name: trimmed,
-					firstName,
-					avatar: data.avatar !== undefined ? data.avatar : s.user.avatar
+		// Real Google Credential Login flow (sent to server verification)
+		loginWithGoogleCredential: async (
+			credential: string
+		): Promise<{ success: boolean; user?: UserProfile; needsSetup?: boolean; error?: string }> => {
+			state.update((s) => ({ ...s, isLoading: true }));
+
+			try {
+				const res = await fetch('/api/auth/google', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ credential })
+				});
+
+				if (!res.ok) {
+					const errBody = await res.json().catch(() => ({}));
+					state.update((s) => ({ ...s, isLoading: false }));
+					return {
+						success: false,
+						error: errBody.error || 'Login Google gagal. Coba lagi.'
+					};
+				}
+
+				const { user: verifiedUser } = await res.json();
+
+				// Check persistent registry for returning user
+				let existingProfile: UserProfile | null = null;
+				if (typeof window !== 'undefined') {
+					const registryRaw = localStorage.getItem(USERS_REGISTRY_KEY);
+					if (registryRaw) {
+						try {
+							const registry = JSON.parse(registryRaw);
+							existingProfile = registry[verifiedUser.id] || null;
+						} catch {}
+					}
+				}
+
+				let finalUser: UserProfile;
+				let needsSetup = false;
+
+				if (existingProfile && existingProfile.hasCompletedProfileSetup) {
+					// Returning user with completed profile setup
+					finalUser = {
+						...verifiedUser,
+						name: existingProfile.name || verifiedUser.name,
+						firstName: existingProfile.firstName || verifiedUser.firstName,
+						avatar: existingProfile.avatar || verifiedUser.avatar,
+						hasCompletedProfileSetup: true
+					};
+					needsSetup = false;
+				} else {
+					// New user or incomplete profile setup
+					finalUser = {
+						...verifiedUser,
+						hasCompletedProfileSetup: false
+					};
+					needsSetup = true;
+				}
+
+				saveCurrentSession(finalUser, true);
+				progressStore.loadForUser(finalUser.id);
+
+				state.update((s) => ({
+					...s,
+					isAuthenticated: true,
+					user: finalUser,
+					isGoogleModalOpen: false,
+					isLoading: false
+				}));
+
+				return {
+					success: true,
+					user: finalUser,
+					needsSetup
 				};
-				saveToStorage(updatedUser, s.isAuthenticated);
-				return { ...s, user: updatedUser };
-			});
+			} catch (err) {
+				console.error('Login request error:', err);
+				state.update((s) => ({ ...s, isLoading: false }));
+				return {
+					success: false,
+					error: 'Koneksi bermasalah. Coba lagi.'
+				};
+			}
 		},
 
 		// Complete first-time profile setup
-		completeProfileSetup: (data: { name: string; avatar: string }) => {
+		completeProfileSetup: (data: { name: string; avatar: string }): UserProfile => {
+			let updatedUser: UserProfile = DEFAULT_GUEST_USER;
+
 			state.update((s) => {
 				const trimmed = data.name.trim() || s.user.name;
 				const firstName = trimmed.split(' ')[0] || trimmed;
-				const updatedUser: UserProfile = {
+				updatedUser = {
 					...s.user,
 					name: trimmed,
 					firstName,
 					avatar: data.avatar || s.user.avatar,
 					hasCompletedProfileSetup: true
 				};
-				saveToStorage(updatedUser, true);
-				return { ...s, user: updatedUser };
+
+				saveCurrentSession(updatedUser, true);
+				return {
+					...s,
+					user: updatedUser
+				};
 			});
+
+			return updatedUser;
 		},
 
-		// Logout back to default guest profile
-		logout: () => {
-			saveToStorage(DEFAULT_USER, false);
+		// Update profile details from Profile page
+		updateProfile: (data: { name?: string; avatar?: string }): UserProfile => {
+			let updatedUser: UserProfile = DEFAULT_GUEST_USER;
+
+			state.update((s) => {
+				const trimmed = data.name !== undefined ? data.name.trim() : s.user.name;
+				const firstName = trimmed.split(' ')[0] || trimmed;
+				updatedUser = {
+					...s.user,
+					name: trimmed,
+					firstName,
+					avatar: data.avatar !== undefined ? data.avatar : s.user.avatar
+				};
+
+				saveCurrentSession(updatedUser, s.isAuthenticated);
+				return {
+					...s,
+					user: updatedUser
+				};
+			});
+
+			return updatedUser;
+		},
+
+		// Logout back to unauthenticated / login screen
+		logout: async () => {
+			try {
+				await fetch('/api/auth/logout', { method: 'POST' });
+			} catch {}
+
+			saveCurrentSession(DEFAULT_GUEST_USER, false);
+			progressStore.loadForUser('guest-1');
+
 			state.update((s) => ({
 				...s,
 				isAuthenticated: false,
-				user: DEFAULT_USER,
-				isGoogleModalOpen: false
+				user: DEFAULT_GUEST_USER,
+				isGoogleModalOpen: false,
+				isLoading: false
 			}));
-		},
-
-		// Client ID helper for dev/runtime configuration if not in .env
-		getGoogleClientId: (): string => {
-			const envId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID;
-			if (envId && envId.trim().length > 0) return envId.trim();
-			if (typeof window !== 'undefined') {
-				return localStorage.getItem(CLIENT_ID_STORAGE_KEY) || '';
-			}
-			return '';
-		},
-
-		setGoogleClientId: (clientId: string) => {
-			if (typeof window !== 'undefined') {
-				localStorage.setItem(CLIENT_ID_STORAGE_KEY, clientId.trim());
-			}
 		}
 	};
 }
@@ -214,16 +320,16 @@ export const authStore = createAuthStore();
 export const dashboardUserStore = derived(
 	[authStore, progressStore],
 	([$auth, $progress]) => {
-		const level = Math.max(1, Math.floor($progress.xp / 100) + 1);
+		const level = Math.max(1, Math.floor(($progress.xp || 0) / 100) + 1);
 		return {
 			...$auth.user,
 			isAuthenticated: $auth.isAuthenticated,
 			hasCompletedProfileSetup: $auth.user.hasCompletedProfileSetup,
-			xp: $progress.xp,
+			xp: $progress.xp || 0,
 			level,
 			streak: $progress.streak || 1,
-			completedMissions: $progress.completedChallenges.length,
-			completedQuestions: $progress.completedQuestions.length
+			completedMissions: ($progress.completedChallenges || []).length,
+			completedQuestions: ($progress.completedQuestions || []).length
 		};
 	}
 );

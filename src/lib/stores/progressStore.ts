@@ -14,6 +14,23 @@ const INITIAL_PROGRESS: UserProgress = {
 };
 
 const STORAGE_KEY = 'pyquest_progress_v2';
+let currentStorageKey = STORAGE_KEY;
+const userProgressCache: Record<string, UserProgress> = {};
+
+function getStorageKey(userId?: string): string {
+	if (!userId || userId === 'guest-1') return STORAGE_KEY;
+	return `${STORAGE_KEY}_${userId}`;
+}
+
+function saveProgressToStorage(data: UserProgress) {
+	userProgressCache[currentStorageKey] = data;
+	if (typeof window !== 'undefined') {
+		localStorage.setItem(currentStorageKey, JSON.stringify(data));
+		if (currentStorageKey !== STORAGE_KEY) {
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+		}
+	}
+}
 
 function createProgressStore() {
 	let initial = INITIAL_PROGRESS;
@@ -39,10 +56,39 @@ function createProgressStore() {
 
 	return {
 		subscribe,
+		loadForUser: (userId?: string) => {
+			currentStorageKey = getStorageKey(userId);
+			let loaded = INITIAL_PROGRESS;
+			if (typeof window !== 'undefined') {
+				let saved = localStorage.getItem(currentStorageKey);
+				if (!saved && currentStorageKey !== STORAGE_KEY) {
+					saved = localStorage.getItem(STORAGE_KEY);
+					if (saved) {
+						localStorage.setItem(currentStorageKey, saved);
+					}
+				}
+				if (saved) {
+					try {
+						const parsed = JSON.parse(saved);
+						loaded = {
+							...INITIAL_PROGRESS,
+							...parsed,
+							completedLearningLevels: parsed.completedLearningLevels || [],
+							learningLevelScores: parsed.learningLevelScores || {}
+						};
+					} catch {
+						loaded = INITIAL_PROGRESS;
+					}
+				}
+			} else if (userProgressCache[currentStorageKey]) {
+				loaded = userProgressCache[currentStorageKey];
+			}
+			set(loaded);
+		},
 		addXp: (amount: number) => {
 			update((p) => {
 				const updated = { ...p, xp: p.xp + amount, score: p.score + amount * 10 };
-				if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+				saveProgressToStorage(updated);
 				return updated;
 			});
 		},
@@ -59,7 +105,7 @@ function createProgressStore() {
 					score: p.score + xpGain * 10,
 					completedQuestions: [...p.completedQuestions, questionId]
 				};
-				if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+				saveProgressToStorage(updated);
 				return updated;
 			});
 			return rewarded;
@@ -79,7 +125,7 @@ function createProgressStore() {
 					score: (Number(p.score) || 0) + safeGain * 10,
 					completedChallenges: [...existing, challengeId]
 				};
-				if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+				saveProgressToStorage(updated);
 				return updated;
 			});
 			return isFirstCompletion;
@@ -97,7 +143,7 @@ function createProgressStore() {
 					score: (Number(p.score) || 0) + safeBonus * 10,
 					completedLevels: [...existing, levelId]
 				};
-				if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+				saveProgressToStorage(updated);
 				return updated;
 			});
 			return isFirstLevelCompletion;
@@ -128,7 +174,7 @@ function createProgressStore() {
 						...p,
 						learningLevelScores: updatedScores
 					};
-					if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+					saveProgressToStorage(updated);
 					return updated;
 				}
 
@@ -139,7 +185,7 @@ function createProgressStore() {
 					completedLearningLevels: [...existing, levelId],
 					learningLevelScores: updatedScores
 				};
-				if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+				saveProgressToStorage(updated);
 				return updated;
 			});
 			return isFirstCompletion;
@@ -147,12 +193,17 @@ function createProgressStore() {
 		nextModule: () => {
 			update((p) => {
 				const updated = { ...p, currentModuleIndex: p.currentModuleIndex + 1 };
-				if (typeof window !== 'undefined') localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+				saveProgressToStorage(updated);
 				return updated;
 			});
 		},
 		reset: () => {
-			if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY);
+			delete userProgressCache[currentStorageKey];
+			delete userProgressCache[STORAGE_KEY];
+			if (typeof window !== 'undefined') {
+				localStorage.removeItem(currentStorageKey);
+				localStorage.removeItem(STORAGE_KEY);
+			}
 			set(INITIAL_PROGRESS);
 		}
 	};

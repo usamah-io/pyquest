@@ -20,21 +20,21 @@
 		return typeof window !== 'undefined' && !!(window as any).google?.accounts?.id;
 	}
 
-	function handleCredentialResponse(response: any) {
+	async function handleCredentialResponse(response: any) {
 		if (!response || !response.credential) {
-			errorMessage = 'Gagal menerima kredensial dari Google. Silakan coba lagi.';
+			errorMessage = 'Login dibatalkan.';
 			return;
 		}
 
 		errorMessage = null;
-		const loginResult = authStore.loginWithGoogleCredential(response.credential);
-		if (loginResult) {
+		const loginResult = await authStore.loginWithGoogleCredential(response.credential);
+		if (loginResult && loginResult.success) {
 			if (onLoginSuccess) {
-				onLoginSuccess(loginResult.needsSetup);
+				onLoginSuccess(loginResult.needsSetup ?? false);
 			}
 			onClose();
 		} else {
-			errorMessage = 'Format token Google tidak valid.';
+			errorMessage = loginResult?.error || 'Login Google gagal. Coba lagi.';
 		}
 	}
 

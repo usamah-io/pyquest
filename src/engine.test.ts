@@ -14,6 +14,7 @@ import {
 } from '../src/lib/questions/questionsData';
 import { learningLevelsData } from '../src/lib/questions/learningLevelsData';
 import { progressStore } from '../src/lib/stores/progressStore';
+import { authStore, dashboardUserStore, getGoogleClientId } from '../src/lib/stores/authStore';
 import type { CodingBlock } from '../src/lib/types';
 
 describe('Block Compiler', () => {
@@ -886,5 +887,84 @@ describe('Coding Game Challenge XP Rewards & Level Progression System', () => {
 		expect(get(progressStore).completedChallenges).toContain(ch.id);
 	});
 });
+
+describe('Google Authentication, Profile Setup & Account Persistence', () => {
+	it('should return valid non-empty Google Client ID for frontend', () => {
+		const clientId = getGoogleClientId();
+		expect(clientId).toBeDefined();
+		expect(clientId.length).toBeGreaterThan(20);
+		expect(clientId).toContain('googleusercontent.com');
+	});
+
+	it('should maintain initial unauthenticated guest state cleanly', () => {
+		const auth = get(authStore);
+		expect(auth.user.provider).toBe('guest');
+	});
+
+	it('should support completeProfileSetup and dynamically update dashboardUserStore', () => {
+		const updated = authStore.completeProfileSetup({
+			name: 'Usamah',
+			avatar: '/mascot/pybot-happy-success.png'
+		});
+
+		expect(updated.name).toBe('Usamah');
+		expect(updated.firstName).toBe('Usamah');
+		expect(updated.hasCompletedProfileSetup).toBe(true);
+
+		const dashUser = get(dashboardUserStore);
+		expect(dashUser.name).toBe('Usamah');
+		expect(dashUser.firstName).toBe('Usamah');
+		expect(dashUser.avatar).toBe('/mascot/pybot-happy-success.png');
+	});
+
+	it('should allow profile editing and update dashboard display name instantly', () => {
+		const updated = authStore.updateProfile({
+			name: 'Usamah Programmer'
+		});
+
+		expect(updated.name).toBe('Usamah Programmer');
+		expect(updated.firstName).toBe('Usamah');
+
+		const dashUser = get(dashboardUserStore);
+		expect(dashUser.name).toBe('Usamah Programmer');
+		expect(dashUser.firstName).toBe('Usamah');
+	});
+
+	it('should persist and isolate user progress per account ID across login/logout', () => {
+		// User 1 plays and earns XP
+		const user1Id = 'google-test-user-1';
+		progressStore.loadForUser(user1Id);
+		progressStore.reset();
+		expect(get(progressStore).xp).toBe(0);
+
+		progressStore.completeChallenge('lvl1-ch1', 20);
+		expect(get(progressStore).xp).toBe(20);
+
+		// User 2 logs in (fresh)
+		const user2Id = 'google-test-user-2';
+		progressStore.loadForUser(user2Id);
+		progressStore.reset();
+		expect(get(progressStore).xp).toBe(0);
+
+		progressStore.completeChallenge('lvl1-ch1', 20);
+		progressStore.completeChallenge('lvl1-ch2', 25);
+		expect(get(progressStore).xp).toBe(45);
+
+		// Switch back to User 1: progress should be isolated and restored
+		progressStore.loadForUser(user1Id);
+		expect(get(progressStore).xp).toBe(20);
+
+		// Switch back to User 2
+		progressStore.loadForUser(user2Id);
+		expect(get(progressStore).xp).toBe(45);
+	});
+
+	it('should cleanly reset session on logout', async () => {
+		await authStore.logout();
+		const auth = get(authStore);
+		expect(auth.isAuthenticated).toBe(false);
+	});
+});
+
 
 

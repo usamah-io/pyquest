@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import LandingHero from '$lib/components/LandingHero.svelte';
 	import LearningLevelSelect from '$lib/components/LearningLevelSelect.svelte';
@@ -15,6 +16,7 @@
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import MissionBriefing from '$lib/components/MissionBriefing.svelte';
 	import GoogleAuthModal from '$lib/components/GoogleAuthModal.svelte';
+	import LoginView from '$lib/components/LoginView.svelte';
 	import ProfileSetup from '$lib/components/ProfileSetup.svelte';
 	import ProfileView from '$lib/components/ProfileView.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
@@ -31,14 +33,46 @@
 	import { requestAppFullscreen, isFullscreenActive } from '$lib/utils/fullscreen';
 	import type { AppScreen, CodingBlock, Direction, GridCoord } from '$lib/types';
 
-	// Screen Flow State
-	let currentScreen = $state<AppScreen>('LANDING');
+	// Screen Flow State (Starts at LOGIN for unauthenticated, LANDING for returning users)
+	let currentScreen = $state<AppScreen>(
+		$authStore.isAuthenticated
+			? ($authStore.user.hasCompletedProfileSetup ? 'LANDING' : 'PROFILE_SETUP')
+			: 'LOGIN'
+	);
+
+	onMount(async () => {
+		await authStore.initAuth();
+		if (typeof window !== 'undefined') {
+			const urlParams = new URLSearchParams(window.location.search);
+			const screenParam = urlParams.get('screen') as AppScreen | null;
+			const authSuccess = urlParams.get('auth_success');
+			if (authSuccess) {
+				await authStore.initAuth();
+			}
+			if (screenParam && ['LOGIN', 'LANDING', 'LEARN_SELECT', 'LEVEL_SELECT', 'PROFILE_SETUP', 'PROFILE'].includes(screenParam)) {
+				if ($authStore.isAuthenticated) {
+					currentScreen = screenParam;
+				}
+			}
+		}
+	});
+
+	// Global Authentication Guard
+	$effect(() => {
+		if (!$authStore.isAuthenticated) {
+			currentScreen = 'LOGIN';
+		} else if (!$authStore.user.hasCompletedProfileSetup && currentScreen !== 'PROFILE_SETUP') {
+			currentScreen = 'PROFILE_SETUP';
+		} else if ($authStore.isAuthenticated && $authStore.user.hasCompletedProfileSetup && currentScreen === 'LOGIN') {
+			currentScreen = 'LANDING';
+		}
+	});
 
 	// Active Mode identifier for Navigation: 'HOME' | 'LEARN' | 'GAME' | 'PROFILE'
 	let activeNavbarMode = $derived<'HOME' | 'LEARN' | 'GAME' | 'PROFILE'>(
 		currentScreen === 'PROFILE'
 			? 'PROFILE'
-			: currentScreen === 'LANDING' || currentScreen === 'SUMMARY'
+			: currentScreen === 'LANDING' || currentScreen === 'SUMMARY' || currentScreen === 'LOGIN'
 			? 'HOME'
 			: currentScreen === 'LEARN_SELECT' ||
 			  currentScreen === 'QUESTION' ||
@@ -408,18 +442,20 @@
 
 <div class="bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'min-h-screen portrait:h-auto portrait:overflow-visible landscape:h-[100dvh] landscape:max-h-[100dvh] landscape:overflow-hidden md:h-[100dvh] md:max-h-[100dvh] md:overflow-hidden' : 'min-h-screen'}">
 	<!-- Top Nav with Mode Switcher -->
-	{#if currentScreen === 'CHALLENGE' || currentScreen === 'REWARD'}
-		<div class="hidden md:block">
+	{#if currentScreen !== 'LOGIN' && currentScreen !== 'PROFILE_SETUP'}
+		{#if currentScreen === 'CHALLENGE' || currentScreen === 'REWARD'}
+			<div class="hidden md:block">
+				<Navbar
+					onSelectMode={handleSelectNavbarMode}
+					onOpenProfile={handleOpenProfile}
+				/>
+			</div>
+		{:else}
 			<Navbar
 				onSelectMode={handleSelectNavbarMode}
 				onOpenProfile={handleOpenProfile}
 			/>
-		</div>
-	{:else}
-		<Navbar
-			onSelectMode={handleSelectNavbarMode}
-			onOpenProfile={handleOpenProfile}
-		/>
+		{/if}
 	{/if}
 
 
@@ -445,9 +481,21 @@
 		{/if}
 
 		<!-- Main Stage -->
-		<main class="flex-1 flex flex-col {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'p-1.5 sm:p-2.5 landscape:p-1 portrait:h-auto portrait:overflow-y-auto portrait:pb-24 landscape:h-full landscape:max-h-full landscape:overflow-hidden md:h-full md:max-h-full md:overflow-hidden' : 'p-2 sm:p-4 md:p-6 pb-20 lg:pb-6 overflow-y-auto'} min-h-0">
+		<main class="flex-1 flex flex-col {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'p-1.5 sm:p-2.5 landscape:p-1 portrait:h-auto portrait:overflow-y-auto portrait:pb-24 landscape:h-full landscape:max-h-full landscape:overflow-hidden md:h-full md:max-h-full md:overflow-hidden' : currentScreen === 'LOGIN' ? 'p-2 sm:p-4 overflow-y-auto' : 'p-2 sm:p-4 md:p-6 pb-20 lg:pb-6 overflow-y-auto'} min-h-0">
+			<!-- 0. LOGIN SCREEN (Real Google Sign-In) -->
+			{#if currentScreen === 'LOGIN'}
+				<LoginView
+					onSuccess={(needsSetup) => {
+						if (needsSetup) {
+							currentScreen = 'PROFILE_SETUP';
+						} else {
+							currentScreen = 'LANDING';
+						}
+					}}
+				/>
+
 			<!-- 1. LANDING / HOME -->
-			{#if currentScreen === 'LANDING'}
+			{:else if currentScreen === 'LANDING'}
 				<LandingHero
 					onStartLearning={handleStartLearning}
 					onStartCodingGame={handleStartCodingGame}
@@ -581,7 +629,7 @@
 	</div>
 
 	<!-- Mobile Fixed Bottom Navigation Bar -->
-	{#if currentScreen !== 'CHALLENGE' && currentScreen !== 'REWARD' && currentScreen !== 'QUESTION' && currentScreen !== 'PROFILE_SETUP'}
+	{#if currentScreen !== 'CHALLENGE' && currentScreen !== 'REWARD' && currentScreen !== 'QUESTION' && currentScreen !== 'PROFILE_SETUP' && currentScreen !== 'LOGIN'}
 		<BottomNav
 			currentMode={activeNavbarMode}
 			onSelectMode={handleSelectNavbarMode}

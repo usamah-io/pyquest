@@ -23,6 +23,16 @@
 	let showCustomUrlInput = $state(false);
 	let errorMessage = $state<string | null>(null);
 
+	// Sync when user store changes
+	$effect(() => {
+		if ($dashboardUserStore.name && displayName === 'Penjelajah Kode') {
+			displayName = $dashboardUserStore.name;
+		}
+		if ($dashboardUserStore.avatar && chosenAvatar === '/mascot/pybot-front-idle.png') {
+			chosenAvatar = $dashboardUserStore.avatar;
+		}
+	});
+
 	function handleSelectAvatar(src: string) {
 		chosenAvatar = src;
 		showCustomUrlInput = false;
@@ -52,26 +62,22 @@
 	}
 </script>
 
-<div class="min-h-full flex flex-col items-center justify-center py-8 px-4 select-none">
-	<div class="w-full max-w-lg bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md relative overflow-hidden">
-		<!-- Decorative Ambient Glow -->
-		<div class="absolute -top-24 -left-24 w-56 h-56 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-		<div class="absolute -bottom-24 -right-24 w-56 h-56 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-		<!-- Logo & Title -->
+<div class="min-h-full flex flex-col items-center justify-center py-6 sm:py-8 px-4 select-none animate-fade-in">
+	<div class="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+		<!-- Logo & Welcoming Header -->
 		<div class="flex flex-col items-center text-center mb-6">
 			<div class="mb-3">
 				<PyQuestLogo size="md" showSubtitle={false} />
 			</div>
 			<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-bold mb-2">
 				<Icon name="sparkles" size={13} />
-				<span>Selamat Datang!</span>
+				<span>Langkah Awal Petualangan</span>
 			</div>
 			<h2 class="text-2xl sm:text-3xl font-black text-white tracking-tight">
-				Lengkapi Profilmu
+				Siapkan Profilmu
 			</h2>
 			<p class="text-xs sm:text-sm text-slate-400 mt-1 max-w-sm">
-				Pilih avatar favorit dan tentukan nama tampilan untuk petualangan kodingmu bersama PyBot.
+				Tentukan avatar dan nama panggilan yang akan menemanimu belajar koding di PyQuest.
 			</p>
 		</div>
 
@@ -86,7 +92,7 @@
 			<!-- Avatar Preview & Selector -->
 			<div class="flex flex-col items-center">
 				<div class="relative group">
-					<div class="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-slate-950 border-2 border-indigo-500/50 p-2 shadow-xl shadow-indigo-500/20 flex items-center justify-center overflow-hidden">
+					<div class="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-slate-950 border-2 border-indigo-500/50 p-2 shadow-xl shadow-indigo-500/10 flex items-center justify-center overflow-hidden">
 						<img
 							src={chosenAvatar}
 							alt="Avatar Pilihan"
@@ -100,10 +106,24 @@
 						<Icon name="camera" size={14} />
 					</div>
 				</div>
-				<span class="text-[11px] font-bold text-slate-400 mt-3 mb-2">Pilih Avatar Siswa</span>
+				<span class="text-[11px] font-bold text-slate-400 mt-3 mb-2">Pilih Avatar Karakter</span>
 
 				<!-- Avatar Presets Grid -->
 				<div class="flex items-center justify-center gap-2.5 flex-wrap">
+					<!-- If user has Google Avatar, show it as first option -->
+					{#if $dashboardUserStore.avatar && $dashboardUserStore.avatar.startsWith('http')}
+						<button
+							type="button"
+							onclick={() => handleSelectAvatar($dashboardUserStore.avatar || '')}
+							class="w-12 h-12 rounded-2xl bg-slate-950 border-2 transition-all p-1 cursor-pointer {chosenAvatar === $dashboardUserStore.avatar
+								? 'border-cyan-400 scale-105 shadow-md shadow-cyan-500/30 ring-2 ring-cyan-400/30'
+								: 'border-slate-800 hover:border-slate-700 opacity-70 hover:opacity-100'}"
+							title="Foto Profil Google"
+						>
+							<img src={$dashboardUserStore.avatar} alt="Google" class="w-full h-full object-cover rounded-xl" />
+						</button>
+					{/if}
+
 					{#each AVATAR_OPTIONS as opt}
 						<button
 							type="button"
@@ -151,7 +171,7 @@
 			<!-- Display Name Input -->
 			<div class="space-y-1.5 text-left">
 				<label for="displayNameInput" class="block text-xs font-bold text-slate-300">
-					Nama Tampilan
+					Nama kamu?
 				</label>
 				<div class="relative">
 					<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
@@ -168,7 +188,7 @@
 					/>
 				</div>
 				<p class="text-[11px] text-slate-500">
-					Nama ini akan tampil di sertifikat, papan peringkat, dan sambutan dashboard.
+					Ini nama yang akan tampil di PyQuest.
 				</p>
 			</div>
 
@@ -177,7 +197,7 @@
 				type="submit"
 				class="w-full py-3.5 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 border border-indigo-400/50 text-white font-black text-sm shadow-xl shadow-indigo-600/30 transition-all cursor-pointer flex items-center justify-center gap-2 group hover:scale-[1.01] active:scale-[0.99]"
 			>
-				<span>Simpan & Mulai Petualangan</span>
+				<span>Mulai Petualangan</span>
 				<Icon name="arrow-right" size={16} class="group-hover:translate-x-1 transition-transform" />
 			</button>
 		</form>

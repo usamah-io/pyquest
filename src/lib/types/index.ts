@@ -144,6 +144,7 @@ export interface UserProgress {
 }
 
 export type AppScreen =
+	| 'LOGIN'
 	| 'LANDING'
 	| 'LEARN_SELECT'
 	| 'QUESTION'
