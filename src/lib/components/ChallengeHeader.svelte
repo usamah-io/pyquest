@@ -49,29 +49,29 @@
 	}
 </script>
 
-<div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 sm:p-4 mb-3 flex items-center justify-between gap-3 shadow-lg shrink-0 select-none">
+<div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-2 sm:p-3 landscape:p-1.5 landscape:py-1 mb-2 sm:mb-3 landscape:mb-1.5 flex items-center justify-between gap-2.5 shadow-lg shrink-0 select-none">
 	<!-- Left: Back Button & Objective Info -->
-	<div class="flex items-center gap-3 min-w-0">
+	<div class="flex items-center gap-2 sm:gap-3 min-w-0">
 		{#if onBackToModes}
 			<button
 				type="button"
 				onclick={onBackToModes}
-				class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+				class="w-8 h-8 sm:w-9 sm:h-9 landscape:w-7 landscape:h-7 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
 				title="Pilih Misi / Level Lain"
 				aria-label="Pilih Misi / Level Lain"
 			>
-				<Icon name="chevron-left" size={18} />
+				<Icon name="chevron-left" size={16} />
 			</button>
 		{/if}
 
 		<div class="min-w-0">
 			<div class="flex items-center gap-2 flex-wrap">
-				<span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/20 shrink-0">
+				<span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-1.5 sm:px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/20 shrink-0">
 					{topic}
 				</span>
-				<h2 class="text-sm sm:text-base font-black text-white truncate">{title}</h2>
+				<h2 class="text-xs sm:text-base landscape:text-xs font-black text-white truncate">{title}</h2>
 			</div>
-			<p class="text-xs text-slate-300 mt-0.5 truncate max-w-xl">{objective}</p>
+			<p class="text-[11px] sm:text-xs landscape:text-[10px] text-slate-300 mt-0.5 truncate max-w-xl">{objective}</p>
 		</div>
 	</div>
 
@@ -81,10 +81,10 @@
 			<button
 				type="button"
 				onclick={handleOpenHintModal}
-				class="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+				class="px-2.5 sm:px-3 py-1 sm:py-1.5 landscape:py-1 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
 				title="Lihat Petunjuk PyBot"
 			>
-				<Icon name="lightbulb" size={15} class="text-amber-400" />
+				<Icon name="lightbulb" size={14} class="text-amber-400" />
 				<span class="hidden sm:inline">Petunjuk</span>
 				<span class="text-[10px] bg-amber-400/20 text-amber-200 px-1.5 py-0.2 rounded-full font-mono">
 					{remainingQuota}

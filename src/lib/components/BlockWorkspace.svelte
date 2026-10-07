@@ -187,26 +187,32 @@
 					name: 'MAJU',
 					subtext: 'Langkah maju',
 					icon: 'arrow-up',
+					category: 'Gerak',
 					accentColor: 'emerald',
-					bgClass: 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400 text-white',
+					bgClass: 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 border-emerald-400 text-white shadow-emerald-950/40 border-b-[3px] border-b-emerald-800',
+					tabColor: 'bg-emerald-600',
 					pyBadge: 'pybot.move()'
 				};
 			case 'TURN_LEFT':
 				return {
 					name: 'BELOK KIRI',
-					subtext: 'Putar 90° kiri',
+					subtext: '90° Kiri',
 					icon: 'corner-up-left',
+					category: 'Putar',
 					accentColor: 'amber',
-					bgClass: 'bg-amber-600 hover:bg-amber-500 border-amber-400 text-white',
+					bgClass: 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 border-amber-400 text-white shadow-amber-950/40 border-b-[3px] border-b-amber-900',
+					tabColor: 'bg-amber-600',
 					pyBadge: 'pybot.turn_left()'
 				};
 			case 'TURN_RIGHT':
 				return {
 					name: 'BELOK KANAN',
-					subtext: 'Putar 90° kanan',
+					subtext: '90° Kanan',
 					icon: 'corner-up-right',
+					category: 'Putar',
 					accentColor: 'orange',
-					bgClass: 'bg-orange-600 hover:bg-orange-500 border-orange-400 text-white',
+					bgClass: 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-500 hover:to-orange-600 border-orange-400 text-white shadow-orange-950/40 border-b-[3px] border-b-orange-900',
+					tabColor: 'bg-orange-600',
 					pyBadge: 'pybot.turn_right()'
 				};
 			case 'REPEAT':
@@ -214,8 +220,10 @@
 					name: 'ULANGI',
 					subtext: 'Perulangan kali',
 					icon: 'repeat',
+					category: 'Loop',
 					accentColor: 'indigo',
-					bgClass: 'bg-indigo-600 hover:bg-indigo-500 border-indigo-400 text-white',
+					bgClass: 'bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 border-indigo-400 text-white shadow-indigo-950/40 border-b-[3px] border-b-indigo-900',
+					tabColor: 'bg-indigo-600',
 					pyBadge: 'for _ in range(n):'
 				};
 			case 'FOREVER':
@@ -223,8 +231,10 @@
 					name: 'SELAMANYA',
 					subtext: 'Loop terus-menerus',
 					icon: 'refresh-cw',
+					category: 'Loop',
 					accentColor: 'purple',
-					bgClass: 'bg-purple-600 hover:bg-purple-500 border-purple-400 text-white',
+					bgClass: 'bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600 border-violet-400 text-white shadow-purple-950/40 border-b-[3px] border-b-purple-900',
+					tabColor: 'bg-violet-600',
 					pyBadge: 'while True:'
 				};
 		}
@@ -447,34 +457,34 @@
 
 <div
 	data-workspace-root
-	class="flex flex-col h-full bg-slate-900/95 border border-slate-800 rounded-3xl p-3 sm:p-4 shadow-2xl overflow-hidden backdrop-blur-md select-none relative"
+	class="flex flex-col h-full bg-slate-900/95 border border-slate-800 rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 landscape:p-2.5 shadow-2xl overflow-hidden backdrop-blur-md select-none relative"
 >
 	<!-- Workspace Header -->
-	<div class="flex items-center justify-between pb-3 border-b border-slate-800 shrink-0">
+	<div class="flex items-center justify-between pb-2 sm:pb-3 landscape:pb-1.5 border-b border-slate-800 shrink-0">
 		<div class="flex items-center gap-2">
-			<div class="w-7 h-7 rounded-lg bg-indigo-500/20 border border-indigo-500/40 text-indigo-400 flex items-center justify-center">
-				<Icon name="puzzle" size={16} />
+			<div class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-indigo-500/20 border border-indigo-500/40 text-indigo-400 flex items-center justify-center">
+				<Icon name="puzzle" size={15} />
 			</div>
 			<div>
-				<h3 class="font-bold text-white text-xs sm:text-sm tracking-wide">Penyusun Blok Logika</h3>
+				<h3 class="font-bold text-white text-xs sm:text-sm landscape:text-xs tracking-wide">Penyusun Blok Logika</h3>
 			</div>
 			{#if attempts > 0}
-				<span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 font-mono">
-					Percobaan: {attempts}
+				<span class="text-[9px] sm:text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 font-mono">
+					{attempts}x RUN
 				</span>
 			{/if}
 		</div>
 
 		<div class="flex items-center gap-2">
 			{#if maxMoves}
-				<span class="text-[11px] text-slate-400 font-mono hidden sm:inline bg-slate-950/60 px-2 py-1 rounded-lg border border-slate-800">
+				<span class="text-[10px] sm:text-[11px] text-slate-400 font-mono hidden sm:inline bg-slate-950/60 px-2 py-0.5 sm:py-1 rounded-lg border border-slate-800">
 					Batas: {maxMoves} langkah
 				</span>
 			{/if}
 			<button
 				type="button"
 				onclick={() => (showPythonCode = !showPythonCode)}
-				class="text-xs px-2.5 py-1 rounded-lg border font-mono transition-colors flex items-center gap-1.5 cursor-pointer {showPythonCode
+				class="text-[11px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border font-mono transition-colors flex items-center gap-1.5 cursor-pointer {showPythonCode
 					? 'bg-indigo-500/20 border-indigo-500 text-indigo-300'
 					: 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'}"
 			>
@@ -486,7 +496,7 @@
 
 	<!-- Python Live Code Preview Overlay -->
 	{#if showPythonCode}
-		<div class="mt-2.5 p-2.5 rounded-2xl bg-slate-950 border border-slate-800 font-mono text-xs text-emerald-400 shrink-0 animate-fade-in">
+		<div class="mt-2 p-2 sm:p-2.5 rounded-2xl bg-slate-950 border border-slate-800 font-mono text-xs text-emerald-400 shrink-0 animate-fade-in max-h-36 overflow-y-auto">
 			<div class="flex items-center justify-between pb-1.5 mb-1.5 border-b border-slate-800 text-[11px] text-slate-400">
 				<span>Kode Python Ekuivalen</span>
 				<span class="text-[10px] text-slate-500 font-sans">Dihasilkan otomatis</span>
@@ -495,20 +505,20 @@
 		</div>
 	{/if}
 
-	<!-- PALETTE BLOK KODING (DRAGGABLE + CLICK FALLBACK) -->
-	<div class="py-3 border-b border-slate-800 shrink-0">
-		<div class="flex items-center justify-between mb-2">
-			<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-				<Icon name="layout-grid" size={13} class="text-indigo-400" />
+	<!-- PALETTE BLOK KODING (DRAGGABLE) -->
+	<div class="py-2 sm:py-3 landscape:py-1.5 border-b border-slate-800 shrink-0">
+		<div class="flex items-center justify-between mb-1.5 sm:mb-2">
+			<span class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+				<Icon name="layout-grid" size={12} class="text-indigo-400" />
 				<span>Palet Balok Kode</span>
 			</span>
 			<span class="text-[10px] text-cyan-400 font-semibold hidden sm:inline flex items-center gap-1">
 				<Icon name="grip-vertical" size={11} />
-				<span>Tarik & lepas balok ke kanvas editor</span>
+				<span>Tarik & lepas balok ke kanvas</span>
 			</span>
 		</div>
 
-		<div class="flex flex-wrap gap-2">
+		<div class="flex flex-wrap gap-1.5 sm:gap-2">
 			{#each fullPalette as bType}
 				{@const meta = getBlockMeta(bType)}
 				<div
@@ -516,13 +526,17 @@
 					tabindex="0"
 					style="touch-action: none;"
 					onpointerdown={(e) => handlePointerDown(e, 'palette', bType)}
-					class="group relative select-none rounded-xl border px-3 py-2 text-xs font-black shadow-md cursor-grab active:cursor-grabbing transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lg active:scale-95 disabled:opacity-50 {meta.bgClass} flex items-center gap-2"
+					class="group relative select-none rounded-xl border px-2.5 sm:px-3 py-1.5 sm:py-2 text-[11px] sm:text-xs font-black shadow-md cursor-grab active:cursor-grabbing transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lg active:scale-95 disabled:opacity-50 {meta.bgClass} flex items-center gap-1.5 sm:gap-2"
 					title="Tarik dan letakkan balok ke kanvas editor"
 				>
-					<Icon name="grip-vertical" size={12} class="opacity-60 group-hover:opacity-100 shrink-0" />
-					<Icon name={meta.icon} size={15} class="shrink-0" />
+					<!-- Puzzle connector hints on palette piece -->
+					<div class="absolute -top-[2px] left-4 w-5 h-1 bg-slate-900/90 rounded-b-sm border-x border-b border-black/40 pointer-events-none"></div>
+					<div class="absolute -bottom-1.5 left-4 w-5 h-1.5 rounded-b-sm border-x border-b border-black/30 shadow-xs pointer-events-none {meta.tabColor}"></div>
+
+					<Icon name="grip-vertical" size={11} class="opacity-60 group-hover:opacity-100 shrink-0" />
+					<Icon name={meta.icon} size={14} class="shrink-0" />
 					<span>{meta.name}</span>
-					<span class="hidden sm:inline text-[9px] font-mono text-white/70 bg-black/20 px-1 py-0.5 rounded border border-white/10">
+					<span class="hidden sm:inline text-[9px] font-mono text-white/75 bg-black/20 px-1 py-0.5 rounded border border-white/10">
 						{meta.pyBadge}
 					</span>
 				</div>
@@ -607,21 +621,26 @@
 							data-block-index={i}
 							style="touch-action: none;"
 							onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
-							class="rounded-2xl border-2 shadow-lg overflow-hidden transition-all duration-150 {block.type === 'REPEAT'
+							class="relative rounded-2xl border-2 shadow-lg overflow-visible transition-all duration-150 {block.type === 'REPEAT'
 								? 'border-indigo-500 bg-indigo-950/40 shadow-indigo-900/20'
 								: 'border-purple-500 bg-purple-950/40 shadow-purple-900/20'} {isDragging && dragInfo?.blockId === block.id
 								? 'opacity-40 border-dashed scale-95'
 								: ''}"
 						>
+							<!-- Top puzzle notch socket on C-block -->
+							<div class="absolute -top-[2px] left-6 sm:left-8 w-7 h-2 bg-slate-900/90 rounded-b-md border-x border-b border-black/50 z-20 pointer-events-none"></div>
+
 							<!-- C-Block Top Header -->
 							<div
-								class="px-3.5 py-2.5 flex items-center justify-between text-xs sm:text-sm font-black text-white cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
-									? 'bg-indigo-600'
-									: 'bg-purple-600'}"
+								class="px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-t-[14px] flex items-center justify-between text-xs sm:text-sm font-black text-white cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
+									? 'bg-gradient-to-r from-indigo-600 to-indigo-700'
+									: 'bg-gradient-to-r from-violet-600 to-purple-700'}"
 							>
-								<div class="flex items-center gap-2">
-									<Icon name="grip-vertical" size={14} class="text-white/60 shrink-0" />
-									<Icon name={block.type === 'REPEAT' ? 'repeat' : 'refresh-cw'} size={16} />
+								<div class="flex items-center gap-2 flex-wrap">
+									<Icon name="grip-vertical" size={13} class="text-white/60 shrink-0" />
+									<div class="w-6 h-6 rounded-lg bg-black/20 border border-white/20 flex items-center justify-center shrink-0">
+										<Icon name={block.type === 'REPEAT' ? 'repeat' : 'refresh-cw'} size={14} />
+									</div>
 									<span>{block.type === 'REPEAT' ? 'ULANGI' : 'SELAMANYA'}</span>
 
 									{#if block.type === 'REPEAT'}
@@ -669,7 +688,7 @@
 									{/if}
 								</div>
 
-								<div class="flex items-center gap-1.5">
+								<div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
 									<button
 										type="button"
 										onclick={(e) => {
@@ -699,19 +718,19 @@
 								</div>
 							</div>
 
-							<!-- C-Block Nested Body (Indented Inner Slot) -->
+							<!-- C-Block Nested Body (Indented Inner Slot with Left Spine) -->
 							<div
 								data-repeat-inner-id={block.id}
 								data-child-count={block.children?.length || 0}
-								class="pl-4 sm:pl-5 pr-2 py-2 flex flex-col space-y-1.5 border-l-8 {block.type === 'REPEAT'
-									? 'border-indigo-600 bg-indigo-950/20'
-									: 'border-purple-600 bg-purple-950/20'}"
+								class="pl-4 sm:pl-5 pr-2 py-2 flex flex-col space-y-2 border-l-[10px] sm:border-l-[12px] {block.type === 'REPEAT'
+									? 'border-indigo-600 bg-indigo-950/25'
+									: 'border-purple-600 bg-purple-950/25'}"
 							>
 								{#if !block.children || block.children.length === 0}
 									<div
 										data-slot-parent={block.id}
 										data-slot-index="0"
-										class="py-3 px-4 border border-dashed rounded-xl text-center text-xs text-slate-400 bg-slate-900/60 {isDragging && dropTarget?.parentId === block.id
+										class="py-2.5 px-3 border border-dashed rounded-xl text-center text-xs text-slate-400 bg-slate-900/60 {isDragging && dropTarget?.parentId === block.id
 											? 'border-cyan-400 bg-cyan-950/40 text-cyan-200 shadow-[0_0_15px_rgba(34,211,238,0.3)]'
 											: 'border-slate-700'}"
 									>
@@ -737,13 +756,19 @@
 											data-block-index={ci}
 											style="touch-action: none;"
 											onpointerdown={(e) => handlePointerDown(e, 'workspace', child.type, child.id, block.id, ci, child)}
-											class="flex items-center justify-between px-3 py-2 rounded-xl border text-xs font-bold shadow-md cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-0.5 {childMeta.bgClass} {isDragging && dragInfo?.blockId === child.id
+											class="relative flex items-center justify-between px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border text-xs font-bold shadow-md cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-0.5 {childMeta.bgClass} {isDragging && dragInfo?.blockId === child.id
 												? 'opacity-40 border-dashed scale-95'
 												: ''}"
 										>
+											<!-- Inner child notch and tab -->
+											<div class="absolute -top-[2px] left-5 w-5 h-1.5 bg-slate-900/90 rounded-b-sm border-x border-b border-black/50 pointer-events-none"></div>
+											<div class="absolute -bottom-1.5 left-5 w-5 h-1.5 rounded-b-sm border-x border-b border-black/30 shadow-xs pointer-events-none {childMeta.tabColor}"></div>
+
 											<div class="flex items-center gap-2">
-												<Icon name="grip-vertical" size={12} class="text-white/60 shrink-0" />
-												<Icon name={childMeta.icon} size={14} class="shrink-0" />
+												<Icon name="grip-vertical" size={11} class="text-white/60 shrink-0" />
+												<div class="w-5 h-5 rounded bg-black/20 border border-white/20 flex items-center justify-center shrink-0">
+													<Icon name={childMeta.icon} size={13} class="text-white" />
+												</div>
 												<span>{childMeta.name}</span>
 											</div>
 											<div class="flex items-center gap-1">
@@ -780,10 +805,13 @@
 
 							<!-- C-Block Bottom Closing Bar -->
 							<div
-								class="h-2.5 px-3 {block.type === 'REPEAT'
+								class="h-3 rounded-b-[14px] px-3 relative {block.type === 'REPEAT'
 									? 'bg-indigo-700'
 									: 'bg-purple-700'}"
-							></div>
+							>
+								<!-- Bottom puzzle tab protrusion on C-block foot -->
+								<div class="absolute -bottom-2 left-6 sm:left-8 w-7 h-2 rounded-b-md border-x border-b border-black/40 shadow-sm z-20 pointer-events-none {block.type === 'REPEAT' ? 'bg-indigo-700' : 'bg-purple-700'}"></div>
+							</div>
 						</div>
 					{:else}
 						<!-- STACK BLOCK (MAJU / BELOK KIRI / BELOK KANAN) -->
@@ -796,26 +824,31 @@
 							data-block-index={i}
 							style="touch-action: none;"
 							onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
-							class="group flex items-center justify-between px-3.5 py-2.5 rounded-2xl border text-xs sm:text-sm font-black shadow-lg cursor-grab active:cursor-grabbing transition-all duration-150 hover:-translate-y-0.5 hover:shadow-xl {meta.bgClass} {isDragging && dragInfo?.blockId === block.id
+							class="group relative flex items-center justify-between px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-2xl border text-xs sm:text-sm font-black shadow-lg cursor-grab active:cursor-grabbing transition-all duration-150 hover:-translate-y-0.5 hover:shadow-xl {meta.bgClass} {isDragging && dragInfo?.blockId === block.id
 								? 'opacity-40 border-dashed scale-95'
 								: ''}"
 						>
-							<!-- Left: Grab handle + Notch circle + Icon + Name -->
-							<div class="flex items-center gap-2.5">
-								<Icon name="grip-vertical" size={14} class="text-white/60 shrink-0" />
-								<div class="w-3 h-3 rounded-full bg-white/20 border border-white/40 flex items-center justify-center">
-									<div class="w-1.5 h-1.5 rounded-full bg-white"></div>
+							<!-- Top puzzle notch socket -->
+							<div class="absolute -top-[2px] left-6 sm:left-8 w-7 h-2 bg-slate-900/90 rounded-b-md border-x border-b border-black/50 z-20 pointer-events-none"></div>
+
+							<!-- Bottom puzzle tab protrusion -->
+							<div class="absolute -bottom-2 left-6 sm:left-8 w-7 h-2 rounded-b-md border-x border-b border-black/40 shadow-sm z-20 pointer-events-none {meta.tabColor}"></div>
+
+							<!-- Left: Grab handle + Direction Icon + Name + Subtext -->
+							<div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
+								<Icon name="grip-vertical" size={13} class="text-white/60 shrink-0" />
+								<div class="w-6 h-6 rounded-lg bg-black/20 border border-white/20 flex items-center justify-center shrink-0 shadow-inner">
+									<Icon name={meta.icon} size={15} class="text-white" />
 								</div>
-								<Icon name={meta.icon} size={16} class="shrink-0" />
-								<span>{meta.name}</span>
-								<span class="text-[10px] font-normal text-white/80 hidden sm:inline ml-1 font-sans">
+								<span class="truncate">{meta.name}</span>
+								<span class="text-[10px] font-normal text-white/80 hidden sm:inline ml-0.5 font-sans">
 									({meta.subtext})
 								</span>
 							</div>
 
 							<!-- Right: Python Badge + Actions -->
-							<div class="flex items-center gap-1.5">
-								<span class="text-[10px] font-mono text-white/70 hidden md:inline mr-2 bg-black/20 px-2 py-0.5 rounded-md">
+							<div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+								<span class="text-[9px] sm:text-[10px] font-mono text-white/70 hidden md:inline mr-1 bg-black/20 px-2 py-0.5 rounded-md">
 									{meta.pyBadge}
 								</span>
 								<button
@@ -870,15 +903,15 @@
 	</div>
 
 	<!-- Bottom Section: Run & Reset Buttons -->
-	<div class="flex items-center gap-3 pt-3 border-t border-slate-800 mt-2 shrink-0">
+	<div class="flex items-center gap-2 sm:gap-3 pt-2 sm:pt-3 landscape:pt-1.5 border-t border-slate-800 mt-1 sm:mt-2 landscape:mt-1 shrink-0">
 		<button
 			type="button"
 			onclick={onReset}
 			disabled={isRunning}
-			class="px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 active:scale-95"
+			class="px-3 sm:px-4 py-2 sm:py-3 landscape:py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 active:scale-95"
 			title="Kembalikan posisi awal robot"
 		>
-			<Icon name="rotate-ccw" size={15} />
+			<Icon name="rotate-ccw" size={14} />
 			<span>Reset</span>
 		</button>
 
@@ -886,13 +919,13 @@
 			type="button"
 			onclick={onRun}
 			disabled={workspaceBlocks.length === 0 || isRunning}
-			class="flex-1 py-3 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-sm sm:text-base rounded-xl shadow-lg shadow-emerald-500/25 transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+			class="flex-1 py-2 sm:py-3 landscape:py-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black text-xs sm:text-base landscape:text-xs rounded-xl shadow-lg shadow-emerald-500/25 transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
 		>
 			{#if isRunning}
-				<Icon name="refresh-cw" size={18} class="animate-spin text-slate-950" />
+				<Icon name="refresh-cw" size={16} class="animate-spin text-slate-950" />
 				<span>Menjalankan Urutan Blok...</span>
 			{:else}
-				<Icon name="play" size={18} class="text-slate-950" />
+				<Icon name="play" size={16} class="text-slate-950" />
 				<span>JALANKAN KODE (RUN)</span>
 			{/if}
 		</button>
@@ -909,12 +942,15 @@
 		style="left: {pointerPos.x}px; top: {pointerPos.y}px;"
 	>
 		<div
-			class="px-4 py-2.5 rounded-2xl border-2 font-black text-xs sm:text-sm text-white flex items-center gap-2.5 shadow-[0_20px_40px_rgba(0,0,0,0.7)] backdrop-blur-md rotate-2 scale-105 {meta.bgClass} {isOverTrash
+			class="relative px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-2xl border-2 font-black text-xs sm:text-sm text-white flex items-center gap-2 sm:gap-2.5 shadow-[0_20px_40px_rgba(0,0,0,0.8)] backdrop-blur-md rotate-2 scale-105 {meta.bgClass} {isOverTrash
 				? 'opacity-60 grayscale ring-4 ring-rose-500/60'
 				: 'ring-4 ring-cyan-400/50'}"
 		>
-			<Icon name="grip-vertical" size={14} class="text-white/70" />
-			<Icon name={meta.icon} size={18} />
+			<div class="absolute -top-[2px] left-6 w-6 h-1.5 bg-slate-900/90 rounded-b-md border-x border-b border-black/50"></div>
+			<div class="absolute -bottom-1.5 left-6 w-6 h-1.5 rounded-b-md border-x border-b border-black/30 shadow-xs {meta.tabColor}"></div>
+
+			<Icon name="grip-vertical" size={13} class="text-white/70" />
+			<Icon name={meta.icon} size={16} />
 			<span>{meta.name}</span>
 			{#if dragInfo.type === 'REPEAT' && dragInfo.data?.repeatCount}
 				<span class="px-1.5 py-0.5 rounded bg-black/40 text-[10px] font-mono border border-white/20">

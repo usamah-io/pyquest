@@ -21,7 +21,6 @@
 	type MascotPose = 'idle' | 'left' | 'right' | 'waving' | 'happy';
 	let mascotPose = $state<MascotPose>('waving');
 	let isHoveringMascot = $state(false);
-	let mascotSpeech = $state<string>('Siap untuk misi berikutnya?');
 
 	const poseMap: Record<MascotPose, string> = {
 		idle: '/mascot/pybot-front-idle.png',
@@ -51,23 +50,19 @@
 
 	function handleMascotClick() {
 		mascotPose = 'happy';
-		mascotSpeech = 'Hebat! Ayo raih Bintang Emas hari ini!';
 		setTimeout(() => {
 			mascotPose = 'waving';
-			mascotSpeech = 'Siap untuk misi berikutnya?';
 		}, 3000);
 	}
 
 	function handleMascotMouseEnter() {
 		isHoveringMascot = true;
 		mascotPose = 'happy';
-		mascotSpeech = 'Hai! Senang melihatmu kembali!';
 	}
 
 	function handleMascotMouseLeave() {
 		isHoveringMascot = false;
 		mascotPose = 'waving';
-		mascotSpeech = 'Siap untuk misi berikutnya?';
 	}
 
 	// Calculate Real Player Progress from $progressStore
@@ -273,11 +268,6 @@
 				aria-label="Maskot PyBot"
 				onkeydown={(e) => e.key === 'Enter' && handleMascotClick()}
 			>
-				<!-- Dynamic Speech Bubble -->
-				<div class="absolute -top-7 sm:-top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-indigo-950/90 border border-indigo-500/40 text-cyan-200 text-[11px] font-bold px-3 py-1 rounded-2xl shadow-xl shadow-cyan-500/10 backdrop-blur-md animate-bounce">
-					{mascotSpeech}
-					<div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 bg-indigo-950 border-r border-b border-indigo-500/40 rotate-45"></div>
-				</div>
 
 				<!-- PyBot 3D Image -->
 				<div class="w-36 h-36 sm:w-44 sm:h-44 md:w-48 md:h-48 relative flex items-center justify-center transition-transform duration-300 group-hover:scale-105">

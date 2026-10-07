@@ -403,17 +403,26 @@
 	<title>PyQuest — Petualangan Logika Python</title>
 </svelte:head>
 
-<div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
+<div class="bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white {currentScreen === 'CHALLENGE' ? 'h-[100dvh] max-h-[100dvh] overflow-hidden' : 'min-h-screen'}">
 	<!-- Mobile Orientation Guard (Active during Coding Game mode in portrait) -->
 	{#if currentScreen === 'CHALLENGE'}
 		<OrientationGuard />
 	{/if}
 
 	<!-- Top Nav with Mode Switcher -->
-	<Navbar
-		onSelectMode={handleSelectNavbarMode}
-		onOpenProfile={handleOpenProfile}
-	/>
+	{#if currentScreen === 'CHALLENGE'}
+		<div class="hidden md:block">
+			<Navbar
+				onSelectMode={handleSelectNavbarMode}
+				onOpenProfile={handleOpenProfile}
+			/>
+		</div>
+	{:else}
+		<Navbar
+			onSelectMode={handleSelectNavbarMode}
+			onOpenProfile={handleOpenProfile}
+		/>
+	{/if}
 
 	<!-- Focus Mode / Anti-Cheat Warning Toast Banner -->
 	{#if focusWarning}
@@ -492,7 +501,7 @@
 		{/if}
 
 		<!-- Main Stage -->
-		<main class="flex-1 flex flex-col p-2 sm:p-4 md:p-6 pb-20 lg:pb-6 overflow-y-auto min-h-0">
+		<main class="flex-1 flex flex-col {currentScreen === 'CHALLENGE' ? 'p-1.5 sm:p-2.5 landscape:p-1 overflow-hidden h-full max-h-full' : 'p-2 sm:p-4 md:p-6 pb-20 lg:pb-6 overflow-y-auto'} min-h-0">
 			<!-- 1. LANDING / HOME -->
 			{#if currentScreen === 'LANDING'}
 				<LandingHero
@@ -561,7 +570,7 @@
 
 			<!-- 8. CODING GAME CHALLENGE -->
 			{:else if currentScreen === 'CHALLENGE'}
-				<div class="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto w-full">
+				<div class="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto w-full h-full overflow-hidden">
 					<ChallengeHeader
 						title={`${activeLevel.title} — ${activeChallenge.title}`}
 						objective={activeChallenge.objective}
@@ -573,8 +582,8 @@
 						}}
 					/>
 
-					<div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-0">
-						<div class="h-full min-h-[260px]">
+					<div class="flex-1 grid grid-cols-1 landscape:grid-cols-2 md:grid-cols-2 gap-2 sm:gap-3 landscape:gap-2 min-h-0 h-full overflow-hidden">
+						<div class="h-full min-h-0 overflow-hidden">
 							<GameCanvas
 								grid={activeChallenge.grid}
 								{playerPos}
@@ -585,7 +594,7 @@
 							/>
 						</div>
 
-						<div class="h-full min-h-[280px]">
+						<div class="h-full min-h-0 overflow-hidden">
 							<BlockWorkspace
 								bind:workspaceBlocks
 								availableBlocks={activeChallenge.availableBlocks}
