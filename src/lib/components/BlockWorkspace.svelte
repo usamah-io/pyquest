@@ -278,20 +278,31 @@
 		}
 	}
 
-	// Palette availability
+	// Palette availability: GUARANTEE that MAJU, BELOK KIRI, and BELOK KANAN are always available
 	let fullPalette = $derived.by<BlockType[]>(() => {
-		const set = new Set<BlockType>(availableBlocks);
-		if (set.has('REPEAT')) {
+		const baseBlocks: BlockType[] = ['MOVE', 'TURN_LEFT', 'TURN_RIGHT'];
+		const set = new Set<BlockType>(baseBlocks);
+		if (availableBlocks && availableBlocks.length > 0) {
+			for (const b of availableBlocks) {
+				set.add(b);
+			}
+		}
+		// If loop blocks are introduced in progression, provide both REPEAT and FOREVER
+		if (set.has('REPEAT') || set.has('FOREVER')) {
+			set.add('REPEAT');
 			set.add('FOREVER');
 		}
-		return Array.from(set);
+		const order: BlockType[] = ['MOVE', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT', 'FOREVER'];
+		return order.filter((t) => set.has(t));
 	});
 
-
 	// ==========================================
-	// POINTER EVENT HANDLERS (DESKTOP + MOBILE)
+	// TRUE DRAG & DROP ENGINE (POINTER EVENTS)
 	// ==========================================
 	let holdTimer: ReturnType<typeof setTimeout> | null = null;
+	let activePointerEl: HTMLElement | null = null;
+	let isTouchPointer = $state(false);
+	let paletteScrollEl: HTMLElement | null = $state(null);
 
 	function clearHoldTimer() {
 		if (holdTimer) {
@@ -330,11 +341,17 @@
 		if (isRunning) return;
 		if (e.button !== 0) return; // Only primary mouse/touch button
 
-		// If user tapped on an interactive element inside the block, let that element handle it
+		// If user tapped on an interactive control (input or sub-button) INSIDE a workspace block, let that handle it
 		const targetEl = e.target as HTMLElement;
-		if (targetEl.closest('input, button')) return;
+		if (source === 'workspace' && targetEl.closest('input, button')) return;
 
 		clearHoldTimer();
+
+		isTouchPointer = e.pointerType === 'touch';
+		activePointerEl = e.currentTarget as HTMLElement;
+		try {
+			activePointerEl?.setPointerCapture?.(e.pointerId);
+		} catch {}
 
 		const isHandle =
 			source === 'palette' ||
@@ -357,13 +374,12 @@
 		pointerPos = { x: e.clientX, y: e.clientY };
 
 		if (!isHandle && e.pointerType === 'touch') {
-			// On touch outside handle, wait for a short hold (180ms) before activating drag,
-			// allowing normal scroll gestures to proceed without delay if user swipes vertically.
+			// On touch outside handle, start drag if held for 150ms
 			holdTimer = setTimeout(() => {
 				if (pendingDrag && !isDragging) {
 					startDrag();
 				}
-			}, 180);
+			}, 150);
 		}
 
 		window.addEventListener('pointermove', onGlobalPointerMove, { passive: false });
@@ -380,39 +396,43 @@
 		if (!isDragging) {
 			const dx = e.clientX - pendingDrag.startX;
 			const dy = e.clientY - pendingDrag.startY;
+			const dist = Math.hypot(dx, dy);
 
 			if (pendingDrag.source === 'palette') {
 				if (e.pointerType === 'touch') {
-					// On touch: allow natural horizontal scroll of the palette
-					if (Math.abs(dx) > Math.abs(dy) && Math.abs(dy) < 16) {
+					// Allow smooth horizontal scrolling if swipe is mostly horizontal
+					if (Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dy) < 14) {
+						if (paletteScrollEl) {
+							paletteScrollEl.scrollLeft -= (e.clientX - pointerPos.x);
+						}
 						return;
 					}
-					// Only start dragging down into workspace if gesture is downwards and intentional
-					if (dy > 16 || Math.hypot(dx, dy) > 25) {
+					// Drag downward into workspace or drag pulled out
+					if (dy > 10 || dist > 16) {
 						startDrag();
 					}
 				} else {
 					// Mouse drag threshold
-					if (Math.hypot(dx, dy) > 8) {
+					if (dist > 5) {
 						startDrag();
 					}
 				}
 			} else if (pendingDrag.isHandle) {
 				// Immediate drag detection for handle or mouse in workspace
-				if (Math.hypot(dx, dy) > 8) {
+				if (dist > 5) {
 					startDrag();
 				}
 			} else {
-				// Touch on block body without handle:
-				// If user moves primarily vertically, it's an intentional vertical scroll gesture!
-				if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 7) {
+				// Touch on block body in workspace:
+				// If user moves primarily vertically quickly, it's an intentional vertical scroll of workspace
+				if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) {
 					clearHoldTimer();
 					cleanupPointerListeners();
 					pendingDrag = null;
 					return;
 				}
-				// If moved horizontally significantly, initiate drag
-				if (Math.abs(dx) > 12) {
+				// If moved horizontally or threshold exceeded, initiate drag
+				if (dist > 12) {
 					clearHoldTimer();
 					startDrag();
 				}
@@ -420,7 +440,6 @@
 		}
 
 		if (isDragging) {
-			// Prevent touch scroll on mobile devices while dragging
 			if (e.cancelable) {
 				e.preventDefault();
 			}
@@ -449,111 +468,127 @@
 				return;
 			}
 
-			// 3. Check if hovering over a block item: [data-block-id] [data-block-parent] [data-block-index]
-			const blockEl = elements.find((el) => el.hasAttribute('data-block-id'));
-			if (blockEl) {
-				const bId = blockEl.getAttribute('data-block-id');
-				// Prevent dropping directly onto itself
-				if (dragInfo?.blockId && bId === dragInfo.blockId) {
-					return;
+			// 3. Check elements in order (deepest / topmost child first)
+			let foundTarget: { parentId: string | null; index: number } | null = null;
+			for (const el of elements) {
+				if (el.hasAttribute('data-block-id')) {
+					const bId = el.getAttribute('data-block-id');
+					// Prevent dropping directly onto itself
+					if (dragInfo?.blockId && bId === dragInfo.blockId) {
+						continue;
+					}
+					const pId = el.getAttribute('data-block-parent');
+					const bIdx = parseInt(el.getAttribute('data-block-index') || '0', 10);
+					const rect = el.getBoundingClientRect();
+					const midY = rect.top + rect.height / 2;
+					const targetIndex = e.clientY < midY ? bIdx : bIdx + 1;
+					foundTarget = {
+						parentId: pId === 'root' ? null : pId,
+						index: targetIndex
+					};
+					break;
 				}
-				const pId = blockEl.getAttribute('data-block-parent');
-				const bIdx = parseInt(blockEl.getAttribute('data-block-index') || '0', 10);
-				const rect = blockEl.getBoundingClientRect();
-				const midY = rect.top + rect.height / 2;
-				const targetIndex = e.clientY < midY ? bIdx : bIdx + 1;
-				dropTarget = {
-					parentId: pId === 'root' ? null : pId,
-					index: targetIndex
-				};
-				return;
+
+				if (el.hasAttribute('data-repeat-inner-id')) {
+					const repId = el.getAttribute('data-repeat-inner-id');
+					if (dragInfo?.blockId && repId === dragInfo.blockId) continue;
+					const childCount = parseInt(el.getAttribute('data-child-count') || '0', 10);
+					foundTarget = {
+						parentId: repId,
+						index: childCount
+					};
+					break;
+				}
+
+				if (el.hasAttribute('data-empty-canvas')) {
+					foundTarget = { parentId: null, index: 0 };
+					break;
+				}
+
+				if (el.hasAttribute('data-workspace-area')) {
+					foundTarget = { parentId: null, index: workspaceBlocks.length };
+					break;
+				}
 			}
 
-			// 4. Check if hovering over inner repeat/forever slot: [data-repeat-inner-id]
-			const repeatInnerEl = elements.find((el) => el.hasAttribute('data-repeat-inner-id'));
-			if (repeatInnerEl) {
-				const repId = repeatInnerEl.getAttribute('data-repeat-inner-id');
-				if (dragInfo?.blockId && repId === dragInfo.blockId) return;
-				const childCount = parseInt(repeatInnerEl.getAttribute('data-child-count') || '0', 10);
-				dropTarget = {
-					parentId: repId,
-					index: childCount
-				};
-				return;
-			}
-
-			// 5. Check if hovering over empty canvas: [data-empty-canvas]
-			const emptyCanvas = elements.find((el) => el.hasAttribute('data-empty-canvas'));
-			if (emptyCanvas) {
-				dropTarget = { parentId: null, index: 0 };
-				return;
-			}
-
-			// 6. Check if hovering inside workspace area: [data-workspace-area]
-			const workspaceEl = elements.find((el) => el.hasAttribute('data-workspace-area'));
-			if (workspaceEl) {
-				dropTarget = { parentId: null, index: workspaceBlocks.length };
-				return;
-			}
-
-			dropTarget = null;
+			dropTarget = foundTarget;
 		}
 	}
 
 	function cleanupPointerListeners() {
 		clearHoldTimer();
+		if (activePointerEl && pendingDrag) {
+			try {
+				activePointerEl.releasePointerCapture?.(pendingDrag.pointerId);
+			} catch {}
+		}
+		activePointerEl = null;
 		window.removeEventListener('pointermove', onGlobalPointerMove);
 		window.removeEventListener('pointerup', onGlobalPointerUp);
 		window.removeEventListener('pointercancel', onGlobalPointerCancel);
 	}
 
 	function onGlobalPointerUp(e: PointerEvent) {
+		const wasDragging = isDragging;
+		const currentDragInfo = dragInfo;
+		const currentDropTarget = dropTarget;
+		const currentPendingDrag = pendingDrag;
+
 		cleanupPointerListeners();
 
-		if (!isDragging) {
-			if (pendingDrag && pendingDrag.source === 'palette') {
-				handleTapPaletteBlock(pendingDrag.type);
+		if (!wasDragging) {
+			if (currentPendingDrag && currentPendingDrag.source === 'palette') {
+				handleTapPaletteBlock(currentPendingDrag.type);
 			}
 			pendingDrag = null;
 			return;
 		}
 
-
-		if (isDragging && dragInfo) {
+		if (wasDragging && currentDragInfo) {
 			if (isOverTrash) {
 				// Drag to trash drop zone -> delete block
-				if (dragInfo.source === 'workspace' && dragInfo.blockId) {
-					workspaceBlocks = removeBlockById(workspaceBlocks, dragInfo.blockId);
+				if (currentDragInfo.source === 'workspace' && currentDragInfo.blockId) {
+					workspaceBlocks = removeBlockById(workspaceBlocks, currentDragInfo.blockId);
 				}
-			} else if (dropTarget) {
-				if (dragInfo.source === 'palette') {
+			} else if (currentDropTarget) {
+				if (currentDragInfo.source === 'palette') {
 					// Insert new block from palette
-					const newBlock = createDefaultBlock(dragInfo.type);
-					workspaceBlocks = insertBlockAt(workspaceBlocks, newBlock, dropTarget.parentId, dropTarget.index);
-				} else if (dragInfo.source === 'workspace' && dragInfo.blockId) {
+					const newBlock = createDefaultBlock(currentDragInfo.type);
+					workspaceBlocks = insertBlockAt(workspaceBlocks, newBlock, currentDropTarget.parentId, currentDropTarget.index);
+				} else if (currentDragInfo.source === 'workspace' && currentDragInfo.blockId) {
 					// Reorder or move existing block
-					const movingBlock = findBlockById(workspaceBlocks, dragInfo.blockId);
+					const movingBlock = findBlockById(workspaceBlocks, currentDragInfo.blockId);
 					if (movingBlock) {
-						// Guard: cannot drop container into itself
-						if (dropTarget.parentId !== movingBlock.id) {
-							const cleaned = removeBlockById(workspaceBlocks, dragInfo.blockId);
-							workspaceBlocks = insertBlockAt(cleaned, movingBlock, dropTarget.parentId, dropTarget.index);
+						function isDescendant(parent: CodingBlock, targetId: string | null): boolean {
+							if (!targetId || !parent.children) return false;
+							return parent.children.some((c) => c.id === targetId || isDescendant(c, targetId));
+						}
+
+						// Guard: cannot drop container into itself or its own descendants
+						if (currentDropTarget.parentId !== movingBlock.id && !isDescendant(movingBlock, currentDropTarget.parentId)) {
+							const sameParent = (currentDragInfo.parentId ?? null) === currentDropTarget.parentId;
+							let targetIndex = currentDropTarget.index;
+							if (sameParent && currentDragInfo.index !== undefined && currentDragInfo.index < targetIndex) {
+								targetIndex -= 1;
+							}
+							const cleaned = removeBlockById(workspaceBlocks, currentDragInfo.blockId);
+							workspaceBlocks = insertBlockAt(cleaned, movingBlock, currentDropTarget.parentId, targetIndex);
 						}
 					}
 				}
 			} else {
-				if (dragInfo.source === 'palette') {
+				if (currentDragInfo.source === 'palette') {
 					// Fallback: If drag was initiated from palette but released near origin or without target, treat as tap-to-add
-					const dist = pendingDrag ? Math.hypot(e.clientX - pendingDrag.startX, e.clientY - pendingDrag.startY) : 0;
+					const dist = currentPendingDrag ? Math.hypot(e.clientX - currentPendingDrag.startX, e.clientY - currentPendingDrag.startY) : 0;
 					if (dist < 36) {
-						handleTapPaletteBlock(dragInfo.type);
+						handleTapPaletteBlock(currentDragInfo.type);
 					}
-				} else if (dragInfo.source === 'workspace' && dragInfo.blockId) {
+				} else if (currentDragInfo.source === 'workspace' && currentDragInfo.blockId) {
 					// Dragged completely outside workspace area -> delete from sequence
 					const elements = document.elementsFromPoint(e.clientX, e.clientY);
 					const isInsideWorkspace = elements.some((el) => el.closest('[data-workspace-root]'));
 					if (!isInsideWorkspace) {
-						workspaceBlocks = removeBlockById(workspaceBlocks, dragInfo.blockId);
+						workspaceBlocks = removeBlockById(workspaceBlocks, currentDragInfo.blockId);
 					}
 				}
 			}
@@ -641,16 +676,25 @@
 			</span>
 		</div>
 
-		<div class="flex flex-nowrap overflow-x-auto pb-2 scrollbar-none sm:flex-wrap gap-1.5 sm:gap-2">
+		<div
+			bind:this={paletteScrollEl}
+			class="flex flex-nowrap overflow-x-auto pb-2 scrollbar-none sm:flex-wrap gap-1.5 sm:gap-2"
+		>
 			{#each fullPalette as bType}
 				{@const meta = getBlockMeta(bType)}
 				<button
 					type="button"
 					tabindex="0"
-					style="touch-action: pan-x;"
+					style="touch-action: none;"
 					onpointerdown={(e) => handlePointerDown(e, 'palette', bType)}
 					onclick={() => handleTapPaletteBlock(bType)}
-					class="group relative shrink-0 select-none rounded-xl border px-3 sm:px-3 py-2 sm:py-2 text-[11px] sm:text-xs font-black shadow-md cursor-grab active:cursor-grabbing transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lg active:scale-95 disabled:opacity-50 {meta.bgClass} flex items-center gap-1.5 sm:gap-2 min-h-[44px] touch-manipulation"
+					onkeydown={(e) => {
+						if (e.key === 'Enter' || e.key === ' ') {
+							e.preventDefault();
+							handleTapPaletteBlock(bType);
+						}
+					}}
+					class="group relative shrink-0 select-none rounded-xl border px-3 sm:px-3 py-2 sm:py-2 text-[11px] sm:text-xs font-black shadow-md cursor-grab active:cursor-grabbing transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lg active:scale-95 disabled:opacity-50 {meta.bgClass} flex items-center gap-1.5 sm:gap-2 min-h-[44px] touch-none"
 					title="Ketuk atau tarik balok ini ke kanvas"
 				>
 					<!-- Puzzle connector hints on palette piece -->
@@ -748,7 +792,7 @@
 							data-block-id={block.id}
 							data-block-parent="root"
 							data-block-index={i}
-							style="touch-action: pan-y;"
+							style="touch-action: none;"
 							onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
 							class="relative rounded-2xl border-2 shadow-lg overflow-visible transition-all duration-150 {block.type === 'REPEAT'
 								? 'border-indigo-500 bg-indigo-950/40 shadow-indigo-900/20'
@@ -891,11 +935,19 @@
 									<div
 										data-slot-parent={block.id}
 										data-slot-index="0"
-										class="py-2.5 px-3 border border-dashed rounded-xl text-center text-xs text-slate-400 bg-slate-900/60 {isDragging && dropTarget?.parentId === block.id
-											? 'border-cyan-400 bg-cyan-950/40 text-cyan-200 shadow-[0_0_15px_rgba(34,211,238,0.3)]'
-											: 'border-slate-700'}"
+										class="py-2.5 px-3 border border-dashed rounded-xl text-center text-xs font-bold transition-all duration-150 {isDragging && dropTarget?.parentId === block.id
+											? 'border-cyan-400 bg-cyan-950/70 text-cyan-200 shadow-[0_0_20px_rgba(34,211,238,0.5)] scale-[1.01]'
+											: 'border-slate-700 text-slate-400 bg-slate-900/60'}"
 									>
-										Tarik aksi ke dalam loop ini
+										{#if isDragging && dropTarget?.parentId === block.id}
+											<div class="flex items-center justify-center gap-1.5 text-cyan-300 animate-pulse">
+												<Icon name="arrow-down" size={13} />
+												<span>LEPAS KE DALAM LOOP</span>
+												<Icon name="arrow-down" size={13} />
+											</div>
+										{:else}
+											Tarik aksi ke dalam loop ini
+										{/if}
 									</div>
 								{:else}
 									{#each block.children as child, ci (child.id)}
@@ -904,8 +956,12 @@
 											<div
 												data-slot-parent={block.id}
 												data-slot-index={ci}
-												class="w-full h-1.5 my-0.5 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.9)] animate-pulse"
-											></div>
+												class="w-full my-1 py-0.5 rounded-lg border border-dashed border-cyan-400 bg-cyan-950/80 shadow-[0_0_15px_rgba(34,211,238,0.6)] flex items-center justify-center gap-1 text-[10px] font-black text-cyan-300 animate-pulse select-none"
+											>
+												<Icon name="arrow-down" size={11} />
+												<span>MASUKKAN KE LOOP</span>
+												<Icon name="arrow-down" size={11} />
+											</div>
 										{/if}
 
 										{@const childMeta = getBlockMeta(child.type)}
@@ -915,7 +971,7 @@
 											data-block-id={child.id}
 											data-block-parent={block.id}
 											data-block-index={ci}
-											style="touch-action: pan-y;"
+											style="touch-action: none;"
 											onpointerdown={(e) => handlePointerDown(e, 'workspace', child.type, child.id, block.id, ci, child)}
 											class="relative flex items-center justify-between px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border text-xs font-bold shadow-md cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-0.5 {childMeta.bgClass} {isDragging && dragInfo?.blockId === child.id
 												? 'opacity-40 border-dashed scale-95'
@@ -1005,8 +1061,12 @@
 										<div
 											data-slot-parent={block.id}
 											data-slot-index={block.children.length}
-											class="w-full h-1.5 my-0.5 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.9)] animate-pulse"
-										></div>
+											class="w-full my-1 py-0.5 rounded-lg border border-dashed border-cyan-400 bg-cyan-950/80 shadow-[0_0_15px_rgba(34,211,238,0.6)] flex items-center justify-center gap-1 text-[10px] font-black text-cyan-300 animate-pulse select-none"
+										>
+											<Icon name="arrow-down" size={11} />
+											<span>MASUKKAN KE LOOP</span>
+											<Icon name="arrow-down" size={11} />
+										</div>
 									{/if}
 								{/if}
 							</div>
@@ -1030,7 +1090,7 @@
 							data-block-id={block.id}
 							data-block-parent="root"
 							data-block-index={i}
-							style="touch-action: pan-y;"
+							style="touch-action: none;"
 							onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
 							class="group relative flex items-center justify-between px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-2xl border text-xs sm:text-sm font-black shadow-lg cursor-grab active:cursor-grabbing transition-all duration-150 hover:-translate-y-0.5 hover:shadow-xl {meta.bgClass} {isDragging && dragInfo?.blockId === block.id
 								? 'opacity-40 border-dashed scale-95'
@@ -1182,7 +1242,9 @@
 {#if isDragging && dragInfo}
 	{@const meta = getBlockMeta(dragInfo.type)}
 	<div
-		class="fixed pointer-events-none z-[99999] select-none -translate-x-1/2 -translate-y-1/2 will-change-transform"
+		class="fixed pointer-events-none z-[99999] select-none will-change-transform {isTouchPointer
+			? '-translate-x-1/2 -translate-y-[125%]'
+			: '-translate-x-1/2 -translate-y-1/2'}"
 		style="left: {pointerPos.x}px; top: {pointerPos.y}px;"
 	>
 		<div
