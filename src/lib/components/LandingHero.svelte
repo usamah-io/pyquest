@@ -324,13 +324,13 @@
 		<!-- Left Thumbnail Artwork + Mission Info -->
 		<div class="flex items-center gap-4 sm:gap-5 w-full sm:w-auto relative z-10">
 			<!-- Maze Thumbnail Art -->
-			<div class="w-24 h-18 sm:w-36 sm:h-22 rounded-2xl overflow-hidden border border-slate-700 bg-slate-950 shrink-0 shadow-md relative group-hover:scale-[1.02] transition-transform">
+			<div class="w-28 sm:w-36 aspect-video rounded-2xl overflow-hidden border border-slate-700/80 bg-slate-950 shrink-0 shadow-md relative group-hover:scale-[1.02] transition-transform">
 				<img
 					src="/art/adventure_maze_thumb.png"
 					alt="Thumbnail Labirin Petualangan"
-					class="w-full h-full object-cover"
+					class="w-full h-full object-cover object-center"
 				/>
-				<div class="absolute inset-0 bg-slate-950/20"></div>
+				<div class="absolute inset-0 bg-slate-950/15"></div>
 			</div>
 
 			<!-- Mission Info & Progress -->
