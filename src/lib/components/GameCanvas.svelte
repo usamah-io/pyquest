@@ -123,11 +123,14 @@
 	</div>
 
 	<!-- Arena Canvas / Tile Grid Area -->
-	<div class="flex-1 flex items-center justify-center p-1 sm:p-2.5 landscape:p-1 relative min-h-0 overflow-hidden z-10">
+	<div
+		class="flex-1 flex items-center justify-center p-1 sm:p-2.5 landscape:p-1 relative min-h-0 overflow-hidden z-10"
+		style="container-type: size;"
+	>
 		<!-- The Game World Floor with elevated depth & environmental details -->
 		<div
-			class="relative p-2 sm:p-3 landscape:p-1.5 rounded-2xl bg-[#0c1830] border-2 border-cyan-500/30 shadow-[0_15px_35px_rgba(0,0,0,0.6),inset_0_2px_4px_rgba(255,255,255,0.08)] select-none max-h-full"
-			style="width: min(100%, 350px); aspect-ratio: {grid.cols} / {grid.rows};"
+			class="relative p-2 sm:p-3 landscape:p-1.5 rounded-2xl bg-[#0c1830] border-2 border-cyan-500/30 shadow-[0_15px_35px_rgba(0,0,0,0.6),inset_0_2px_4px_rgba(255,255,255,0.08)] select-none max-h-full max-w-full"
+			style="width: min(100%, 100cqw, calc(100cqh * ({grid.cols} / {grid.rows})), 350px); aspect-ratio: {grid.cols} / {grid.rows};"
 		>
 			<!-- Decorative Corner Sci-Fi LED Nodes -->
 			<div class="absolute top-1.5 left-1.5 w-1.5 h-1.5 rounded-full bg-cyan-400/60 shadow-[0_0_6px_rgba(34,211,238,0.8)]"></div>

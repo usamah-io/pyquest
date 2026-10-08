@@ -586,7 +586,7 @@
 					/>
 
 					<div class="flex-1 flex flex-col md:grid md:grid-cols-2 landscape:grid landscape:grid-cols-2 gap-2 sm:gap-3 landscape:gap-2 min-h-0 h-full overflow-hidden">
-						<div class="w-full max-w-md mx-auto portrait:h-[220px] sm:portrait:h-[260px] landscape:h-full md:h-full min-h-0 overflow-hidden shrink-0">
+						<div class="w-full max-w-md mx-auto portrait:h-[295px] sm:portrait:h-[330px] landscape:h-full md:h-full min-h-0 overflow-hidden shrink-0">
 							<GameCanvas
 								grid={activeChallenge.grid}
 								{playerPos}
