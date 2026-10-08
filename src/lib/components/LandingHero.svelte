@@ -203,9 +203,9 @@
 			<img
 				src="/art/hero_banner_panorama.png"
 				alt="Dunia Petualangan Python"
-				class="w-full h-full object-cover object-right md:object-center opacity-40 mix-blend-screen scale-105"
+				class="w-full h-full object-cover object-right md:object-center opacity-55 scale-105"
 			/>
-			<div class="absolute inset-0 bg-slate-950/60"></div>
+			<div class="absolute inset-0 bg-slate-950/45"></div>
 		</div>
 
 		<!-- Hero Content Grid -->
