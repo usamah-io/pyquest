@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { LearningLevel } from '$lib/types';
+	import { progressStore } from '$lib/stores/progressStore';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -87,6 +88,27 @@
 						<span class="text-[10px] text-rose-400 font-normal block">{wrongAnswers} salah</span>
 					{/if}
 				</div>
+			</div>
+		</div>
+
+		<!-- Live Streak Celebration Badge -->
+		<div class="flex items-center justify-between p-3 bg-slate-950/80 border border-orange-500/40 rounded-2xl mb-5 text-left">
+			<div class="flex items-center gap-3 min-w-0">
+				<div class="w-9 h-9 rounded-xl bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center justify-center shrink-0">
+					<Icon name="flame" size={18} class="text-orange-400 animate-pulse" />
+				</div>
+				<div class="min-w-0">
+					<div class="text-[10px] text-orange-400/90 font-bold uppercase truncate">
+						Streak Harian Belajar
+					</div>
+					<div class="text-sm font-black text-white truncate">
+						{$progressStore.streak} Hari Beruntun!
+					</div>
+				</div>
+			</div>
+			<div class="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-400 text-[10px] font-bold shrink-0">
+				<span class="w-1.5 h-1.5 rounded-full bg-orange-400 animate-ping"></span>
+				<span>Api Menyala 🔥</span>
 			</div>
 		</div>
 

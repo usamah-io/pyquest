@@ -10,6 +10,7 @@
 		attemptsCount = 1,
 		isLevelCompleted = false,
 		isLastChallengeInLevel = false,
+		isLastLevel = false,
 		onNext,
 		onReplay,
 		onBackToLevelSelect
@@ -20,6 +21,7 @@
 		attemptsCount?: number;
 		isLevelCompleted?: boolean;
 		isLastChallengeInLevel?: boolean;
+		isLastLevel?: boolean;
 		onNext: () => void;
 		onReplay?: () => void;
 		onBackToLevelSelect?: () => void;
@@ -103,6 +105,27 @@
 			</div>
 		</div>
 
+		<!-- Live Streak Celebration Badge -->
+		<div class="flex items-center justify-between p-2.5 sm:p-3 bg-slate-950/80 border border-orange-500/40 rounded-xl sm:rounded-2xl mb-2.5 text-left">
+			<div class="flex items-center gap-2 sm:gap-2.5 min-w-0">
+				<div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center justify-center shrink-0">
+					<Icon name="flame" size={18} class="text-orange-400 animate-pulse" />
+				</div>
+				<div class="min-w-0">
+					<div class="text-[9px] sm:text-[10px] text-orange-400/90 font-bold uppercase truncate">
+						Streak Harian Belajar
+					</div>
+					<div class="text-xs sm:text-sm font-black text-white truncate">
+						{$progressStore.streak} Hari Beruntun!
+					</div>
+				</div>
+			</div>
+			<div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-400 text-[10px] font-bold shrink-0">
+				<span class="w-1.5 h-1.5 rounded-full bg-orange-400 animate-ping"></span>
+				<span>Api Menyala 🔥</span>
+			</div>
+		</div>
+
 		<!-- Level Progression Progress Bar Pill -->
 		<div class="p-2.5 sm:p-3 bg-slate-950/60 border border-slate-800/80 rounded-xl mb-3 text-left">
 			<div class="flex items-center justify-between text-xs font-bold mb-1.5">
@@ -155,7 +178,7 @@
 				onclick={onNext}
 				class="w-full py-2.5 sm:py-3.5 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-black text-xs sm:text-sm rounded-xl sm:rounded-2xl shadow-lg shadow-emerald-500/25 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
 			>
-				<span>{isLastChallengeInLevel ? 'Pilih Level Berikutnya' : 'Misi Berikutnya'}</span>
+				<span>{isLastChallengeInLevel ? (isLastLevel ? 'Lihat Rangkuman Akhir' : 'Lanjut ke Level Berikutnya') : 'Misi Berikutnya'}</span>
 				<Icon name="chevron-right" size={16} class="text-slate-950" />
 			</button>
 
@@ -177,7 +200,7 @@
 						class="flex-1 py-2 sm:py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
 					>
 						<Icon name="gamepad" size={13} />
-						<span>Jalur Belajar</span>
+						<span>Menu Level</span>
 					</button>
 				{/if}
 			</div>

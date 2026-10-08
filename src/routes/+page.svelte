@@ -402,14 +402,21 @@
 	function handleNextChallengeOrLevel() {
 		stopSimulation();
 		if (currentChallengeIndex < activeLevel.challenges.length - 1) {
+			// Next challenge in current level
 			currentChallengeIndex++;
 			attemptsCount = 0;
 			earnedXpThisRun = 0;
 			syncChallengeArena();
 			currentScreen = 'MISSION_BRIEFING';
 		} else {
+			// Level completed! Advance directly to the next level's first challenge
 			if (currentLevelIndex < levelsData.length - 1) {
-				currentScreen = 'LEVEL_SELECT';
+				currentLevelIndex++;
+				currentChallengeIndex = 0;
+				attemptsCount = 0;
+				earnedXpThisRun = 0;
+				syncChallengeArena();
+				currentScreen = 'MISSION_BRIEFING';
 			} else {
 				currentScreen = 'SUMMARY';
 			}
@@ -682,6 +689,7 @@
 			{attemptsCount}
 			isLevelCompleted={isLevelCompleted}
 			isLastChallengeInLevel={currentChallengeIndex === activeLevel.challenges.length - 1}
+			isLastLevel={currentLevelIndex === levelsData.length - 1}
 			onNext={handleNextChallengeOrLevel}
 			onReplay={handleReplayCurrentChallenge}
 			onBackToLevelSelect={() => {
