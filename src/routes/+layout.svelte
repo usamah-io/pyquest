@@ -11,16 +11,26 @@
 	onMount(() => {
 		pwaStore.init();
 
-		// Register Service Worker in browser
+		// Service Worker handling
 		if ('serviceWorker' in navigator) {
-			navigator.serviceWorker
-				.register('/service-worker.js')
-				.then((registration) => {
-					console.log('[SW] Registered successfully with scope:', registration.scope);
-				})
-				.catch((err) => {
-					console.warn('[SW] Service worker registration error:', err);
+			if (import.meta.env.DEV) {
+				// In development, unregister any active service worker to avoid stale asset caching
+				navigator.serviceWorker.getRegistrations().then((registrations) => {
+					for (const registration of registrations) {
+						registration.unregister();
+					}
 				});
+			} else {
+				// In production, register Service Worker for offline PWA support
+				navigator.serviceWorker
+					.register('/service-worker.js')
+					.then((registration) => {
+						console.log('[SW] Registered successfully with scope:', registration.scope);
+					})
+					.catch((err) => {
+						console.warn('[SW] Service worker registration error:', err);
+					});
+			}
 		}
 	});
 </script>

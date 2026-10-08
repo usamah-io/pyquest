@@ -147,13 +147,19 @@ self.addEventListener('fetch', (event) => {
 					return cachedResponse;
 				}
 
-				return fetch(request).then((networkResponse) => {
-					if (networkResponse && networkResponse.status === 200) {
-						const responseClone = networkResponse.clone();
-						caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
-					}
-					return networkResponse;
-				});
+				return fetch(request)
+					.then((networkResponse) => {
+						if (networkResponse && networkResponse.status === 200) {
+							const responseClone = networkResponse.clone();
+							caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+						}
+						return networkResponse;
+					})
+					.catch(async () => {
+						const fallback = await caches.match(request);
+						if (fallback) return fallback;
+						return new Response(null, { status: 404, statusText: 'Asset not found' });
+					});
 			})
 		);
 		return;
