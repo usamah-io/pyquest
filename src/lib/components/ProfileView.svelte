@@ -6,9 +6,15 @@
 	import Icon from './Icon.svelte';
 
 	let {
-		onBackToHome
+		onBackToHome,
+		onOpenXp,
+		onOpenStreak,
+		onOpenMissions
 	}: {
 		onBackToHome: () => void;
+		onOpenXp?: () => void;
+		onOpenStreak?: () => void;
+		onOpenMissions?: () => void;
 	} = $props();
 
 	const DEFAULT_AVATAR = '/mascot/pybot-front-idle.png';
@@ -241,31 +247,59 @@
 
 		<!-- Right: Edit Form & Stats -->
 		<div class="md:col-span-2 space-y-6">
-			<!-- Statistics Bar -->
+			<!-- Statistics Bar (Clickable Stat Summary Cards) -->
 			<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-				<div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col items-center text-center">
-					<Icon name="zap" size={20} class="text-amber-400 mb-1" />
-					<span class="text-xl font-black text-white">{$dashboardUserStore.xp}</span>
-					<span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total XP</span>
-				</div>
+				<!-- Total XP Button -->
+				<button
+					type="button"
+					onclick={() => onOpenXp && onOpenXp()}
+					class="p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-amber-500/50 flex flex-col items-center text-center transition-all cursor-pointer group shadow-xs active:scale-95"
+					title="Buka Rincian Total XP"
+				>
+					<Icon name="zap" size={20} class="text-amber-400 mb-1 group-hover:scale-110 transition-transform" />
+					<span class="text-xl font-black text-white group-hover:text-amber-300 transition-colors">{$dashboardUserStore.xp}</span>
+					<span class="text-[10px] text-slate-400 group-hover:text-slate-300 uppercase font-bold tracking-wider">Total XP</span>
+				</button>
 
-				<div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col items-center text-center">
-					<Icon name="award" size={20} class="text-indigo-400 mb-1" />
-					<span class="text-xl font-black text-white">Lvl {$dashboardUserStore.level}</span>
-					<span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Peringkat</span>
-				</div>
+				<!-- Peringkat Button -->
+				<button
+					type="button"
+					onclick={() => onOpenXp && onOpenXp()}
+					class="p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-indigo-500/50 flex flex-col items-center text-center transition-all cursor-pointer group shadow-xs active:scale-95"
+					title="Buka Peringkat & Progres Level"
+				>
+					<Icon name="award" size={20} class="text-indigo-400 mb-1 group-hover:scale-110 transition-transform" />
+					<span class="text-xl font-black text-white group-hover:text-indigo-300 transition-colors">Lvl {$dashboardUserStore.level}</span>
+					<span class="text-[10px] text-slate-400 group-hover:text-slate-300 uppercase font-bold tracking-wider">Peringkat</span>
+				</button>
 
-				<div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col items-center text-center">
-					<Icon name="flame" size={20} class="text-orange-400 mb-1" />
-					<span class="text-xl font-black text-white">{$dashboardUserStore.streak}</span>
-					<span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Hari Beruntun</span>
-				</div>
+				<!-- Hari Beruntun Button -->
+				<button
+					type="button"
+					onclick={() => onOpenStreak && onOpenStreak()}
+					class="p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-orange-500/50 flex flex-col items-center text-center transition-all cursor-pointer group shadow-xs active:scale-95"
+					title="Buka Kalender Streak Konsistensi"
+				>
+					<Icon
+						name="flame"
+						size={20}
+						class="{$dashboardUserStore.streak > 0 ? 'text-orange-400' : 'text-slate-500'} mb-1 group-hover:scale-110 transition-transform"
+					/>
+					<span class="text-xl font-black text-white group-hover:text-orange-300 transition-colors">{$dashboardUserStore.streak}</span>
+					<span class="text-[10px] text-slate-400 group-hover:text-slate-300 uppercase font-bold tracking-wider">Hari Beruntun</span>
+				</button>
 
-				<div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col items-center text-center">
-					<Icon name="check-circle" size={20} class="text-emerald-400 mb-1" />
-					<span class="text-xl font-black text-white">{$dashboardUserStore.completedMissions}</span>
-					<span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Misi Selesai</span>
-				</div>
+				<!-- Misi Selesai Button -->
+				<button
+					type="button"
+					onclick={() => onOpenMissions && onOpenMissions()}
+					class="p-4 rounded-2xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-emerald-500/50 flex flex-col items-center text-center transition-all cursor-pointer group shadow-xs active:scale-95"
+					title="Buka Arsip Misi Selesai"
+				>
+					<Icon name="check-circle" size={20} class="text-emerald-400 mb-1 group-hover:scale-110 transition-transform" />
+					<span class="text-xl font-black text-white group-hover:text-emerald-300 transition-colors">{$dashboardUserStore.completedMissions}</span>
+					<span class="text-[10px] text-slate-400 group-hover:text-slate-300 uppercase font-bold tracking-wider">Misi Selesai</span>
+				</button>
 			</div>
 
 			<!-- Edit Form -->

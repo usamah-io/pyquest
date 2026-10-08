@@ -480,6 +480,8 @@
 				currentMode={activeNavbarMode}
 				onSelectMode={handleSelectNavbarMode}
 				onOpenProfile={handleOpenProfile}
+				onOpenXp={() => (currentScreen = 'XP_PROGRESS')}
+				onOpenStreak={() => (currentScreen = 'STREAK_VIEW')}
 			/>
 		{/if}
 
@@ -629,6 +631,9 @@
 			{:else if currentScreen === 'PROFILE'}
 				<ProfileView
 					onBackToHome={() => (currentScreen = 'LANDING')}
+					onOpenMissions={() => (currentScreen = 'MISSIONS')}
+					onOpenXp={() => (currentScreen = 'XP_PROGRESS')}
+					onOpenStreak={() => (currentScreen = 'STREAK_VIEW')}
 				/>
 
 			<!-- 12. DEDICATED COMPLETED MISSIONS PAGE -->

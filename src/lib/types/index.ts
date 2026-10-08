@@ -141,6 +141,9 @@ export interface UserProgress {
 	completedLearningLevels: number[]; // Learning module levels
 	learningLevelScores?: Record<number, { correctAnswers: number; totalQuestions: number; isPerfect: boolean }>;
 	streak: number;
+	longestStreak?: number;
+	lastActiveDate?: string;
+	activeDates?: string[];
 }
 
 export type AppScreen =

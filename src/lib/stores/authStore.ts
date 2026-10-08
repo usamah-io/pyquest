@@ -1,5 +1,5 @@
 import { writable, derived } from 'svelte/store';
-import { progressStore } from './progressStore';
+import { progressStore, getLocalDateStr } from './progressStore';
 import { avatarStorage } from '../utils/avatarStorage';
 
 export interface UserProfile {
@@ -345,13 +345,21 @@ export const dashboardUserStore = derived(
 	[authStore, progressStore],
 	([$auth, $progress]) => {
 		const level = Math.max(1, Math.floor(($progress.xp || 0) / 100) + 1);
+		const today = getLocalDateStr();
+		const isStreakActiveToday = $progress.lastActiveDate === today;
+		const streak = $progress.streak ?? 0;
+		const longestStreak = $progress.longestStreak ?? streak;
 		return {
 			...$auth.user,
 			isAuthenticated: $auth.isAuthenticated,
 			hasCompletedProfileSetup: $auth.user.hasCompletedProfileSetup,
 			xp: $progress.xp || 0,
 			level,
-			streak: $progress.streak || 1,
+			streak,
+			longestStreak,
+			lastActiveDate: $progress.lastActiveDate,
+			activeDates: $progress.activeDates || [],
+			isStreakActiveToday,
 			completedMissions: ($progress.completedChallenges || []).length,
 			completedQuestions: ($progress.completedQuestions || []).length
 		};

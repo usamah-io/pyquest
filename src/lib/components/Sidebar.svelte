@@ -6,11 +6,15 @@
 	let {
 		currentMode = 'HOME',
 		onSelectMode,
-		onOpenProfile
+		onOpenProfile,
+		onOpenXp,
+		onOpenStreak
 	}: {
 		currentMode?: 'HOME' | 'LEARN' | 'GAME' | 'PROFILE';
 		onSelectMode?: (mode: 'HOME' | 'LEARN' | 'GAME') => void;
 		onOpenProfile?: () => void;
+		onOpenXp?: () => void;
+		onOpenStreak?: () => void;
 	} = $props();
 </script>
 
@@ -79,17 +83,31 @@
 			</span>
 			<div class="grid grid-cols-2 gap-2">
 				<!-- Streak -->
-				<div class="p-2 rounded-xl bg-slate-900 border border-slate-800/80 flex flex-col items-center text-center">
-					<Icon name="flame" size={16} class="text-amber-400 mb-0.5" />
-					<span class="text-xs font-black text-white">{$dashboardUserStore.streak} Hari</span>
-					<span class="text-[9px] text-slate-500 font-bold uppercase">Streak</span>
-				</div>
+				<button
+					type="button"
+					onclick={() => onOpenStreak && onOpenStreak()}
+					class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800/90 border border-slate-800/80 hover:border-orange-500/40 flex flex-col items-center text-center transition-all cursor-pointer group active:scale-95"
+					title="Buka Kalender Streak"
+				>
+					<Icon
+						name="flame"
+						size={16}
+						class="{$dashboardUserStore.streak > 0 ? 'text-amber-400' : 'text-slate-500'} mb-0.5 group-hover:scale-110 transition-transform"
+					/>
+					<span class="text-xs font-black text-white group-hover:text-amber-300 transition-colors">{$dashboardUserStore.streak} Hari</span>
+					<span class="text-[9px] text-slate-500 group-hover:text-slate-400 font-bold uppercase">Streak</span>
+				</button>
 				<!-- XP -->
-				<div class="p-2 rounded-xl bg-slate-900 border border-slate-800/80 flex flex-col items-center text-center">
-					<Icon name="zap" size={16} class="text-cyan-400 mb-0.5" />
-					<span class="text-xs font-black text-white">{$dashboardUserStore.xp}</span>
-					<span class="text-[9px] text-slate-500 font-bold uppercase">XP</span>
-				</div>
+				<button
+					type="button"
+					onclick={() => onOpenXp && onOpenXp()}
+					class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800/90 border border-slate-800/80 hover:border-cyan-500/40 flex flex-col items-center text-center transition-all cursor-pointer group active:scale-95"
+					title="Buka Rincian Total XP"
+				>
+					<Icon name="zap" size={16} class="text-cyan-400 mb-0.5 group-hover:scale-110 transition-transform" />
+					<span class="text-xs font-black text-white group-hover:text-cyan-300 transition-colors">{$dashboardUserStore.xp}</span>
+					<span class="text-[9px] text-slate-500 group-hover:text-slate-400 font-bold uppercase">XP</span>
+				</button>
 			</div>
 
 			<!-- PWA Install Prompt (Subtle, visible when installable) -->
