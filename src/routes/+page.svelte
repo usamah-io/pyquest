@@ -571,7 +571,7 @@
 			<!-- 8. CODING GAME CHALLENGE -->
 			{:else if currentScreen === 'CHALLENGE' || currentScreen === 'REWARD'}
 				<OrientationGuard />
-				<div class="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto w-full portrait:h-auto portrait:overflow-visible landscape:h-full landscape:overflow-hidden md:h-full md:overflow-hidden">
+				<div class="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto w-full h-full overflow-hidden">
 					<ChallengeHeader
 						title={`${activeLevel.title} — ${activeChallenge.title}`}
 						objective={activeChallenge.objective}
@@ -585,8 +585,8 @@
 						}}
 					/>
 
-					<div class="flex-1 flex flex-col md:grid md:grid-cols-2 landscape:grid landscape:grid-cols-2 gap-2 sm:gap-3 landscape:gap-2 min-h-0 portrait:h-auto landscape:h-full md:h-full overflow-hidden portrait:overflow-visible">
-						<div class="w-full max-w-md mx-auto portrait:h-[280px] sm:portrait:h-[320px] landscape:h-full md:h-full min-h-0 overflow-hidden shrink-0">
+					<div class="flex-1 flex flex-col md:grid md:grid-cols-2 landscape:grid landscape:grid-cols-2 gap-2 sm:gap-3 landscape:gap-2 min-h-0 h-full overflow-hidden">
+						<div class="w-full max-w-md mx-auto portrait:h-[220px] sm:portrait:h-[260px] landscape:h-full md:h-full min-h-0 overflow-hidden shrink-0">
 							<GameCanvas
 								grid={activeChallenge.grid}
 								{playerPos}
@@ -597,7 +597,7 @@
 							/>
 						</div>
 
-						<div class="w-full portrait:h-auto portrait:min-h-0 portrait:overflow-visible landscape:h-full md:h-full min-h-0 overflow-hidden">
+						<div class="flex-1 w-full min-h-0 h-full overflow-hidden">
 							<BlockWorkspace
 								bind:workspaceBlocks
 								availableBlocks={activeChallenge.availableBlocks}

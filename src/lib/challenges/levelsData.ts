@@ -1267,30 +1267,30 @@ export const levelsData: GameLevel[] = [
 		"id": 6,
 		"unitId": 2,
 		"unitTitle": "Unit 2: Pola Iterasi & Looping",
-		"title": "Level 6: Jalur Bercabang",
-		"description": "Pilih cabang rute yang aman menuju bintang.",
-		"objective": "Pilih cabang rute yang tepat.",
-		"quickTip": "Jangan masuk lorong buntu; cari cabang jalan yang tembus ke target.",
+		"title": "Level 6: Pengenalan Loop",
+		"description": "Belajar menggunakan perintah ULANGI untuk mengulang gerakan.",
+		"objective": "Belajar menggunakan perintah ULANGI untuk mengulang gerakan.",
+		"quickTip": "Gunakan balok ULANGI untuk menjalankan perintah berkali-kali secara otomatis.",
 		"concepts": [
-			"PILIH JALUR",
-			"S-CURVE"
+			"ULANGI",
+			"LOOP DASAR"
 		],
-		"concept": "Pengambilan Keputusan: Menentukan lintasan yang tidak berujung buntu.",
+		"concept": "Konsep Perulangan: Mengelompokkan perintah yang sama menggunakan loop.",
 		"achievement": {
 			"id": "ach-lvl-6",
 			"levelId": 6,
-			"title": "Perintis Cabang",
-			"description": "Pilih jalur terbuka di persimpangan jalan.",
-			"icon": "git-branch",
+			"title": "Ahli Perulangan",
+			"description": "Berhasil menyelesaikan tantangan menggunakan perintah loop.",
+			"icon": "repeat",
 			"xpReward": 50
 		},
-		"difficulty": 3,
+		"difficulty": 2,
 		"challenges": [
 			{
 				"id": "lvl6-ch1",
-				"title": "Simpang Dua Jalan",
-				"objective": "Cabang atas buntu oleh batu. Pilih cabang bawah yang aman.",
-				"pythonContext": "pybot.move()\npybot.turn_right()\npybot.move()\npybot.turn_left()\npybot.move()\npybot.move()",
+				"title": "Langkah Berulang 3 Kali",
+				"objective": "Jalan lurus 3 langkah menuju bintang emas menggunakan perintah ULANGI.",
+				"pythonContext": "for i in range(3):\n    pybot.move()",
 				"grid": {
 					"cols": 6,
 					"rows": 5,
@@ -1301,9 +1301,17 @@ export const levelsData: GameLevel[] = [
 					"startDirection": "RIGHT",
 					"targetPos": {
 						"x": 4,
-						"y": 3
+						"y": 2
 					},
 					"obstacles": [
+						{
+							"x": 1,
+							"y": 1
+						},
+						{
+							"x": 2,
+							"y": 1
+						},
 						{
 							"x": 3,
 							"y": 1
@@ -1314,143 +1322,29 @@ export const levelsData: GameLevel[] = [
 						},
 						{
 							"x": 1,
-							"y": 1
+							"y": 3
 						},
 						{
-							"x": 1,
+							"x": 2,
+							"y": 3
+						},
+						{
+							"x": 3,
+							"y": 3
+						},
+						{
+							"x": 4,
 							"y": 3
 						}
 					],
 					"coins": [
 						{
 							"x": 2,
-							"y": 3
-						},
-						{
-							"x": 3,
-							"y": 3
-						}
-					]
-				},
-				"availableBlocks": [
-					"MOVE",
-					"TURN_LEFT",
-					"TURN_RIGHT"
-				],
-				"maxBlocks": 7,
-				"maxMoves": 7,
-				"xpReward": 55,
-				"hints": [
-					"Analisis rute atas dan bawah: perhatikan cabang mana yang terhalang batu.",
-					"Arahkan PyBot ke lorong terbuka di bawah agar terhindar dari jalan buntu."
-				]
-			},
-			{
-				"id": "lvl6-ch2",
-				"title": "Lorong S-Curve",
-				"objective": "Melintasi kurva ganda yang menyerupai huruf S.",
-				"pythonContext": "pybot.move()\npybot.move()\npybot.turn_right()\npybot.move()\npybot.turn_right()\npybot.move()\npybot.turn_left()\npybot.move()",
-				"grid": {
-					"cols": 6,
-					"rows": 6,
-					"startPos": {
-						"x": 1,
-						"y": 1
-					},
-					"startDirection": "RIGHT",
-					"targetPos": {
-						"x": 2,
-						"y": 4
-					},
-					"obstacles": [
-						{
-							"x": 1,
-							"y": 2
-						},
-						{
-							"x": 2,
-							"y": 2
-						},
-						{
-							"x": 3,
-							"y": 3
-						},
-						{
-							"x": 4,
-							"y": 3
-						},
-						{
-							"x": 1,
-							"y": 0
-						},
-						{
-							"x": 4,
-							"y": 1
-						}
-					],
-					"coins": [
-						{
-							"x": 3,
-							"y": 2
-						}
-					]
-				},
-				"availableBlocks": [
-					"MOVE",
-					"TURN_LEFT",
-					"TURN_RIGHT"
-				],
-				"maxBlocks": 9,
-				"maxMoves": 9,
-				"xpReward": 60,
-				"hints": [
-					"Kurva ganda membutuhkan ketelitian arah hadap: belok pertama mengubah arah ke bawah, belok berikutnya meluruskan kembali.",
-					"Jangan melangkah maju sebelum memastikan robot menghadap ke celah terbuka."
-				]
-			},
-			{
-				"id": "lvl6-ch3",
-				"title": "Labirin Kotak Dalam",
-				"objective": "Memutari dinding perimeter untuk masuk ke ruang tengah.",
-				"pythonContext": "pybot.move()\npybot.turn_right()\nfor i in range(3):\n    pybot.move()\npybot.turn_left()\npybot.move()",
-				"grid": {
-					"cols": 6,
-					"rows": 6,
-					"startPos": {
-						"x": 1,
-						"y": 1
-					},
-					"startDirection": "RIGHT",
-					"targetPos": {
-						"x": 3,
-						"y": 3
-					},
-					"obstacles": [
-						{
-							"x": 2,
 							"y": 2
 						},
 						{
 							"x": 3,
 							"y": 2
-						},
-						{
-							"x": 4,
-							"y": 2
-						},
-						{
-							"x": 2,
-							"y": 3
-						},
-						{
-							"x": 2,
-							"y": 4
-						}
-					],
-					"coins": [
-						{
-							"x": 4,
-							"y": 3
 						}
 					]
 				},
@@ -1460,12 +1354,216 @@ export const levelsData: GameLevel[] = [
 					"TURN_RIGHT",
 					"REPEAT"
 				],
-				"maxBlocks": 7,
-				"maxMoves": 9,
+				"maxMoves": 10,
+				"xpReward": 50,
+				"hints": [
+					"Gunakan perintah pengulangan untuk melangkah lurus tanpa repot menyusun banyak balok.",
+					"Atur angka putaran loop menjadi 3 sesuai jarak petak menuju bintang."
+				]
+			},
+			{
+				"id": "lvl6-ch2",
+				"title": "Meluncur 5 Langkah",
+				"objective": "Gunakan ULANGI 5 kali untuk meluncur sepanjang jalur lurus.",
+				"pythonContext": "for i in range(5):\n    pybot.move()",
+				"grid": {
+					"cols": 7,
+					"rows": 5,
+					"startPos": {
+						"x": 1,
+						"y": 2
+					},
+					"startDirection": "RIGHT",
+					"targetPos": {
+						"x": 6,
+						"y": 2
+					},
+					"obstacles": [
+						{
+							"x": 1,
+							"y": 1
+						},
+						{
+							"x": 2,
+							"y": 1
+						},
+						{
+							"x": 3,
+							"y": 1
+						},
+						{
+							"x": 4,
+							"y": 1
+						},
+						{
+							"x": 5,
+							"y": 1
+						},
+						{
+							"x": 6,
+							"y": 1
+						},
+						{
+							"x": 1,
+							"y": 3
+						},
+						{
+							"x": 2,
+							"y": 3
+						},
+						{
+							"x": 3,
+							"y": 3
+						},
+						{
+							"x": 4,
+							"y": 3
+						},
+						{
+							"x": 5,
+							"y": 3
+						},
+						{
+							"x": 6,
+							"y": 3
+						}
+					],
+					"coins": [
+						{
+							"x": 2,
+							"y": 2
+						},
+						{
+							"x": 4,
+							"y": 2
+						}
+					]
+				},
+				"availableBlocks": [
+					"MOVE",
+					"TURN_LEFT",
+					"TURN_RIGHT",
+					"REPEAT"
+				],
+				"maxMoves": 12,
+				"xpReward": 55,
+				"hints": [
+					"Jalur lurus kali ini lebih panjang; manfaatkan efisiensi balok perulangan.",
+					"Ubah angka perulangan menjadi 5 agar robot mencapai ujung lorong."
+				]
+			},
+			{
+				"id": "lvl6-ch3",
+				"title": "Ulangi Lalu Belok",
+				"objective": "Maju 3 langkah dengan ULANGI, belok kanan, lalu melangkah ke bintang.",
+				"pythonContext": "for i in range(3):\n    pybot.move()\npybot.turn_right()\npybot.move()",
+				"grid": {
+					"cols": 6,
+					"rows": 5,
+					"startPos": {
+						"x": 1,
+						"y": 1
+					},
+					"startDirection": "RIGHT",
+					"targetPos": {
+						"x": 4,
+						"y": 2
+					},
+					"obstacles": [
+						{
+							"x": 5,
+							"y": 1
+						},
+						{
+							"x": 1,
+							"y": 2
+						},
+						{
+							"x": 2,
+							"y": 2
+						},
+						{
+							"x": 3,
+							"y": 2
+						},
+						{
+							"x": 5,
+							"y": 2
+						}
+					],
+					"coins": [
+						{
+							"x": 2,
+							"y": 1
+						},
+						{
+							"x": 4,
+							"y": 1
+						}
+					]
+				},
+				"availableBlocks": [
+					"MOVE",
+					"TURN_LEFT",
+					"TURN_RIGHT",
+					"REPEAT"
+				],
+				"maxMoves": 12,
 				"xpReward": 60,
 				"hints": [
-					"Dinding tengah tidak dapat ditembus secara langsung; telusuri tepi luar untuk mencari celah masuk.",
-					"Gunakan perulangan jika ada jalur lurus panjang di sepanjang dinding pembatas."
+					"Gunakan perulangan untuk menelusuri lorong lurus pertama di atas.",
+					"Setelah keluar dari loop, sambungkan perintah belok dan langkah ke bawah."
+				]
+			},
+			{
+				"id": "lvl6-ch4",
+				"title": "Pola Berulang Dua Kali",
+				"objective": "Gunakan ULANGI 2 kali untuk mengulang pola maju dan belok kanan.",
+				"pythonContext": "for i in range(2):\n    pybot.move()\n    pybot.turn_right()",
+				"grid": {
+					"cols": 5,
+					"rows": 5,
+					"startPos": {
+						"x": 1,
+						"y": 1
+					},
+					"startDirection": "RIGHT",
+					"targetPos": {
+						"x": 2,
+						"y": 2
+					},
+					"obstacles": [
+						{
+							"x": 3,
+							"y": 1
+						},
+						{
+							"x": 1,
+							"y": 2
+						},
+						{
+							"x": 3,
+							"y": 2
+						}
+					],
+					"coins": [
+						{
+							"x": 2,
+							"y": 1
+						}
+					]
+				},
+				"availableBlocks": [
+					"MOVE",
+					"TURN_LEFT",
+					"TURN_RIGHT",
+					"REPEAT"
+				],
+				"maxMoves": 10,
+				"xpReward": 65,
+				"hints": [
+					"Amati langkah robot: maju satu petak lalu belok kanan membentuk pola berulang.",
+					"Masukkan aksi gerakan dan belokan ke dalam satu kontainer perulangan 2 kali."
 				]
 			}
 		]
