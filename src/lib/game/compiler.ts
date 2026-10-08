@@ -30,30 +30,25 @@ export function compileBlocksToCommands(
 			commands.push('TURN_RIGHT');
 		} else if (block.type === 'REPEAT') {
 			const count = Math.min(Math.max(block.repeatCount || 2, 1), 10);
-			const innerBlocks =
-				block.children && block.children.length > 0
-					? block.children
-					: [{ id: 'default', type: 'MOVE' as const }];
+			const innerBlocks = block.children || [];
 			for (let i = 0; i < count; i++) {
 				for (const inner of innerBlocks) {
 					processBlock(inner);
 				}
 			}
 		} else if (block.type === 'FOREVER') {
-			const innerBlocks =
-				block.children && block.children.length > 0
-					? block.children
-					: [{ id: 'default', type: 'MOVE' as const }];
-			// Safe execution limit for FOREVER to prevent infinite loops and freezing
-			const prevInForever = inForever;
-			inForever = true;
-			const foreverCap = Math.min(30, maxInstructions + 1);
-			for (let i = 0; i < foreverCap; i++) {
-				for (const inner of innerBlocks) {
-					processBlock(inner);
+			const innerBlocks = block.children || [];
+			if (innerBlocks.length > 0) {
+				const prevInForever = inForever;
+				inForever = true;
+				const foreverCap = Math.min(30, maxInstructions + 1);
+				for (let i = 0; i < foreverCap; i++) {
+					for (const inner of innerBlocks) {
+						processBlock(inner);
+					}
 				}
+				inForever = prevInForever;
 			}
-			inForever = prevInForever;
 		}
 	}
 

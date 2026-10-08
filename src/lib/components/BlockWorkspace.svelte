@@ -63,21 +63,48 @@
 			return {
 				id: makeId(),
 				type: 'REPEAT',
-				repeatCount: 4,
-				children: [{ id: makeId(), type: 'MOVE' }]
+				repeatCount: 2,
+				children: []
 			};
 		}
 		if (type === 'FOREVER') {
 			return {
 				id: makeId(),
 				type: 'FOREVER',
-				children: [{ id: makeId(), type: 'MOVE' }]
+				children: []
 			};
 		}
 		return {
 			id: makeId(),
 			type
 		};
+	}
+
+	function deleteBlock(id: string) {
+		if (isRunning) return;
+		workspaceBlocks = removeBlockById(workspaceBlocks, id);
+		if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+			try {
+				navigator.vibrate(20);
+			} catch {}
+		}
+	}
+
+	function extractChildBlock(parentId: string, childId: string) {
+		if (isRunning) return;
+		const parentIndex = workspaceBlocks.findIndex((b) => b.id === parentId);
+		const child = findBlockById(workspaceBlocks, childId);
+		if (!child) return;
+
+		const cleaned = removeBlockById(workspaceBlocks, childId);
+		const insertIdx = parentIndex !== -1 ? parentIndex + 1 : cleaned.length;
+		workspaceBlocks = insertBlockAt(cleaned, child, null, insertIdx);
+
+		if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+			try {
+				navigator.vibrate(15);
+			} catch {}
+		}
 	}
 
 	function cloneBlock(block: CodingBlock): CodingBlock {
@@ -483,6 +510,8 @@
 		const targetEl = e.target as HTMLElement;
 		if (targetEl.closest('input, button')) return;
 
+		e.stopPropagation();
+
 		isTouchPointer = e.pointerType === 'touch';
 		activePointerEl = e.currentTarget as HTMLElement;
 		try {
@@ -831,8 +860,6 @@
 							data-block-id={block.id}
 							data-block-parent="root"
 							data-block-index={i}
-							style="touch-action: none;"
-							onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
 							class="relative rounded-2xl border-2 shadow-lg overflow-visible transition-all duration-150 w-fit min-w-[210px] max-w-full select-none {block.type === 'REPEAT'
 								? 'border-indigo-500 bg-indigo-950/40 shadow-indigo-900/20'
 								: 'border-purple-500 bg-purple-950/40 shadow-purple-900/20'} {isDragging && dragInfo?.blockId === block.id
@@ -844,62 +871,84 @@
 
 							<!-- C-Block Top Header -->
 							<div
-								class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-t-[14px] flex items-center gap-2 text-xs sm:text-sm font-black text-white cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
+								role="button"
+								tabindex="0"
+								aria-label="Tarik blok loop"
+								style="touch-action: none;"
+								onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
+								class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-t-[14px] flex items-center justify-between gap-2 text-xs sm:text-sm font-black text-white cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
 									? 'bg-indigo-600'
 									: 'bg-purple-600'}"
 							>
-								<!-- Exactly ONE icon -->
-								<div class="w-5 h-5 rounded-md bg-black/20 border border-white/20 flex items-center justify-center shrink-0">
-									<Icon name={block.type === 'REPEAT' ? 'repeat' : 'refresh-cw'} size={13} />
-								</div>
-								<span>{block.type === 'REPEAT' ? 'ULANGI' : 'SELAMANYA'}</span>
-
-								{#if block.type === 'REPEAT'}
-									<!-- Editable repeat count with +/- buttons and direct input -->
-									<div class="flex items-center bg-black/40 rounded-lg border border-white/20 px-1 py-0.5 ml-1">
-										<button
-											type="button"
-											disabled={isRunning || (block.repeatCount || 4) <= 1}
-											onpointerdown={(e) => e.stopPropagation()}
-											onclick={(e) => {
-												e.stopPropagation();
-												updateRepeatCount(block.id, (block.repeatCount || 4) - 1);
-											}}
-											class="w-4 h-4 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 rounded cursor-pointer disabled:opacity-30 text-xs"
-											title="Kurangi jumlah perulangan"
-										>-</button>
-										<input
-											type="number"
-											min="1"
-											max="10"
-											value={block.repeatCount || 4}
-											disabled={isRunning}
-											onpointerdown={(e) => e.stopPropagation()}
-											onclick={(e) => e.stopPropagation()}
-											onchange={(e) => {
-												const val = parseInt((e.target as HTMLInputElement).value, 10);
-												if (!isNaN(val)) updateRepeatCount(block.id, val);
-											}}
-											class="w-6 text-center bg-transparent font-mono font-black text-white text-xs outline-none focus:text-cyan-300"
-										/>
-										<button
-											type="button"
-											disabled={isRunning || (block.repeatCount || 4) >= 10}
-											onpointerdown={(e) => e.stopPropagation()}
-											onclick={(e) => {
-												e.stopPropagation();
-												updateRepeatCount(block.id, (block.repeatCount || 4) + 1);
-											}}
-											class="w-4 h-4 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 rounded cursor-pointer disabled:opacity-30 text-xs"
-											title="Tambah jumlah perulangan"
-										>+</button>
+								<div class="flex items-center gap-1.5 sm:gap-2">
+									<!-- Exactly ONE icon -->
+									<div class="w-5 h-5 rounded-md bg-black/20 border border-white/20 flex items-center justify-center shrink-0">
+										<Icon name={block.type === 'REPEAT' ? 'repeat' : 'refresh-cw'} size={13} />
 									</div>
-									<span class="text-[11px] text-white/90">KALI</span>
-								{:else}
-									<span class="text-[10px] font-mono text-purple-200 bg-black/20 px-1.5 py-0.5 rounded border border-purple-400/30">
-										Loop Aman
-									</span>
-								{/if}
+									<span>{block.type === 'REPEAT' ? 'ULANGI' : 'SELAMANYA'}</span>
+
+									{#if block.type === 'REPEAT'}
+										<!-- Editable repeat count with +/- buttons and direct input -->
+										<div class="flex items-center bg-black/40 rounded-lg border border-white/20 px-1 py-0.5 ml-1">
+											<button
+												type="button"
+												disabled={isRunning || (block.repeatCount || 4) <= 1}
+												onpointerdown={(e) => e.stopPropagation()}
+												onclick={(e) => {
+													e.stopPropagation();
+													updateRepeatCount(block.id, (block.repeatCount || 4) - 1);
+												}}
+												class="w-4 h-4 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 rounded cursor-pointer disabled:opacity-30 text-xs"
+												title="Kurangi jumlah perulangan"
+											>-</button>
+											<input
+												type="number"
+												min="1"
+												max="10"
+												value={block.repeatCount || 4}
+												disabled={isRunning}
+												onpointerdown={(e) => e.stopPropagation()}
+												onclick={(e) => e.stopPropagation()}
+												onchange={(e) => {
+													const val = parseInt((e.target as HTMLInputElement).value, 10);
+													if (!isNaN(val)) updateRepeatCount(block.id, val);
+												}}
+												class="w-6 text-center bg-transparent font-mono font-black text-white text-xs outline-none focus:text-cyan-300"
+											/>
+											<button
+												type="button"
+												disabled={isRunning || (block.repeatCount || 4) >= 10}
+												onpointerdown={(e) => e.stopPropagation()}
+												onclick={(e) => {
+													e.stopPropagation();
+													updateRepeatCount(block.id, (block.repeatCount || 4) + 1);
+												}}
+												class="w-4 h-4 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 rounded cursor-pointer disabled:opacity-30 text-xs"
+												title="Tambah jumlah perulangan"
+											>+</button>
+										</div>
+										<span class="text-[11px] text-white/90">KALI</span>
+									{:else}
+										<span class="text-[10px] font-mono text-purple-200 bg-black/20 px-1.5 py-0.5 rounded border border-purple-400/30">
+											Loop Aman
+										</span>
+									{/if}
+								</div>
+
+								<!-- Quick delete button for C-block -->
+								<button
+									type="button"
+									disabled={isRunning}
+									onpointerdown={(e) => e.stopPropagation()}
+									onclick={(e) => {
+										e.stopPropagation();
+										deleteBlock(block.id);
+									}}
+									class="w-5 h-5 flex items-center justify-center rounded-md bg-black/20 hover:bg-rose-500 text-white/70 hover:text-white transition-colors cursor-pointer text-xs ml-2"
+									title="Hapus loop ini"
+								>
+									<Icon name="x" size={12} />
+								</button>
 							</div>
 
 							<!-- C-Block Nested Body (Indented Inner Slot with Left Spine) -->
@@ -942,8 +991,11 @@
 											data-block-parent={block.id}
 											data-block-index={ci}
 											style="touch-action: none;"
-											onpointerdown={(e) => handlePointerDown(e, 'workspace', child.type, child.id, block.id, ci, child)}
-											class="relative flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-bold shadow-sm cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-0.5 select-none w-fit min-w-[110px] {childMeta.bgClass} {isDragging && dragInfo?.blockId === child.id
+											onpointerdown={(e) => {
+												e.stopPropagation();
+												handlePointerDown(e, 'workspace', child.type, child.id, block.id, ci, child);
+											}}
+											class="group/child relative flex items-center justify-between gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-bold shadow-sm cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-0.5 select-none w-fit min-w-[140px] {childMeta.bgClass} {isDragging && dragInfo?.blockId === child.id
 												? 'opacity-40 border-dashed scale-95'
 												: ''}"
 										>
@@ -951,10 +1003,43 @@
 											<div class="absolute -top-[2px] left-4 w-5 h-1.5 bg-slate-900/90 rounded-b-sm border-x border-b border-black/50 pointer-events-none"></div>
 											<div class="absolute -bottom-1.5 left-4 w-5 h-1.5 rounded-b-sm border-x border-b border-black/30 shadow-xs pointer-events-none {childMeta.tabColor}"></div>
 
-											<div class="w-5 h-5 rounded bg-black/20 border border-white/20 flex items-center justify-center shrink-0">
-												<Icon name={childMeta.icon} size={13} class="text-white" />
+											<div class="flex items-center gap-1.5">
+												<div class="w-5 h-5 rounded bg-black/20 border border-white/20 flex items-center justify-center shrink-0">
+													<Icon name={childMeta.icon} size={13} class="text-white" />
+												</div>
+												<span>{childMeta.name}</span>
 											</div>
-											<span>{childMeta.name}</span>
+
+											<div class="flex items-center gap-1 ml-auto pl-1.5">
+												<!-- Extract button -->
+												<button
+													type="button"
+													disabled={isRunning}
+													onpointerdown={(e) => e.stopPropagation()}
+													onclick={(e) => {
+														e.stopPropagation();
+														extractChildBlock(block.id, child.id);
+													}}
+													class="w-5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-cyan-500/80 text-white/70 hover:text-white transition-colors cursor-pointer text-xs"
+													title="Keluarkan dari loop ke kanvas utama"
+												>
+													<Icon name="corner-up-left" size={11} />
+												</button>
+												<!-- Delete button -->
+												<button
+													type="button"
+													disabled={isRunning}
+													onpointerdown={(e) => e.stopPropagation()}
+													onclick={(e) => {
+														e.stopPropagation();
+														deleteBlock(child.id);
+													}}
+													class="w-5 h-5 flex items-center justify-center rounded bg-black/20 hover:bg-rose-500 text-white/70 hover:text-white transition-colors cursor-pointer text-xs"
+													title="Hapus balok ini"
+												>
+													<Icon name="x" size={11} />
+												</button>
+											</div>
 										</div>
 									{/each}
 
@@ -974,7 +1059,12 @@
 
 							<!-- C-Block Bottom Closing Bar -->
 							<div
-								class="h-3 rounded-b-[14px] px-3 relative {block.type === 'REPEAT'
+								role="button"
+								tabindex="0"
+								aria-label="Tarik penutup loop"
+								style="touch-action: none;"
+								onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
+								class="h-3 rounded-b-[14px] px-3 relative cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
 									? 'bg-indigo-700'
 									: 'bg-purple-700'}"
 							>
@@ -993,7 +1083,7 @@
 							data-block-index={i}
 							style="touch-action: none;"
 							onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
-							class="group relative flex items-center gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl border text-xs sm:text-sm font-black shadow-md cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-0.5 select-none w-fit min-w-[130px] {meta.bgClass} {isDragging && dragInfo?.blockId === block.id
+							class="group relative flex items-center justify-between gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl border text-xs sm:text-sm font-black shadow-md cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-0.5 select-none w-fit min-w-[140px] {meta.bgClass} {isDragging && dragInfo?.blockId === block.id
 								? 'opacity-40 border-dashed scale-95'
 								: ''}"
 						>
@@ -1003,11 +1093,28 @@
 							<!-- Bottom puzzle tab protrusion -->
 							<div class="absolute -bottom-1.5 left-5 w-6 h-1.5 rounded-b-sm border-x border-b border-black/40 shadow-xs z-20 pointer-events-none {meta.tabColor}"></div>
 
-							<!-- EXACTLY ONE ICON -->
-							<div class="w-5 h-5 rounded-md bg-black/20 border border-white/20 flex items-center justify-center shrink-0">
-								<Icon name={meta.icon} size={14} class="text-white" />
+							<div class="flex items-center gap-2">
+								<!-- EXACTLY ONE ICON -->
+								<div class="w-5 h-5 rounded-md bg-black/20 border border-white/20 flex items-center justify-center shrink-0">
+									<Icon name={meta.icon} size={14} class="text-white" />
+								</div>
+								<span>{meta.name}</span>
 							</div>
-							<span>{meta.name}</span>
+
+							<!-- Quick delete button for stack block -->
+							<button
+								type="button"
+								disabled={isRunning}
+								onpointerdown={(e) => e.stopPropagation()}
+								onclick={(e) => {
+									e.stopPropagation();
+									deleteBlock(block.id);
+								}}
+								class="w-5 h-5 flex items-center justify-center rounded-md bg-black/20 hover:bg-rose-500 text-white/70 hover:text-white transition-colors cursor-pointer text-xs ml-1"
+								title="Hapus balok ini"
+							>
+								<Icon name="x" size={12} />
+							</button>
 						</div>
 					{/if}
 
