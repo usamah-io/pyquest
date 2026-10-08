@@ -36,7 +36,6 @@
 		startX: number;
 		startY: number;
 		pointerId: number;
-		isHandle: boolean;
 	}
 
 	let pendingDrag = $state<PendingDrag | null>(null);
@@ -200,22 +199,6 @@
 		}
 	}
 
-	let lastTapBlockTime = 0;
-	let lastTapBlockType: BlockType | null = null;
-	function handleTapPaletteBlock(type: BlockType) {
-		if (isRunning) return;
-		const now = performance.now();
-		// Only ignore immediate synthetic duplicates of the same block from pointerup+click (< 60ms)
-		if (now - lastTapBlockTime < 60 && lastTapBlockType === type) return;
-		lastTapBlockTime = now;
-		lastTapBlockType = type;
-
-		const newBlock = createDefaultBlock(type);
-		workspaceBlocks = [...workspaceBlocks, newBlock];
-		if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-			try { navigator.vibrate(15); } catch {}
-		}
-	}
 
 	// Block visual and semantic metadata
 	function getBlockMeta(type: BlockType) {
@@ -299,17 +282,13 @@
 	// ==========================================
 	// TRUE DRAG & DROP ENGINE (POINTER EVENTS)
 	// ==========================================
-	let holdTimer: ReturnType<typeof setTimeout> | null = null;
+	// ==========================================
+	// TRUE DRAG & DROP ENGINE (POINTER EVENTS ONLY - NO CLICK-TO-ADD)
+	// ==========================================
+	const DRAG_THRESHOLD = 8; // Movement threshold (px) to distinguish click from intentional drag
 	let activePointerEl: HTMLElement | null = null;
 	let isTouchPointer = $state(false);
 	let paletteScrollEl: HTMLElement | null = $state(null);
-
-	function clearHoldTimer() {
-		if (holdTimer) {
-			clearTimeout(holdTimer);
-			holdTimer = null;
-		}
-	}
 
 	function startDrag() {
 		if (!pendingDrag || isDragging) return;
@@ -329,6 +308,104 @@
 		}
 	}
 
+	function findDropTarget(clientX: number, clientY: number): {
+		isTrash: boolean;
+		target: { parentId: string | null; index: number } | null;
+	} {
+		if (typeof document === 'undefined') {
+			return { isTrash: false, target: null };
+		}
+
+		// Helper to probe elements at coordinate
+		function probeAt(x: number, y: number) {
+			const elements = document.elementsFromPoint(x, y);
+
+			// 1. Check Trash Drop Zone
+			const trashEl = elements.find((el) => el.hasAttribute('data-drop-zone-trash'));
+			if (trashEl) {
+				return { isTrash: true, target: null };
+			}
+
+			// 2. Check explicit slot indicators: [data-slot-parent] [data-slot-index]
+			const slotEl = elements.find((el) => el.hasAttribute('data-slot-parent'));
+			if (slotEl) {
+				const pId = slotEl.getAttribute('data-slot-parent');
+				const sIdx = parseInt(slotEl.getAttribute('data-slot-index') || '0', 10);
+				return {
+					isTrash: false,
+					target: {
+						parentId: pId === 'root' ? null : pId,
+						index: sIdx
+					}
+				};
+			}
+
+			// 3. Check elements in order (deepest / topmost child first)
+			for (const el of elements) {
+				if (el.hasAttribute('data-block-id')) {
+					const bId = el.getAttribute('data-block-id');
+					// Prevent dropping directly onto itself
+					if (dragInfo?.blockId && bId === dragInfo.blockId) {
+						continue;
+					}
+					const pId = el.getAttribute('data-block-parent');
+					const bIdx = parseInt(el.getAttribute('data-block-index') || '0', 10);
+					const rect = el.getBoundingClientRect();
+					const midY = rect.top + rect.height / 2;
+					const targetIndex = y < midY ? bIdx : bIdx + 1;
+					return {
+						isTrash: false,
+						target: {
+							parentId: pId === 'root' ? null : pId,
+							index: targetIndex
+						}
+					};
+				}
+
+				if (el.hasAttribute('data-repeat-inner-id')) {
+					const repId = el.getAttribute('data-repeat-inner-id');
+					if (dragInfo?.blockId && repId === dragInfo.blockId) continue;
+					const childCount = parseInt(el.getAttribute('data-child-count') || '0', 10);
+					return {
+						isTrash: false,
+						target: {
+							parentId: repId,
+							index: childCount
+						}
+					};
+				}
+
+				if (el.hasAttribute('data-empty-canvas')) {
+					return {
+						isTrash: false,
+						target: { parentId: null, index: 0 }
+					};
+				}
+
+				if (el.hasAttribute('data-workspace-area')) {
+					return {
+						isTrash: false,
+						target: { parentId: null, index: workspaceBlocks.length }
+					};
+				}
+			}
+
+			return null;
+		}
+
+		// Primary probe at exact pointer position
+		const primaryHit = probeAt(clientX, clientY);
+		if (primaryHit) return primaryHit;
+
+		// On touch, if finger is slightly below a block/workspace, probe slightly above (under ghost)
+		if (isTouchPointer) {
+			const touchForgiveHit = probeAt(clientX, clientY - 45);
+			if (touchForgiveHit) return touchForgiveHit;
+		}
+
+		return { isTrash: false, target: null };
+	}
+
 	function handlePointerDown(
 		e: PointerEvent,
 		source: 'palette' | 'workspace',
@@ -339,24 +416,17 @@
 		data?: CodingBlock
 	) {
 		if (isRunning) return;
-		if (e.button !== 0) return; // Only primary mouse/touch button
+		if (e.button !== 0) return; // Only primary mouse button or touch contact
 
-		// If user tapped on an interactive control (input or sub-button) INSIDE a workspace block, let that handle it
+		// If user tapped on an interactive control (input or sub-button) INSIDE a block, let that handle it
 		const targetEl = e.target as HTMLElement;
-		if (source === 'workspace' && targetEl.closest('input, button')) return;
-
-		clearHoldTimer();
+		if (targetEl.closest('input, button')) return;
 
 		isTouchPointer = e.pointerType === 'touch';
 		activePointerEl = e.currentTarget as HTMLElement;
 		try {
 			activePointerEl?.setPointerCapture?.(e.pointerId);
 		} catch {}
-
-		const isHandle =
-			source === 'palette' ||
-			e.pointerType === 'mouse' ||
-			Boolean(targetEl.closest('[data-drag-handle]'));
 
 		pendingDrag = {
 			source,
@@ -367,20 +437,10 @@
 			data,
 			startX: e.clientX,
 			startY: e.clientY,
-			pointerId: e.pointerId,
-			isHandle
+			pointerId: e.pointerId
 		};
 
 		pointerPos = { x: e.clientX, y: e.clientY };
-
-		if (!isHandle && e.pointerType === 'touch') {
-			// On touch outside handle, start drag if held for 150ms
-			holdTimer = setTimeout(() => {
-				if (pendingDrag && !isDragging) {
-					startDrag();
-				}
-			}, 150);
-		}
 
 		window.addEventListener('pointermove', onGlobalPointerMove, { passive: false });
 		window.addEventListener('pointerup', onGlobalPointerUp);
@@ -393,49 +453,14 @@
 
 		pointerPos = { x: e.clientX, y: e.clientY };
 
+		// Intentional Drag Start: only activate dragging after movement exceeds threshold
 		if (!isDragging) {
 			const dx = e.clientX - pendingDrag.startX;
 			const dy = e.clientY - pendingDrag.startY;
 			const dist = Math.hypot(dx, dy);
 
-			if (pendingDrag.source === 'palette') {
-				if (e.pointerType === 'touch') {
-					// Allow smooth horizontal scrolling if swipe is mostly horizontal
-					if (Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dy) < 14) {
-						if (paletteScrollEl) {
-							paletteScrollEl.scrollLeft -= (e.clientX - pointerPos.x);
-						}
-						return;
-					}
-					// Drag downward into workspace or drag pulled out
-					if (dy > 10 || dist > 16) {
-						startDrag();
-					}
-				} else {
-					// Mouse drag threshold
-					if (dist > 5) {
-						startDrag();
-					}
-				}
-			} else if (pendingDrag.isHandle) {
-				// Immediate drag detection for handle or mouse in workspace
-				if (dist > 5) {
-					startDrag();
-				}
-			} else {
-				// Touch on block body in workspace:
-				// If user moves primarily vertically quickly, it's an intentional vertical scroll of workspace
-				if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) {
-					clearHoldTimer();
-					cleanupPointerListeners();
-					pendingDrag = null;
-					return;
-				}
-				// If moved horizontally or threshold exceeded, initiate drag
-				if (dist > 12) {
-					clearHoldTimer();
-					startDrag();
-				}
+			if (dist >= DRAG_THRESHOLD) {
+				startDrag();
 			}
 		}
 
@@ -444,79 +469,14 @@
 				e.preventDefault();
 			}
 
-			// Accurate hit testing using document.elementsFromPoint
-			const elements = document.elementsFromPoint(e.clientX, e.clientY);
-
-			// 1. Check Trash Drop Zone
-			const trashEl = elements.find((el) => el.hasAttribute('data-drop-zone-trash'));
-			if (trashEl) {
-				isOverTrash = true;
-				dropTarget = null;
-				return;
-			}
-			isOverTrash = false;
-
-			// 2. Check explicit slot indicators: [data-slot-parent] [data-slot-index]
-			const slotEl = elements.find((el) => el.hasAttribute('data-slot-parent'));
-			if (slotEl) {
-				const pId = slotEl.getAttribute('data-slot-parent');
-				const sIdx = parseInt(slotEl.getAttribute('data-slot-index') || '0', 10);
-				dropTarget = {
-					parentId: pId === 'root' ? null : pId,
-					index: sIdx
-				};
-				return;
-			}
-
-			// 3. Check elements in order (deepest / topmost child first)
-			let foundTarget: { parentId: string | null; index: number } | null = null;
-			for (const el of elements) {
-				if (el.hasAttribute('data-block-id')) {
-					const bId = el.getAttribute('data-block-id');
-					// Prevent dropping directly onto itself
-					if (dragInfo?.blockId && bId === dragInfo.blockId) {
-						continue;
-					}
-					const pId = el.getAttribute('data-block-parent');
-					const bIdx = parseInt(el.getAttribute('data-block-index') || '0', 10);
-					const rect = el.getBoundingClientRect();
-					const midY = rect.top + rect.height / 2;
-					const targetIndex = e.clientY < midY ? bIdx : bIdx + 1;
-					foundTarget = {
-						parentId: pId === 'root' ? null : pId,
-						index: targetIndex
-					};
-					break;
-				}
-
-				if (el.hasAttribute('data-repeat-inner-id')) {
-					const repId = el.getAttribute('data-repeat-inner-id');
-					if (dragInfo?.blockId && repId === dragInfo.blockId) continue;
-					const childCount = parseInt(el.getAttribute('data-child-count') || '0', 10);
-					foundTarget = {
-						parentId: repId,
-						index: childCount
-					};
-					break;
-				}
-
-				if (el.hasAttribute('data-empty-canvas')) {
-					foundTarget = { parentId: null, index: 0 };
-					break;
-				}
-
-				if (el.hasAttribute('data-workspace-area')) {
-					foundTarget = { parentId: null, index: workspaceBlocks.length };
-					break;
-				}
-			}
-
-			dropTarget = foundTarget;
+			// Hit-testing for drop zones and insertion indicators
+			const hit = findDropTarget(e.clientX, e.clientY);
+			isOverTrash = hit.isTrash;
+			dropTarget = hit.target;
 		}
 	}
 
 	function cleanupPointerListeners() {
-		clearHoldTimer();
 		if (activePointerEl && pendingDrag) {
 			try {
 				activePointerEl.releasePointerCapture?.(pendingDrag.pointerId);
@@ -531,32 +491,56 @@
 	function onGlobalPointerUp(e: PointerEvent) {
 		const wasDragging = isDragging;
 		const currentDragInfo = dragInfo;
-		const currentDropTarget = dropTarget;
-		const currentPendingDrag = pendingDrag;
+
+		// Hit-test at final release coordinates
+		let finalDropTarget = dropTarget;
+		let finalIsOverTrash = isOverTrash;
+		if (wasDragging) {
+			const res = findDropTarget(e.clientX, e.clientY);
+			finalIsOverTrash = res.isTrash;
+			if (res.target) {
+				finalDropTarget = res.target;
+			}
+		}
 
 		cleanupPointerListeners();
 
+		// STRICT RULE: Simple click/tap does NOTHING!
+		// Clicking a block alone must NEVER add, move, or modify workspace blocks!
 		if (!wasDragging) {
-			if (currentPendingDrag && currentPendingDrag.source === 'palette') {
-				handleTapPaletteBlock(currentPendingDrag.type);
-			}
+			isDragging = false;
+			dragInfo = null;
 			pendingDrag = null;
+			dropTarget = null;
+			isOverTrash = false;
 			return;
 		}
 
-		if (wasDragging && currentDragInfo) {
-			if (isOverTrash) {
-				// Drag to trash drop zone -> delete block
+		// INTENTIONAL DRAG & DROP INSERTION / REORDERING
+		if (currentDragInfo) {
+			if (finalIsOverTrash) {
+				// Dragged to trash drop zone -> delete workspace block
 				if (currentDragInfo.source === 'workspace' && currentDragInfo.blockId) {
 					workspaceBlocks = removeBlockById(workspaceBlocks, currentDragInfo.blockId);
+					if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+						try { navigator.vibrate(25); } catch {}
+					}
 				}
-			} else if (currentDropTarget) {
+			} else if (finalDropTarget) {
 				if (currentDragInfo.source === 'palette') {
-					// Insert new block from palette
+					// Physical Drag from Palette -> Insert new block at destination
 					const newBlock = createDefaultBlock(currentDragInfo.type);
-					workspaceBlocks = insertBlockAt(workspaceBlocks, newBlock, currentDropTarget.parentId, currentDropTarget.index);
+					workspaceBlocks = insertBlockAt(
+						workspaceBlocks,
+						newBlock,
+						finalDropTarget.parentId,
+						finalDropTarget.index
+					);
+					if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+						try { navigator.vibrate(20); } catch {}
+					}
 				} else if (currentDragInfo.source === 'workspace' && currentDragInfo.blockId) {
-					// Reorder or move existing block
+					// Reorder or reposition existing workspace block
 					const movingBlock = findBlockById(workspaceBlocks, currentDragInfo.blockId);
 					if (movingBlock) {
 						function isDescendant(parent: CodingBlock, targetId: string | null): boolean {
@@ -565,33 +549,34 @@
 						}
 
 						// Guard: cannot drop container into itself or its own descendants
-						if (currentDropTarget.parentId !== movingBlock.id && !isDescendant(movingBlock, currentDropTarget.parentId)) {
-							const sameParent = (currentDragInfo.parentId ?? null) === currentDropTarget.parentId;
-							let targetIndex = currentDropTarget.index;
-							if (sameParent && currentDragInfo.index !== undefined && currentDragInfo.index < targetIndex) {
+						if (
+							finalDropTarget.parentId !== movingBlock.id &&
+							!isDescendant(movingBlock, finalDropTarget.parentId)
+						) {
+							const sameParent = (currentDragInfo.parentId ?? null) === finalDropTarget.parentId;
+							let targetIndex = finalDropTarget.index;
+							if (
+								sameParent &&
+								currentDragInfo.index !== undefined &&
+								currentDragInfo.index < targetIndex
+							) {
 								targetIndex -= 1;
 							}
 							const cleaned = removeBlockById(workspaceBlocks, currentDragInfo.blockId);
-							workspaceBlocks = insertBlockAt(cleaned, movingBlock, currentDropTarget.parentId, targetIndex);
+							workspaceBlocks = insertBlockAt(
+								cleaned,
+								movingBlock,
+								finalDropTarget.parentId,
+								targetIndex
+							);
+							if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+								try { navigator.vibrate(15); } catch {}
+							}
 						}
 					}
 				}
-			} else {
-				if (currentDragInfo.source === 'palette') {
-					// Fallback: If drag was initiated from palette but released near origin or without target, treat as tap-to-add
-					const dist = currentPendingDrag ? Math.hypot(e.clientX - currentPendingDrag.startX, e.clientY - currentPendingDrag.startY) : 0;
-					if (dist < 36) {
-						handleTapPaletteBlock(currentDragInfo.type);
-					}
-				} else if (currentDragInfo.source === 'workspace' && currentDragInfo.blockId) {
-					// Dragged completely outside workspace area -> delete from sequence
-					const elements = document.elementsFromPoint(e.clientX, e.clientY);
-					const isInsideWorkspace = elements.some((el) => el.closest('[data-workspace-root]'));
-					if (!isInsideWorkspace) {
-						workspaceBlocks = removeBlockById(workspaceBlocks, currentDragInfo.blockId);
-					}
-				}
 			}
+			// If dropped outside valid target or over invalid area, drag is cancelled without changes.
 		}
 
 		isDragging = false;
@@ -661,7 +646,7 @@
 		</div>
 	{/if}
 
-	<!-- PALETTE BLOK KODING (DRAGGABLE + TAP TO ADD) -->
+	<!-- PALETTE BLOK KODING (DRAG & DROP ONLY) -->
 	<div class="py-2 sm:py-3 landscape:py-1.5 border-b border-slate-800 shrink-0">
 		<div class="flex items-center justify-between mb-1.5 sm:mb-2">
 			<span class="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -669,33 +654,24 @@
 				<span>Palet Balok Kode</span>
 			</span>
 			<span class="text-[10px] text-cyan-400 font-semibold flex items-center gap-1">
-				<Icon name="touch" size={11} class="sm:hidden text-cyan-400" />
-				<Icon name="grip-vertical" size={11} class="hidden sm:inline" />
-				<span class="sm:hidden">Ketuk / Tarik untuk menambah</span>
-				<span class="hidden sm:inline">Ketuk atau tarik balok ke kanvas</span>
+				<Icon name="grip-vertical" size={12} class="text-cyan-400" />
+				<span>Tarik balok ke kanvas</span>
 			</span>
 		</div>
 
 		<div
 			bind:this={paletteScrollEl}
-			class="flex flex-nowrap overflow-x-auto pb-2 scrollbar-none sm:flex-wrap gap-1.5 sm:gap-2"
+			class="flex flex-wrap gap-1.5 sm:gap-2 pb-1"
 		>
 			{#each fullPalette as bType}
 				{@const meta = getBlockMeta(bType)}
-				<button
-					type="button"
+				<div
+					role="button"
 					tabindex="0"
 					style="touch-action: none;"
 					onpointerdown={(e) => handlePointerDown(e, 'palette', bType)}
-					onclick={() => handleTapPaletteBlock(bType)}
-					onkeydown={(e) => {
-						if (e.key === 'Enter' || e.key === ' ') {
-							e.preventDefault();
-							handleTapPaletteBlock(bType);
-						}
-					}}
 					class="group relative shrink-0 select-none rounded-xl border px-3 sm:px-3 py-2 sm:py-2 text-[11px] sm:text-xs font-black shadow-md cursor-grab active:cursor-grabbing transition-all duration-150 hover:-translate-y-0.5 hover:shadow-lg active:scale-95 disabled:opacity-50 {meta.bgClass} flex items-center gap-1.5 sm:gap-2 min-h-[44px] touch-none"
-					title="Ketuk atau tarik balok ini ke kanvas"
+					title="Tarik balok ini ke kanvas"
 				>
 					<!-- Puzzle connector hints on palette piece -->
 					<div class="absolute -top-[2px] left-4 w-5 h-1 bg-slate-900/90 rounded-b-sm border-x border-b border-black/40 pointer-events-none"></div>
@@ -707,7 +683,7 @@
 					<span class="hidden sm:inline text-[9px] font-mono text-white/75 bg-black/20 px-1 py-0.5 rounded border border-white/10">
 						{meta.pyBadge}
 					</span>
-				</button>
+				</div>
 			{/each}
 		</div>
 	</div>
@@ -828,6 +804,7 @@
 											<button
 												type="button"
 												disabled={isRunning || (block.repeatCount || 4) <= 1}
+												onpointerdown={(e) => e.stopPropagation()}
 												onclick={(e) => {
 													e.stopPropagation();
 													updateRepeatCount(block.id, (block.repeatCount || 4) - 1);
@@ -841,6 +818,7 @@
 												max="10"
 												value={block.repeatCount || 4}
 												disabled={isRunning}
+												onpointerdown={(e) => e.stopPropagation()}
 												onclick={(e) => e.stopPropagation()}
 												onchange={(e) => {
 													const val = parseInt((e.target as HTMLInputElement).value, 10);
@@ -851,6 +829,7 @@
 											<button
 												type="button"
 												disabled={isRunning || (block.repeatCount || 4) >= 10}
+												onpointerdown={(e) => e.stopPropagation()}
 												onclick={(e) => {
 													e.stopPropagation();
 													updateRepeatCount(block.id, (block.repeatCount || 4) + 1);
@@ -870,6 +849,7 @@
 								<div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
 									<button
 										type="button"
+										onpointerdown={(e) => e.stopPropagation()}
 										onclick={(e) => {
 											e.stopPropagation();
 											moveBlock(block.id, 'UP');
@@ -883,6 +863,7 @@
 									</button>
 									<button
 										type="button"
+										onpointerdown={(e) => e.stopPropagation()}
 										onclick={(e) => {
 											e.stopPropagation();
 											moveBlock(block.id, 'DOWN');
@@ -896,6 +877,7 @@
 									</button>
 									<button
 										type="button"
+										onpointerdown={(e) => e.stopPropagation()}
 										onclick={(e) => {
 											e.stopPropagation();
 											handleDuplicate(block.id);
@@ -909,6 +891,7 @@
 									</button>
 									<button
 										type="button"
+										onpointerdown={(e) => e.stopPropagation()}
 										onclick={(e) => {
 											e.stopPropagation();
 											workspaceBlocks = removeBlockById(workspaceBlocks, block.id);
@@ -1000,6 +983,7 @@
 												</span>
 												<button
 													type="button"
+													onpointerdown={(e) => e.stopPropagation()}
 													onclick={(e) => {
 														e.stopPropagation();
 														moveBlock(child.id, 'UP');
@@ -1013,6 +997,7 @@
 												</button>
 												<button
 													type="button"
+													onpointerdown={(e) => e.stopPropagation()}
 													onclick={(e) => {
 														e.stopPropagation();
 														moveBlock(child.id, 'DOWN');
@@ -1026,6 +1011,7 @@
 												</button>
 												<button
 													type="button"
+													onpointerdown={(e) => e.stopPropagation()}
 													onclick={(e) => {
 														e.stopPropagation();
 														workspaceBlocks = removeBlockById(workspaceBlocks, child.id);
@@ -1040,21 +1026,6 @@
 											</div>
 										</div>
 									{/each}
-
-									<!-- Quick Add Action to Loop Button -->
-									<button
-										type="button"
-										disabled={isRunning}
-										onclick={(e) => {
-											e.stopPropagation();
-											const m = createDefaultBlock('MOVE');
-											workspaceBlocks = insertBlockAt(workspaceBlocks, m, block.id, block.children?.length || 0);
-										}}
-										class="mt-1 text-[10px] font-bold text-cyan-300 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-cyan-500/30 hover:border-cyan-400 py-1 px-2.5 rounded-lg w-fit transition-colors cursor-pointer flex items-center gap-1 self-start shadow-sm"
-									>
-										<Icon name="plus" size={11} />
-										<span>+ Tambah Gerak ke Loop</span>
-									</button>
 
 									<!-- Inner trailing indicator -->
 									{#if isDragging && dropTarget?.parentId === block.id && dropTarget?.index === block.children.length}
@@ -1127,6 +1098,7 @@
 								</span>
 								<button
 									type="button"
+									onpointerdown={(e) => e.stopPropagation()}
 									onclick={(e) => {
 										e.stopPropagation();
 										moveBlock(block.id, 'UP');
@@ -1140,6 +1112,7 @@
 								</button>
 								<button
 									type="button"
+									onpointerdown={(e) => e.stopPropagation()}
 									onclick={(e) => {
 										e.stopPropagation();
 										moveBlock(block.id, 'DOWN');
@@ -1153,6 +1126,7 @@
 								</button>
 								<button
 									type="button"
+									onpointerdown={(e) => e.stopPropagation()}
 									onclick={(e) => {
 										e.stopPropagation();
 										handleDuplicate(block.id);
@@ -1166,6 +1140,7 @@
 								</button>
 								<button
 									type="button"
+									onpointerdown={(e) => e.stopPropagation()}
 									onclick={(e) => {
 										e.stopPropagation();
 										workspaceBlocks = removeBlockById(workspaceBlocks, block.id);
