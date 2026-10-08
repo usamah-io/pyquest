@@ -1,5 +1,6 @@
 import { writable, derived } from 'svelte/store';
 import { progressStore } from './progressStore';
+import { avatarStorage } from '../utils/avatarStorage';
 
 export interface UserProfile {
 	id: string;
@@ -116,6 +117,19 @@ function createAuthStore() {
 				progressStore.loadForUser(initial.user.id);
 			}
 
+			// Load persistent avatar from IndexedDB if stored
+			if (initial.user?.id) {
+				try {
+					const idbAvatar = await avatarStorage.getAvatar(initial.user.id);
+					if (idbAvatar) {
+						state.update((s) => ({
+							...s,
+							user: { ...s.user, avatar: idbAvatar }
+						}));
+					}
+				} catch {}
+			}
+
 			// Validate with backend session cookie
 			try {
 				const res = await fetch('/api/auth/session');
@@ -131,17 +145,27 @@ function createAuthStore() {
 						const registry: Record<string, UserProfile> = registryRaw ? JSON.parse(registryRaw) : {};
 						const existing = registry[verified.id];
 
+						// Check persistent avatar in IndexedDB
+						let avatarUrl = existing?.avatar || verified.avatar;
+						try {
+							const idbAvatar = await avatarStorage.getAvatar(verified.id);
+							if (idbAvatar) {
+								avatarUrl = idbAvatar;
+							}
+						} catch {}
+
 						if (existing) {
 							userProfile = {
 								...verified,
 								name: existing.name || verified.name,
 								firstName: existing.firstName || verified.firstName,
-								avatar: existing.avatar || verified.avatar,
+								avatar: avatarUrl,
 								hasCompletedProfileSetup: existing.hasCompletedProfileSetup
 							};
 						} else {
 							userProfile = {
 								...verified,
+								avatar: avatarUrl,
 								hasCompletedProfileSetup: false
 							};
 						}

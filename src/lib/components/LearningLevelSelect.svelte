@@ -78,31 +78,55 @@
 		return learningLevels.length - 1;
 	});
 
-	// Units structure (3 educational units for Python Module)
+	// Units structure (6 educational units across 30 levels for Python Module)
 	const UNITS = [
 		{
 			id: 1,
 			title: 'Unit 1: Sintaksis & Tipe Data Dasar',
-			description: 'Kuasai fungsi print(), aturan variabel memori, serta tipe data teks dan angka Python.',
+			description: 'Kuasai fungsi print(), aturan variabel memori, tipe data teks, input(), dan operator aritmatika.',
 			badgeClass: 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300',
 			bannerClass: 'bg-slate-900 border-indigo-500/30',
-			levelIds: [1, 2, 3]
+			levelIds: [1, 2, 3, 4, 5]
 		},
 		{
 			id: 2,
-			title: 'Unit 2: Interaktivitas & Operasi Logika',
-			description: 'Terima masukan pengguna dengan input(), hitung aritmatika, dan evaluasi logika boolean.',
+			title: 'Unit 2: Interaksi Logika & Kontrol Alur',
+			description: 'Kuasai boolean, percabangan if-elif-else, serta otomatisasi iterasi for dan while loop.',
 			badgeClass: 'bg-purple-500/15 border-purple-500/30 text-purple-300',
 			bannerClass: 'bg-slate-900 border-purple-500/30',
-			levelIds: [4, 5, 6]
+			levelIds: [6, 7, 8, 9, 10]
 		},
 		{
 			id: 3,
-			title: 'Unit 3: Alur Percabangan & Perulangan',
-			description: 'Ambil keputusan dengan if-elif-else serta otomatisasi aksi berulang dengan for dan while.',
+			title: 'Unit 3: Struktur Data List & Operasi',
+			description: 'Pelajari manipulasi urutan data dinamis dengan list, indexing, slicing, metode mutasi, dan pencarian.',
 			badgeClass: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300',
 			bannerClass: 'bg-slate-900 border-cyan-500/30',
-			levelIds: [7, 8, 9, 10]
+			levelIds: [11, 12, 13, 14, 15]
+		},
+		{
+			id: 4,
+			title: 'Unit 4: Tuple, Dictionary & Kumpulan Data',
+			description: 'Pahami data immutable tuple, pemetaan asosiatif dictionary {key: value}, dan keunikan himpunan set.',
+			badgeClass: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300',
+			bannerClass: 'bg-slate-900 border-emerald-500/30',
+			levelIds: [16, 17, 18, 19, 20]
+		},
+		{
+			id: 5,
+			title: 'Unit 5: Fungsi, Parameter & Modularitas',
+			description: 'Bangun kode modular dengan def, parameter default, nilai kembalian return, scope lokal, dan fungsi lambda.',
+			badgeClass: 'bg-amber-500/15 border-amber-500/30 text-amber-300',
+			bannerClass: 'bg-slate-900 border-amber-500/30',
+			levelIds: [21, 22, 23, 24, 25]
+		},
+		{
+			id: 6,
+			title: 'Unit 6: String Lanjutan, Error & Algoritma',
+			description: 'Kuasai transformasi teks split/join, format f-string, proteksi try-except, list comprehension, dan algoritma.',
+			badgeClass: 'bg-rose-500/15 border-rose-500/30 text-rose-300',
+			bannerClass: 'bg-slate-900 border-rose-500/30',
+			levelIds: [26, 27, 28, 29, 30]
 		}
 	];
 
@@ -158,7 +182,7 @@
 		<div class="flex items-center gap-2 shrink-0">
 			<div class="flex items-center gap-1.5 text-[11px] sm:text-xs bg-slate-900 border border-slate-800 px-2.5 sm:px-3 py-1.5 rounded-xl font-bold text-indigo-400">
 				<Icon name="zap" size={14} class="text-amber-400 shrink-0" />
-				<span>{$progressStore.completedQuestions.length} / 50</span>
+				<span>{$progressStore.completedQuestions.length} / {learningLevels.reduce((acc, l) => acc + l.questionIds.length, 0)}</span>
 				<span class="text-slate-500 font-normal hidden md:inline">Soal</span>
 			</div>
 			<div class="flex items-center gap-1.5 text-[11px] sm:text-xs bg-slate-900 border border-slate-800 px-2.5 sm:px-3 py-1.5 rounded-xl font-bold text-amber-400">

@@ -2,6 +2,7 @@
 	import { authStore, dashboardUserStore } from '$lib/stores/authStore';
 	import { progressStore } from '$lib/stores/progressStore';
 	import { levelsData } from '$lib/challenges/levelsData';
+	import { avatarStorage, validateImageFile, processAndCompressImage } from '$lib/utils/avatarStorage';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -10,6 +11,7 @@
 		onBackToHome: () => void;
 	} = $props();
 
+	const DEFAULT_AVATAR = '/mascot/pybot-front-idle.png';
 	const AVATAR_OPTIONS = [
 		{ id: 'pybot-idle', src: '/mascot/pybot-front-idle.png', label: 'PyBot Normal' },
 		{ id: 'pybot-happy', src: '/mascot/pybot-happy-success.png', label: 'PyBot Juara' },
@@ -19,26 +21,83 @@
 	];
 
 	let displayName = $state($dashboardUserStore.name || 'Penjelajah Kode');
-	let chosenAvatar = $state($dashboardUserStore.avatar || '/mascot/pybot-front-idle.png');
-	let customUrl = $state('');
-	let showCustomUrlInput = $state(false);
+	let chosenAvatar = $state($dashboardUserStore.avatar || DEFAULT_AVATAR);
 	let saveSuccessMessage = $state<string | null>(null);
+	let errorMessage = $state<string | null>(null);
+	let isUploading = $state(false);
+	let fileInput = $state<HTMLInputElement | null>(null);
+	let selectedImageFile = $state<File | null>(null);
+
+	$effect(() => {
+		if ($dashboardUserStore.name && displayName === 'Penjelajah Kode') {
+			displayName = $dashboardUserStore.name;
+		}
+		if ($dashboardUserStore.avatar && chosenAvatar === DEFAULT_AVATAR) {
+			chosenAvatar = $dashboardUserStore.avatar;
+		}
+	});
 
 	function handleSelectAvatar(src: string) {
 		chosenAvatar = src;
-		showCustomUrlInput = false;
+		selectedImageFile = null;
+		errorMessage = null;
 	}
 
-	function handleCustomUrlApply() {
-		if (customUrl.trim()) {
-			chosenAvatar = customUrl.trim();
+	function handleOpenFilePicker() {
+		if (fileInput) {
+			fileInput.value = '';
+			fileInput.click();
 		}
 	}
 
-	function handleSaveProfile(e: SubmitEvent) {
+	async function handleFileChange(event: Event) {
+		const target = event.target as HTMLInputElement;
+		const file = target.files?.[0];
+		if (!file) return;
+
+		const validation = validateImageFile(file);
+		if (!validation.valid) {
+			errorMessage = validation.error || 'File tidak valid.';
+			return;
+		}
+
+		try {
+			isUploading = true;
+			errorMessage = null;
+			const compressedDataUrl = await processAndCompressImage(file);
+			chosenAvatar = compressedDataUrl;
+			selectedImageFile = file;
+		} catch (err) {
+			errorMessage = err instanceof Error ? err.message : 'Gagal memproses gambar.';
+		} finally {
+			isUploading = false;
+		}
+	}
+
+	async function handleRemovePhoto() {
+		chosenAvatar = DEFAULT_AVATAR;
+		selectedImageFile = null;
+		errorMessage = null;
+		const userId = $dashboardUserStore.id || 'guest-1';
+		await avatarStorage.removeAvatar(userId);
+	}
+
+	async function handleSaveProfile(e: SubmitEvent) {
 		e.preventDefault();
 		const trimmedName = displayName.trim();
-		if (!trimmedName) return;
+		if (!trimmedName) {
+			errorMessage = 'Nama tampilan tidak boleh kosong.';
+			return;
+		}
+
+		errorMessage = null;
+		const userId = $dashboardUserStore.id || 'guest-1';
+
+		if (selectedImageFile) {
+			await avatarStorage.saveAvatar(userId, selectedImageFile);
+		} else if (chosenAvatar === DEFAULT_AVATAR) {
+			await avatarStorage.removeAvatar(userId);
+		}
 
 		authStore.updateProfile({
 			name: trimmedName,
@@ -81,18 +140,68 @@
 		</div>
 	{/if}
 
+	<!-- Error Banner -->
+	{#if errorMessage}
+		<div class="p-3.5 rounded-2xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs font-bold flex items-center gap-2 shadow-lg animate-fade-in">
+			<Icon name="alert-circle" size={18} class="text-rose-400 shrink-0" />
+			<span>{errorMessage}</span>
+		</div>
+	{/if}
+
 	<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 		<!-- Left: Profile Identity Card -->
 		<div class="md:col-span-1 bg-slate-900/90 border border-slate-800 rounded-3xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center text-center relative overflow-hidden">
-			<div class="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-slate-950 border-2 border-indigo-500/40 p-2 shadow-xl shadow-indigo-500/20 mb-4 flex items-center justify-center overflow-hidden">
-				<img
-					src={chosenAvatar}
-					alt="Avatar"
-					class="w-full h-full object-contain"
-					onerror={(e) => {
-						(e.currentTarget as HTMLImageElement).src = '/mascot/pybot-front-idle.png';
-					}}
-				/>
+			<!-- Hidden Native File Input for Device Image Selection -->
+			<input
+				bind:this={fileInput}
+				type="file"
+				accept="image/jpeg,image/png,image/webp"
+				onchange={handleFileChange}
+				class="hidden"
+			/>
+
+			<div
+				class="relative group cursor-pointer mb-3"
+				onclick={handleOpenFilePicker}
+				role="button"
+				tabindex="0"
+				onkeydown={(e) => e.key === 'Enter' && handleOpenFilePicker()}
+				title="Klik untuk ubah foto"
+			>
+				<div class="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-slate-950 border-2 border-indigo-500/40 p-2 shadow-xl shadow-indigo-500/20 flex items-center justify-center overflow-hidden hover:border-cyan-400 transition-colors">
+					<img
+						src={chosenAvatar}
+						alt="Avatar"
+						class="w-full h-full object-cover"
+						onerror={(e) => {
+							(e.currentTarget as HTMLImageElement).src = DEFAULT_AVATAR;
+						}}
+					/>
+				</div>
+				<div class="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-indigo-600 hover:bg-indigo-500 border-2 border-slate-900 flex items-center justify-center text-white shadow transition-transform group-hover:scale-110">
+					<Icon name="camera" size={14} />
+				</div>
+			</div>
+
+			<div class="flex items-center gap-2 mb-4">
+				<button
+					type="button"
+					onclick={handleOpenFilePicker}
+					disabled={isUploading}
+					class="px-3 py-1 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+				>
+					<Icon name="upload" size={13} />
+					<span>{isUploading ? 'Memproses...' : 'Ubah Foto'}</span>
+				</button>
+				{#if chosenAvatar !== DEFAULT_AVATAR}
+					<button
+						type="button"
+						onclick={handleRemovePhoto}
+						class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-semibold transition-all cursor-pointer"
+					>
+						Hapus
+					</button>
+				{/if}
 			</div>
 
 			<h3 class="text-xl font-black text-white mb-1">
@@ -201,7 +310,7 @@
 					<!-- Choose Avatar Presets -->
 					<div class="space-y-2">
 						<span class="block text-xs font-bold text-slate-300">
-							Pilih Avatar Karakter
+							Atau Pilih Avatar Karakter PyBot
 						</span>
 						<div class="flex items-center gap-2.5 flex-wrap">
 							{#each AVATAR_OPTIONS as opt}
@@ -216,34 +325,6 @@
 									<img src={opt.src} alt={opt.label} class="w-full h-full object-contain" />
 								</button>
 							{/each}
-						</div>
-
-						<div class="pt-1">
-							{#if !showCustomUrlInput}
-								<button
-									type="button"
-									onclick={() => (showCustomUrlInput = true)}
-									class="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold cursor-pointer"
-								>
-									+ Gunakan tautan foto kustom
-								</button>
-							{:else}
-								<div class="flex gap-2 items-center mt-1">
-									<input
-										type="url"
-										bind:value={customUrl}
-										placeholder="https://... URL gambar"
-										class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono text-[11px]"
-									/>
-									<button
-										type="button"
-										onclick={handleCustomUrlApply}
-										class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold cursor-pointer"
-									>
-										Terapkan
-									</button>
-								</div>
-							{/if}
 						</div>
 					</div>
 

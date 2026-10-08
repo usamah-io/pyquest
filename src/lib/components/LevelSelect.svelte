@@ -73,34 +73,61 @@
 		return levels.length - 1;
 	});
 
-	// Units structure (3 educational units across 10 levels)
+	// Units structure (6 educational units across 30 levels for Coding Game)
 	const UNITS = [
 		{
 			id: 1,
-			title: 'Unit 1: Langkah Dasar & Orientasi',
-			description: 'Kuasai eksekusi instruksi berurutan, belokan sudut, dan cara menghindari rintangan labirin.',
+			title: 'Unit 1: Langkah Dasar, Belokan & Urutan',
+			description: 'Kuasai eksekusi instruksi sekuensial, belokan sudut, dan cara menghindari rintangan labirin.',
 			color: 'teal',
 			badgeClass: 'bg-teal-500/15 border-teal-500/30 text-teal-300',
 			bannerClass: 'bg-slate-900 border-teal-500/30',
-			levelIds: [1, 2, 3]
+			levelIds: [1, 2, 3, 4, 5]
 		},
 		{
 			id: 2,
-			title: 'Unit 2: Pola Iterasi & Looping',
+			title: 'Unit 2: Pola Looping REPEAT & Efisiensi',
 			description: 'Otomatisasi gerakan berulang dengan blok REPEAT dan pecahkan pola jalur berundak secara efisien.',
 			color: 'indigo',
 			badgeClass: 'bg-indigo-500/15 border-indigo-500/30 text-indigo-300',
 			bannerClass: 'bg-slate-900 border-indigo-500/30',
-			levelIds: [4, 5, 6]
+			levelIds: [6, 7, 8, 9, 10]
 		},
 		{
 			id: 3,
-			title: 'Unit 3: Navigasi Kompleks & Algoritma',
-			description: 'Rancang strategi langkah minimal, siklus berputar, dan taklukkan labirin puncak PyQuest.',
+			title: 'Unit 3: Labirin Bersudut & Pola Spiral',
+			description: 'Kuasai lorong spiral dalam, belokan putar balik U-turn, undak diagonal, dan pengumpulan koin sudut.',
+			color: 'cyan',
+			badgeClass: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300',
+			bannerClass: 'bg-slate-900 border-cyan-500/30',
+			levelIds: [11, 12, 13, 14, 15]
+		},
+		{
+			id: 4,
+			title: 'Unit 4: Siklus Berulang & Labirin Berundak',
+			description: 'Taklukkan tangga piramida, loop ganda berurutan, cincin patroli luar, dan rintangan silang simetris.',
 			color: 'emerald',
 			badgeClass: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300',
 			bannerClass: 'bg-slate-900 border-emerald-500/30',
-			levelIds: [7, 8, 9, 10]
+			levelIds: [16, 17, 18, 19, 20]
+		},
+		{
+			id: 5,
+			title: 'Unit 5: Navigasi Kompleks & Multi-Jalur',
+			description: 'Pecahkan labirin bersekat, kisi berpilar terbuka, tikungan sempit 1-sel, dan pola gerigi kunci.',
+			color: 'amber',
+			badgeClass: 'bg-amber-500/15 border-amber-500/30 text-amber-300',
+			bannerClass: 'bg-slate-900 border-amber-500/30',
+			levelIds: [21, 22, 23, 24, 25]
+		},
+		{
+			id: 6,
+			title: 'Unit 6: Master Algoritma & Puncak PyQuest',
+			description: 'Rancang algoritma lintasan helix, rute ular sapu matriks, gerbang benteng, dan labirin quantum piala agung.',
+			color: 'purple',
+			badgeClass: 'bg-purple-500/15 border-purple-500/30 text-purple-300',
+			bannerClass: 'bg-slate-900 border-purple-500/30',
+			levelIds: [26, 27, 28, 29, 30]
 		}
 	];
 
@@ -180,7 +207,7 @@
 		<div class="flex items-center gap-2 shrink-0">
 			<div class="flex items-center gap-1.5 text-[11px] sm:text-xs bg-slate-900 border border-slate-800 px-2.5 sm:px-3 py-1.5 rounded-xl font-bold text-emerald-400">
 				<Icon name="trophy" size={14} class="text-emerald-400 shrink-0" />
-				<span>{$progressStore.completedChallenges.length} / 30</span>
+				<span>{$progressStore.completedChallenges.length} / {levels.reduce((acc, l) => acc + l.challenges.length, 0)}</span>
 				<span class="text-slate-500 font-normal hidden md:inline">Misi</span>
 			</div>
 			<div class="flex items-center gap-1.5 text-[11px] sm:text-xs bg-slate-900 border border-slate-800 px-2.5 sm:px-3 py-1.5 rounded-xl font-bold text-amber-400">

@@ -9,12 +9,18 @@
 		onStartLearning,
 		onStartCodingGame,
 		onContinueCoding,
-		onContinueLearning
+		onContinueLearning,
+		onOpenMissions,
+		onOpenXp,
+		onOpenStreak
 	}: {
 		onStartLearning: () => void;
 		onStartCodingGame: () => void;
 		onContinueCoding?: (lvlIdx: number, chIdx: number) => void;
 		onContinueLearning?: (levelId: number) => void;
+		onOpenMissions?: () => void;
+		onOpenXp?: () => void;
+		onOpenStreak?: () => void;
 	} = $props();
 
 	// PyBot Companion State & Cursor Tracking
@@ -219,37 +225,62 @@
 					</p>
 				</div>
 
-				<!-- Compact Stats Pills (Dynamic from authenticated user / progressStore) -->
+				<!-- Compact Stats Pills (Clickable Entry Points to Deep Pages) -->
 				<div class="flex flex-wrap items-center gap-2 pt-1">
 					<!-- XP Pill -->
-					<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-amber-500/30 text-amber-300 text-xs font-bold shadow-xs">
+					<button
+						type="button"
+						onclick={() => onOpenXp && onOpenXp()}
+						class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-amber-500/30 hover:border-amber-400 text-amber-300 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-95"
+						title="Buka Rincian Total XP"
+					>
 						<Icon name="star" size={14} class="text-amber-400" />
 						<span>{$dashboardUserStore.xp} XP</span>
-					</div>
+					</button>
 
 					<!-- Level Pill -->
-					<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-indigo-500/30 text-indigo-300 text-xs font-bold shadow-xs">
+					<button
+						type="button"
+						onclick={onStartCodingGame}
+						class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-indigo-500/30 hover:border-indigo-400 text-indigo-300 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-95"
+						title="Pilih Level Game"
+					>
 						<Icon name="shield" size={14} class="text-indigo-400" />
 						<span>Level {$dashboardUserStore.level}</span>
-					</div>
+					</button>
 
 					<!-- Misi Pill -->
-					<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-cyan-500/30 text-cyan-300 text-xs font-bold shadow-xs">
+					<button
+						type="button"
+						onclick={() => onOpenMissions && onOpenMissions()}
+						class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-cyan-500/30 hover:border-cyan-400 text-cyan-300 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-95"
+						title="Buka Arsip Misi Selesai"
+					>
 						<Icon name="check-circle" size={14} class="text-cyan-400" />
 						<span>{completedChallengesCount} / {totalChallengesCount} Misi</span>
-					</div>
+					</button>
 
 					<!-- Soal Pill -->
-					<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-purple-500/30 text-purple-300 text-xs font-bold shadow-xs">
+					<button
+						type="button"
+						onclick={onStartLearning}
+						class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-purple-500/30 hover:border-purple-400 text-purple-300 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-95"
+						title="Pilih Modul Materi"
+					>
 						<Icon name="book-open" size={14} class="text-purple-400" />
 						<span>{completedQuestionsCount} / {totalQuestionsCount} Soal</span>
-					</div>
+					</button>
 
 					<!-- Streak Pill -->
-					<div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-amber-500/30 text-amber-400 text-xs font-bold shadow-xs">
+					<button
+						type="button"
+						onclick={() => onOpenStreak && onOpenStreak()}
+						class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-amber-500/30 hover:border-orange-400 text-amber-400 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-95"
+						title="Buka Kalender Streak"
+					>
 						<Icon name="flame" size={14} class="text-amber-400" />
 						<span>{$dashboardUserStore.streak} Hari</span>
-					</div>
+					</button>
 				</div>
 			</div>
 
@@ -481,52 +512,78 @@
 	</section>
 
 	<!-- ======================================================== -->
-	<!-- 4. PERJALANAN TERAKHIR (RECENT ACTIVITY FEED)             -->
+	<!-- 4. RINGKASAN PROGRES & HALAMAN DETAIL                    -->
 	<!-- ======================================================== -->
 	<section
-		class="w-full rounded-3xl bg-slate-900/70 border border-slate-800/80 p-5 shadow-xl backdrop-blur-md text-left"
+		class="w-full rounded-3xl bg-slate-900/70 border border-slate-800/80 p-5 shadow-xl backdrop-blur-md text-left space-y-4"
 	>
 		<!-- Section Header -->
-		<div class="flex items-center justify-between mb-4">
+		<div class="flex items-center justify-between">
 			<div class="flex items-center gap-2">
-				<Icon name="rotate-ccw" size={16} class="text-indigo-400" />
-				<h3 class="font-black text-white text-sm tracking-wide">Perjalanan Terakhir</h3>
+				<Icon name="award" size={16} class="text-amber-400" />
+				<h3 class="font-black text-white text-sm tracking-wide">Ringkasan Statistik & Capaian</h3>
 			</div>
-			<button
-				type="button"
-				onclick={onStartCodingGame}
-				class="text-xs text-indigo-400 hover:text-indigo-300 font-bold transition-colors cursor-pointer flex items-center gap-1"
-			>
-				<span>Lihat Semua</span>
-				<Icon name="arrow-right" size={12} />
-			</button>
+			<span class="text-xs text-slate-500">Klik kartu untuk melihat rincian</span>
 		</div>
 
-		<!-- 3 Activity Cards Grid -->
+		<!-- 3 Deep Page Entry Cards Grid -->
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-			{#each recentActivities as act (act.id)}
-				<div class="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 flex items-center gap-3 hover:border-slate-700 transition-colors">
-					<!-- Status Icon -->
-					<div class="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 {act.status === 'completed'
-						? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-						: 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'}">
-						{#if act.status === 'completed'}
-							<Icon name="check" size={15} />
-						{:else}
-							<Icon name="play" size={13} />
-						{/if}
+			<!-- Misi Selesai Card -->
+			<button
+				type="button"
+				onclick={() => onOpenMissions && onOpenMissions()}
+				class="p-4 rounded-2xl bg-slate-950/80 hover:bg-slate-950 border border-slate-800 hover:border-cyan-500/50 flex items-center justify-between gap-3 text-left transition-all cursor-pointer group shadow-sm active:scale-98"
+			>
+				<div class="flex items-center gap-3 min-w-0">
+					<div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+						<Icon name="check-circle" size={18} />
 					</div>
-
-					<!-- Title & Category -->
-					<div class="flex-1 min-w-0">
-						<div class="text-xs font-bold text-white truncate">{act.title}</div>
-						<div class="text-[10px] text-slate-400 truncate">{act.category}</div>
-						<div class="text-[9px] text-slate-500 mt-0.5">{act.timeAgo}</div>
+					<div class="min-w-0">
+						<div class="text-xs font-bold text-white group-hover:text-cyan-300 transition-colors">Misi Selesai</div>
+						<div class="text-[11px] text-cyan-400 font-mono font-bold">{completedChallengesCount} / {totalChallengesCount} Misi</div>
+						<div class="text-[10px] text-slate-500">Buka katalog arsip</div>
 					</div>
-
-					<Icon name="arrow-right" size={13} class="text-slate-600 shrink-0" />
 				</div>
-			{/each}
+				<Icon name="chevron-right" size={16} class="text-slate-600 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all shrink-0" />
+			</button>
+
+			<!-- Total XP Card -->
+			<button
+				type="button"
+				onclick={() => onOpenXp && onOpenXp()}
+				class="p-4 rounded-2xl bg-slate-950/80 hover:bg-slate-950 border border-slate-800 hover:border-amber-500/50 flex items-center justify-between gap-3 text-left transition-all cursor-pointer group shadow-sm active:scale-98"
+			>
+				<div class="flex items-center gap-3 min-w-0">
+					<div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+						<Icon name="star" size={18} />
+					</div>
+					<div class="min-w-0">
+						<div class="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">Total XP & Peringkat</div>
+						<div class="text-[11px] text-amber-400 font-mono font-bold">{$dashboardUserStore.xp} XP · Lvl {$dashboardUserStore.level}</div>
+						<div class="text-[10px] text-slate-500">Rincian perolehan XP</div>
+					</div>
+				</div>
+				<Icon name="chevron-right" size={16} class="text-slate-600 group-hover:text-amber-400 group-hover:translate-x-1 transition-all shrink-0" />
+			</button>
+
+			<!-- Streak Harian Card -->
+			<button
+				type="button"
+				onclick={() => onOpenStreak && onOpenStreak()}
+				class="p-4 rounded-2xl bg-slate-950/80 hover:bg-slate-950 border border-slate-800 hover:border-orange-500/50 flex items-center justify-between gap-3 text-left transition-all cursor-pointer group shadow-sm active:scale-98"
+			>
+				<div class="flex items-center gap-3 min-w-0">
+					<div class="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+						<Icon name="flame" size={18} />
+					</div>
+					<div class="min-w-0">
+						<div class="text-xs font-bold text-white group-hover:text-orange-300 transition-colors">Streak Konsistensi</div>
+						<div class="text-[11px] text-orange-400 font-mono font-bold">{$dashboardUserStore.streak} Hari Beruntun</div>
+						<div class="text-[10px] text-slate-500">Kalender aktivitas harian</div>
+					</div>
+				</div>
+				<Icon name="chevron-right" size={16} class="text-slate-600 group-hover:text-orange-400 group-hover:translate-x-1 transition-all shrink-0" />
+			</button>
 		</div>
 	</section>
 </div>

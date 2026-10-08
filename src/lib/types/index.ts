@@ -156,5 +156,8 @@ export type AppScreen =
 	| 'REWARD'
 	| 'SUMMARY'
 	| 'PROFILE_SETUP'
-	| 'PROFILE';
+	| 'PROFILE'
+	| 'MISSIONS'
+	| 'XP_PROGRESS'
+	| 'STREAK_VIEW';
 

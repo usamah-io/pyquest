@@ -40,55 +40,23 @@
 		/>
 	</div>
 
-	<!-- Right: Actions, Install Button & Profile Avatar Button -->
-	<div class="flex items-center gap-2 sm:gap-3 relative">
-		<!-- PWA Install Button (Subtle, visible when installable) -->
-		<PwaInstallButton compact={true} />
-
-		<!-- Live Real-Time XP Badge in Navbar -->
-		<div
-			class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono font-black text-xs sm:text-sm shadow-sm select-none"
-			title="Total XP Kamu Saat Ini"
-		>
-			<Icon name="zap" size={14} class="text-amber-400 fill-current shrink-0" />
-			<span>{$dashboardUserStore.xp} XP</span>
-		</div>
-
-		<!-- Dynamic Profile Button -->
+	<!-- Right: ONLY User's Profile Avatar -->
+	<div class="flex items-center relative">
+		<!-- Profile Avatar Button (Clickable) -->
 		<button
 			type="button"
 			onclick={toggleProfileMenu}
-			class="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-2xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-left transition-all cursor-pointer group hover:border-indigo-500/50"
-			title="Profil Siswa"
+			class="w-10 h-10 rounded-full bg-slate-800 hover:bg-slate-700 border-2 border-indigo-500/40 hover:border-cyan-400 p-0.5 transition-all cursor-pointer shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-400/50 shrink-0 overflow-hidden"
+			title="Profil {$dashboardUserStore.name}"
+			aria-label="Buka Menu Profil"
 		>
-			<div class="w-8 h-8 rounded-full bg-indigo-600/30 border border-indigo-400/40 overflow-hidden flex items-center justify-center shrink-0">
-				{#if $dashboardUserStore.avatar}
-					<img
-						src={$dashboardUserStore.avatar}
-						alt={$dashboardUserStore.name}
-						class="w-full h-full object-cover"
-						onerror={(e) => {
-							(e.currentTarget as HTMLImageElement).src = '/mascot/pybot-front-idle.png';
-						}}
-					/>
-				{:else}
-					<Icon name="user" size={16} class="text-indigo-300" />
-				{/if}
-			</div>
-
-			<div class="hidden sm:flex flex-col pr-1">
-				<span class="text-xs font-bold text-slate-200 group-hover:text-white transition-colors truncate max-w-[110px]">
-					{$dashboardUserStore.firstName}
-				</span>
-				<span class="text-[10px] text-indigo-400 font-mono">
-					Lvl {$dashboardUserStore.level}
-				</span>
-			</div>
-
-			<Icon
-				name="chevron-down"
-				size={14}
-				class="text-slate-400 transition-transform duration-200 {isProfileMenuOpen ? 'rotate-180' : ''}"
+			<img
+				src={$dashboardUserStore.avatar || '/mascot/pybot-front-idle.png'}
+				alt={$dashboardUserStore.name}
+				class="w-full h-full object-cover rounded-full"
+				onerror={(e) => {
+					(e.currentTarget as HTMLImageElement).src = '/mascot/pybot-front-idle.png';
+				}}
 			/>
 		</button>
 
@@ -108,14 +76,6 @@
 					<div class="text-xs font-bold text-white truncate">{$dashboardUserStore.name}</div>
 					<div class="text-[11px] text-slate-400 font-mono truncate">
 						{$dashboardUserStore.email || 'Mode Tamu'}
-					</div>
-					<div class="mt-2 flex items-center gap-2">
-						<span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-950 text-indigo-300 border border-indigo-500/30 font-bold">
-							Level {$dashboardUserStore.level}
-						</span>
-						<span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-500/30 font-bold">
-							{$dashboardUserStore.xp} XP
-						</span>
 					</div>
 				</div>
 

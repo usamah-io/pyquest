@@ -19,6 +19,9 @@
 	import LoginView from '$lib/components/LoginView.svelte';
 	import ProfileSetup from '$lib/components/ProfileSetup.svelte';
 	import ProfileView from '$lib/components/ProfileView.svelte';
+	import CompletedMissionsView from '$lib/components/CompletedMissionsView.svelte';
+	import TotalXpView from '$lib/components/TotalXpView.svelte';
+	import StreakView from '$lib/components/StreakView.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 
@@ -49,7 +52,7 @@
 			if (authSuccess) {
 				await authStore.initAuth();
 			}
-			if (screenParam && ['LOGIN', 'LANDING', 'LEARN_SELECT', 'LEVEL_SELECT', 'PROFILE_SETUP', 'PROFILE'].includes(screenParam)) {
+			if (screenParam && ['LOGIN', 'LANDING', 'LEARN_SELECT', 'LEVEL_SELECT', 'PROFILE_SETUP', 'PROFILE', 'MISSIONS', 'XP_PROGRESS', 'STREAK_VIEW'].includes(screenParam)) {
 				if ($authStore.isAuthenticated) {
 					currentScreen = screenParam;
 				}
@@ -472,7 +475,7 @@
 
 	<!-- Body Layout with Desktop Sidebar -->
 	<div class="flex-1 flex {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'portrait:h-auto portrait:overflow-visible landscape:overflow-hidden md:overflow-hidden' : 'overflow-hidden'} min-h-0">
-		{#if currentScreen === 'LANDING' || currentScreen === 'LEARN_SELECT' || currentScreen === 'LEVEL_SELECT' || currentScreen === 'PROFILE'}
+		{#if currentScreen === 'LANDING' || currentScreen === 'LEARN_SELECT' || currentScreen === 'LEVEL_SELECT' || currentScreen === 'PROFILE' || currentScreen === 'MISSIONS' || currentScreen === 'XP_PROGRESS' || currentScreen === 'STREAK_VIEW'}
 			<Sidebar
 				currentMode={activeNavbarMode}
 				onSelectMode={handleSelectNavbarMode}
@@ -501,6 +504,9 @@
 					onStartCodingGame={handleStartCodingGame}
 					onContinueCoding={(lvlIdx, chIdx) => handleSelectLevelChallenge(lvlIdx, chIdx)}
 					onContinueLearning={(levelId) => handleSelectLearningLevel(levelId)}
+					onOpenMissions={() => (currentScreen = 'MISSIONS')}
+					onOpenXp={() => (currentScreen = 'XP_PROGRESS')}
+					onOpenStreak={() => (currentScreen = 'STREAK_VIEW')}
 				/>
 
 			<!-- 2. LEARNING LEVEL SELECTION (10 LEVELS) -->
@@ -622,6 +628,30 @@
 			<!-- 11. DEDICATED PROFILE PAGE -->
 			{:else if currentScreen === 'PROFILE'}
 				<ProfileView
+					onBackToHome={() => (currentScreen = 'LANDING')}
+				/>
+
+			<!-- 12. DEDICATED COMPLETED MISSIONS PAGE -->
+			{:else if currentScreen === 'MISSIONS'}
+				<CompletedMissionsView
+					onBackToHome={() => (currentScreen = 'LANDING')}
+					onPlayChallenge={(lvlIdx, chIdx) => {
+						handleSelectLevelChallenge(lvlIdx, chIdx);
+					}}
+					onPlayLearningLevel={(lvlId) => {
+						handleSelectLearningLevel(lvlId);
+					}}
+				/>
+
+			<!-- 13. DEDICATED TOTAL XP PAGE -->
+			{:else if currentScreen === 'XP_PROGRESS'}
+				<TotalXpView
+					onBackToHome={() => (currentScreen = 'LANDING')}
+				/>
+
+			<!-- 14. DEDICATED STREAK PAGE -->
+			{:else if currentScreen === 'STREAK_VIEW'}
+				<StreakView
 					onBackToHome={() => (currentScreen = 'LANDING')}
 				/>
 			{/if}

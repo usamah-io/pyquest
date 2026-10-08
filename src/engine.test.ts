@@ -80,13 +80,13 @@ describe('Block Compiler', () => {
 	});
 });
 
-describe('Coding Game Engine & 10 Levels System', () => {
-	it('should contain exactly 10 levels with at least 3 challenges each (min 30 total)', () => {
-		expect(levelsData.length).toBe(10);
+describe('Coding Game Engine & 30 Levels System', () => {
+	it('should contain exactly 30 levels with at least 3 challenges each (min 90 total)', () => {
+		expect(levelsData.length).toBe(30);
 		for (const lvl of levelsData) {
 			expect(lvl.challenges.length).toBeGreaterThanOrEqual(3);
 		}
-		expect(challengesData.length).toBeGreaterThanOrEqual(30);
+		expect(challengesData.length).toBeGreaterThanOrEqual(90);
 	});
 
 	it('should ensure every challenge has diverse command blocks available (never only MOVE)', () => {
@@ -165,9 +165,9 @@ describe('Coding Game Engine & 10 Levels System', () => {
 	});
 });
 
-describe('Modul Belajar Python: 10-Level System & Progression', () => {
-	it('should contain exactly 10 learning levels with 5 questions each (50 questions total)', () => {
-		expect(learningLevelsData.length).toBe(10);
+describe('Modul Belajar Python: 30-Level System & Progression', () => {
+	it('should contain exactly 30 learning levels with 5 questions each (150 questions total)', () => {
+		expect(learningLevelsData.length).toBe(30);
 		for (const lvl of learningLevelsData) {
 			expect(lvl.questionIds.length).toBe(5);
 			const questions = getQuestionsByLevel(lvl.id);
@@ -199,16 +199,16 @@ describe('Modul Belajar Python: 10-Level System & Progression', () => {
 	});
 });
 
-describe('Question Bank (50 Questions Minimum, Topics, & Variety)', () => {
-	it('should contain at least 50 questions', () => {
-		expect(questionsData.length).toBeGreaterThanOrEqual(50);
+describe('Question Bank (150 Questions Minimum, Topics, & Variety)', () => {
+	it('should contain at least 150 questions', () => {
+		expect(questionsData.length).toBeGreaterThanOrEqual(150);
 	});
 
 	it('should ensure every question has complete and valid metadata', () => {
 		for (const q of questionsData) {
 			expect(q.id).toBeDefined();
 			expect(q.level).toBeGreaterThanOrEqual(1);
-			expect(q.level).toBeLessThanOrEqual(10);
+			expect(q.level).toBeLessThanOrEqual(30);
 			expect(q.topic).toBeDefined();
 			expect(q.difficulty).toBeDefined();
 			expect(q.type).toBeDefined();
@@ -523,7 +523,7 @@ describe('Movement Safety, Termination Conditions & Anti-Loop (10 Required Test 
 		expect(lastStep.collectedCoins).toEqual([{ x: 2, y: 1 }]);
 	});
 
-	it('should verify all 30 challenges have zero obstacle collisions with start, target, or coins and are solvable', () => {
+	it('should verify all 90 challenges have zero obstacle collisions with start, target, or coins and are solvable', () => {
 		for (const ch of challengesData) {
 			// No obstacle on start
 			expect(ch.grid.obstacles.some((o) => o.x === ch.grid.startPos.x && o.y === ch.grid.startPos.y)).toBe(false);
@@ -568,7 +568,7 @@ describe('Movement Safety, Termination Conditions & Anti-Loop (10 Required Test 
 		}
 	});
 
-	it('should programmatically validate that all 30 challenges satisfy minMoves <= maxMoves with zero errors', () => {
+	it('should programmatically validate that all 90 challenges satisfy minMoves <= maxMoves with zero errors', () => {
 		const validation = validateAllChallenges(challengesData);
 		if (!validation.allValid) {
 			console.error('Failed challenges:', validation.failedChallenges);
@@ -789,7 +789,7 @@ describe('Coding Game Challenge XP Rewards & Level Progression System', () => {
 		}
 	});
 
-	it('should ensure all 10 game levels have achievement bonus xp configured', () => {
+	it('should ensure all 30 game levels have achievement bonus xp configured', () => {
 		for (const lvl of levelsData) {
 			expect(lvl.achievement).toBeDefined();
 			expect(lvl.achievement?.xpReward).toBeGreaterThanOrEqual(25);
