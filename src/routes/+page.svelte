@@ -582,9 +582,11 @@
 				<OrientationGuard />
 				<div class="flex-1 flex flex-col min-h-0 max-w-7xl mx-auto w-full h-full overflow-hidden">
 					<ChallengeHeader
-						title={`${activeLevel.title} — ${activeChallenge.title}`}
+						levelNumber={activeLevel.id}
+						missionNumber={currentChallengeIndex + 1}
+						totalMissions={activeLevel.challenges.length}
+						title={activeChallenge.title || activeLevel.title.replace(/^Level\s+\d+:\s*/i, '')}
 						objective={activeChallenge.objective}
-						topic={`Level ${activeLevel.id} • Misi ${currentChallengeIndex + 1}/${activeLevel.challenges.length}`}
 						hints={activeChallenge.hints}
 						playerXp={$progressStore.xp}
 						rewardXp={activeChallenge.xpReward || activeChallenge.xp || 30}

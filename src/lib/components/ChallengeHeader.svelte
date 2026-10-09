@@ -4,7 +4,10 @@
 	let {
 		title,
 		objective,
-		topic,
+		topic = '',
+		levelNumber,
+		missionNumber,
+		totalMissions,
 		hints = [],
 		playerXp = 0,
 		rewardXp = 0,
@@ -12,7 +15,10 @@
 	}: {
 		title: string;
 		objective: string;
-		topic: string;
+		topic?: string;
+		levelNumber?: number;
+		missionNumber?: number;
+		totalMissions?: number;
 		hints: string[];
 		playerXp?: number;
 		rewardXp?: number;
@@ -53,9 +59,9 @@
 	}
 </script>
 
-<div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-2 sm:p-3 landscape:p-1.5 landscape:py-1 mb-2 sm:mb-3 landscape:mb-1.5 flex items-center justify-between gap-2.5 shadow-lg shrink-0 select-none">
+<div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-2 sm:p-3 landscape:p-1.5 landscape:py-1 mb-2 sm:mb-3 landscape:mb-1.5 flex items-center justify-between gap-2 shadow-lg shrink-0 select-none">
 	<!-- Left: Back Button & Objective Info -->
-	<div class="flex items-center gap-2 sm:gap-3 min-w-0">
+	<div class="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
 		{#if onBackToModes}
 			<button
 				type="button"
@@ -68,14 +74,30 @@
 			</button>
 		{/if}
 
-		<div class="min-w-0">
-			<div class="flex items-center gap-2 flex-wrap">
-				<span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-1.5 sm:px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/20 shrink-0">
-					{topic}
+		<div class="min-w-0 flex-1">
+			<!-- Primary Line: Level Badge + Mission Progress Badge -->
+			<div class="flex items-center gap-1.5 mb-0.5">
+				<span class="text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 shrink-0">
+					{levelNumber ? `LEVEL ${levelNumber}` : (topic || 'MISI')}
 				</span>
-				<h2 class="text-xs sm:text-base landscape:text-xs font-black text-white truncate">{title}</h2>
+				{#if missionNumber && totalMissions}
+					<span class="text-[10px] sm:text-[11px] font-bold px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700 font-mono shrink-0">
+						MISI {missionNumber}/{totalMissions}
+					</span>
+				{/if}
 			</div>
-			<p class="text-[11px] sm:text-xs landscape:text-[10px] text-slate-300 mt-0.5 truncate max-w-xl">{objective}</p>
+
+			<!-- Secondary Line: Clean Mission Title -->
+			<h2 class="text-xs sm:text-sm md:text-base font-black text-white truncate leading-tight">
+				{title}
+			</h2>
+
+			<!-- Supporting Line: Objective -->
+			{#if objective}
+				<p class="text-[10px] sm:text-xs text-slate-400 truncate max-w-xl hidden xs:block mt-0.5">
+					{objective}
+				</p>
+			{/if}
 		</div>
 	</div>
 

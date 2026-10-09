@@ -49,10 +49,9 @@
 				</div>
 			</div>
 		{:else}
-			<div class="w-12 h-12 sm:w-16 sm:h-16 landscape:w-11 landscape:h-11 mx-auto rounded-2xl bg-amber-400/20 border-2 border-amber-400 p-0.5 sm:p-1 mb-2.5 sm:mb-3 shadow-lg shadow-amber-400/20 shrink-0">
+			<div class="w-12 h-12 sm:w-14 sm:h-14 landscape:w-11 landscape:h-11 mx-auto rounded-2xl bg-amber-400/20 border-2 border-amber-400 p-0.5 sm:p-1 mb-2.5 sm:mb-3 shadow-lg shadow-amber-400/20 shrink-0">
 				<div class="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center text-amber-400">
-					<Icon name="trophy" size={26} class="sm:hidden" />
-					<Icon name="trophy" size={32} class="hidden sm:inline" />
+					<Icon name="trophy" size={28} />
 				</div>
 			</div>
 		{/if}

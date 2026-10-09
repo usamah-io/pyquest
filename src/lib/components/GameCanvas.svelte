@@ -47,6 +47,19 @@
 				return 0;
 		}
 	}
+
+	function getMascotSprite(dir: Direction): string {
+		switch (dir) {
+			case 'LEFT':
+				return '/mascot/pybot-looking-left.png';
+			case 'RIGHT':
+				return '/mascot/pybot-looking-right.png';
+			case 'DOWN':
+			case 'UP':
+			default:
+				return '/mascot/pybot-front-idle.png';
+		}
+	}
 </script>
 
 <style>
@@ -195,8 +208,7 @@
 
 									<!-- Floating Star Vector -->
 									<div class="animate-star-pulse text-amber-300">
-										<Icon name="star" size={24} class="sm:hidden fill-amber-300" />
-										<Icon name="star" size={28} class="hidden sm:inline fill-amber-300" />
+										<Icon name="star" size={26} class="fill-amber-300" />
 									</div>
 
 									{#if status === 'SUCCESS'}
@@ -238,18 +250,20 @@
 						<!-- PyBot Mascot Card -->
 						<div class="w-7 h-7 sm:w-9 sm:h-9 landscape:w-7 landscape:h-7 rounded-xl bg-slate-900 border-2 border-cyan-400 p-0.5 sm:p-1 flex items-center justify-center shadow-[0_0_16px_rgba(34,211,238,0.6)] relative">
 							<img
-								src="/mascot/pybot-front-idle.png"
+								src={getMascotSprite(playerDirection)}
 								alt="PyBot"
-								class="w-full h-full object-contain filter drop-shadow"
+								class="w-full h-full object-contain filter drop-shadow transition-transform duration-200 {playerDirection === 'UP' ? 'scale-95 -translate-y-0.5' : ''}"
 							/>
 						</div>
 
-						<!-- Smoothly Rotating Direction Heading Triangle Indicator -->
+						<!-- Smoothly Rotating Direction Heading Triangle Indicator (Centered Anchor) -->
 						<div
-							class="absolute -right-2.5 transition-transform duration-300 origin-[-4px_center]"
+							class="absolute inset-0 flex items-center justify-center pointer-events-none transition-transform duration-300 ease-out"
 							style="transform: rotate({getPlayerRotation(playerDirection)}deg);"
 						>
-							<div class="w-0 h-0 border-y-[5px] border-y-transparent border-l-[8px] border-l-cyan-300 filter drop-shadow-[0_0_5px_rgba(34,211,238,1)] animate-pulse"></div>
+							<div class="translate-x-[18px] sm:translate-x-[22px] flex items-center">
+								<div class="w-0 h-0 border-y-[4px] sm:border-y-[5px] border-y-transparent border-l-[7px] sm:border-l-[8px] border-l-cyan-300 filter drop-shadow-[0_0_6px_rgba(34,211,238,1)] animate-pulse"></div>
+							</div>
 						</div>
 					</div>
 				</div>
