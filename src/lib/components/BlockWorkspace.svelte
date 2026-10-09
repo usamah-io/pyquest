@@ -912,17 +912,17 @@
 									</span>
 								{/if}
 
-								<!-- Inner puzzle tab protrusion hanging into C-mouth -->
-								<div class="absolute -bottom-1.5 left-7 sm:left-8 w-6 h-1.5 rounded-b-sm border-x border-b border-black/30 shadow-xs pointer-events-none {block.type === 'REPEAT' ? 'bg-indigo-600' : 'bg-purple-600'} z-20"></div>
+								<!-- Inner puzzle tab protrusion hanging into C-mouth (aligned directly with child socket) -->
+								<div class="absolute -bottom-1.5 left-10 w-6 h-1.5 rounded-b-sm border-x border-b border-black/30 shadow-xs pointer-events-none {block.type === 'REPEAT' ? 'bg-indigo-600' : 'bg-purple-600'} z-20"></div>
 							</div>
 
 							<!-- C-Block Nested Body (Connected Inner Slot with Left Spine) -->
 							<div
 								data-repeat-inner-id={block.id}
 								data-child-count={block.children?.length || 0}
-								class="pl-3.5 pr-2.5 py-1 flex flex-col items-start space-y-1 border-l-[14px] sm:border-l-[16px] {block.type === 'REPEAT'
-									? 'border-indigo-600 bg-indigo-950/20'
-									: 'border-purple-600 bg-purple-950/20'}"
+								class="pl-2 pr-3 pt-0.5 pb-1 flex flex-col items-start space-y-0.5 border-l-[16px] {block.type === 'REPEAT'
+									? 'border-indigo-600 bg-indigo-950/30'
+									: 'border-purple-600 bg-purple-950/30'}"
 							>
 								{#if !block.children || block.children.length === 0}
 									<div
@@ -960,13 +960,15 @@
 												e.stopPropagation();
 												handlePointerDown(e, 'workspace', child.type, child.id, block.id, ci, child);
 											}}
-											class="relative flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-bold shadow-sm cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-0.5 select-none w-fit min-w-[120px] {childMeta.bgClass} {isDragging && dragInfo?.blockId === child.id
+											class="relative flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold shadow-sm cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-0.5 select-none w-fit min-w-[120px] {childMeta.bgClass} {isDragging && dragInfo?.blockId === child.id
 												? 'opacity-40 border-dashed scale-95'
 												: ''}"
 										>
-											<!-- Inner child notch and tab -->
-											<div class="absolute -top-[2px] left-4 w-5 h-1.5 bg-slate-900/90 rounded-b-sm border-x border-b border-black/50 pointer-events-none"></div>
-											<div class="absolute -bottom-1.5 left-4 w-5 h-1.5 rounded-b-sm border-x border-b border-black/30 shadow-xs pointer-events-none {childMeta.tabColor}"></div>
+											<!-- Inner child notch socket receiving parent/preceding tab -->
+											<div class="absolute -top-[2px] left-4 w-6 h-1.5 bg-slate-900/90 rounded-b-sm border-x border-b border-black/50 z-10 pointer-events-none"></div>
+
+											<!-- Inner child bottom tab protrusion -->
+											<div class="absolute -bottom-1.5 left-4 w-6 h-1.5 rounded-b-sm border-x border-b border-black/30 shadow-xs z-10 pointer-events-none {childMeta.tabColor}"></div>
 
 											<div class="w-5 h-5 rounded bg-black/20 border border-white/20 flex items-center justify-center shrink-0">
 												<Icon name={childMeta.icon} size={13} class="text-white" />
@@ -997,14 +999,14 @@
 								style="touch-action: none;"
 								onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
 								class="h-5 sm:h-6 rounded-b-[14px] px-3 relative flex items-center justify-between cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
-									? 'bg-indigo-700'
-									: 'bg-purple-700'}"
+									? 'bg-indigo-600'
+									: 'bg-purple-600'}"
 							>
 								<!-- Inner top notch socket receiving child bottom tab -->
-								<div class="absolute -top-[2px] left-7 sm:left-8 w-6 h-1.5 bg-slate-900/90 rounded-b-sm border-x border-b border-black/50 z-20 pointer-events-none"></div>
+								<div class="absolute -top-[2px] left-10 w-6 h-1.5 bg-slate-900/90 rounded-b-sm border-x border-b border-black/50 z-20 pointer-events-none"></div>
 
 								<!-- Bottom puzzle tab protrusion on C-block foot -->
-								<div class="absolute -bottom-1.5 left-5 sm:left-6 w-6 h-1.5 rounded-b-sm border-x border-b border-black/40 shadow-xs z-20 pointer-events-none {block.type === 'REPEAT' ? 'bg-indigo-700' : 'bg-purple-700'}"></div>
+								<div class="absolute -bottom-1.5 left-5 sm:left-6 w-6 h-1.5 rounded-b-sm border-x border-b border-black/40 shadow-xs z-20 pointer-events-none {block.type === 'REPEAT' ? 'bg-indigo-600' : 'bg-purple-600'}"></div>
 
 								<!-- Scratch Signature Return Loop Arrow Icon -->
 								<div class="ml-auto text-white/80 pr-0.5 flex items-center" title="Kembali ke awal perulangan">

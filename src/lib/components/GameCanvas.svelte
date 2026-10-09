@@ -192,7 +192,7 @@
 
 							<!-- Obstacle Rock / 3D Barrier Block -->
 							{#if isObstacle}
-								<div class="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-slate-700 border border-slate-500/50 flex items-center justify-center text-slate-200 shadow-md">
+								<div class="w-5.5 h-5.5 sm:w-7 sm:h-7 rounded-lg bg-slate-700 border border-slate-500/50 flex items-center justify-center text-slate-200 shadow-md">
 									<svg viewBox="0 0 24 24" class="w-3.5 h-3.5 sm:w-4.5 sm:h-4.5 fill-slate-500/40 stroke-slate-200 stroke-2">
 										<path d="M4 18h16l-3-11-5 4-4-5z" />
 									</svg>
@@ -203,24 +203,24 @@
 							{#if isTarget}
 								<div class="relative flex items-center justify-center">
 									<!-- Target floor ring -->
-									<div class="absolute w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-amber-400/30 animate-ping pointer-events-none"></div>
-									<div class="absolute w-6 h-6 rounded-full bg-amber-400/25 blur-sm pointer-events-none"></div>
+									<div class="absolute w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-amber-400/40 animate-ping pointer-events-none"></div>
+									<div class="absolute w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-amber-400/20 blur-xs pointer-events-none"></div>
 
 									<!-- Floating Star Vector -->
-									<div class="animate-star-pulse text-amber-300">
-										<Icon name="star" size={26} class="fill-amber-300" />
+									<div class="animate-star-pulse text-amber-300 flex items-center justify-center">
+										<Icon name="star" size={20} class="fill-amber-300 drop-shadow-[0_0_6px_rgba(251,191,36,0.6)]" />
 									</div>
 
 									{#if status === 'SUCCESS'}
-										<div class="absolute -inset-2 rounded-full bg-amber-400/40 blur-md animate-victory-sparkle pointer-events-none"></div>
+										<div class="absolute -inset-1.5 rounded-full bg-amber-400/40 blur-md animate-victory-sparkle pointer-events-none"></div>
 									{/if}
 								</div>
 							{/if}
 
 							<!-- Collectible Energy Coin -->
 							{#if isCoin && !isCoinCollected && !isTarget}
-								<div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-amber-400 border-2 border-yellow-200 text-slate-950 flex items-center justify-center animate-bounce shadow-[0_0_12px_rgba(251,191,36,0.8)]">
-									<Icon name="zap" size={12} class="fill-current" />
+								<div class="w-4.5 h-4.5 sm:w-5.5 sm:h-5.5 rounded-full bg-amber-400 border-2 border-yellow-200 text-slate-950 flex items-center justify-center animate-bounce shadow-[0_0_10px_rgba(251,191,36,0.7)]">
+									<Icon name="zap" size={10} class="fill-current" />
 								</div>
 							{/if}
 						</div>
