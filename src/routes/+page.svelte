@@ -43,6 +43,64 @@
 			: 'LOGIN'
 	);
 
+	// Smart Auto-Hide Navbar State
+	let isNavbarVisible = $state(true);
+	let lastScrollTop = 0;
+	let mainContainerEl = $state<HTMLElement | null>(null);
+
+	function handleMainScroll(e: Event) {
+		if (e.target !== e.currentTarget) return;
+		const target = e.currentTarget as HTMLElement | null;
+		if (!target) return;
+		const currentScrollTop = target.scrollTop;
+
+		if (currentScrollTop <= 15) {
+			isNavbarVisible = true;
+			lastScrollTop = currentScrollTop;
+			return;
+		}
+
+		const diff = currentScrollTop - lastScrollTop;
+		if (Math.abs(diff) > 5) {
+			isNavbarVisible = diff < 0;
+			lastScrollTop = currentScrollTop;
+		}
+	}
+
+	function handleWindowScroll() {
+		const currentScrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+		if (currentScrollTop <= 15) {
+			isNavbarVisible = true;
+			lastScrollTop = currentScrollTop;
+			return;
+		}
+		const diff = currentScrollTop - lastScrollTop;
+		if (Math.abs(diff) > 5) {
+			isNavbarVisible = diff < 0;
+			lastScrollTop = currentScrollTop;
+		}
+	}
+
+	$effect(() => {
+		// When screen changes, reset navbar visibility and scroll
+		if (currentScreen) {
+			isNavbarVisible = true;
+			lastScrollTop = 0;
+			if (mainContainerEl) {
+				mainContainerEl.scrollTop = 0;
+			}
+		}
+	});
+
+	$effect(() => {
+		if (typeof window !== 'undefined') {
+			window.addEventListener('scroll', handleWindowScroll, { passive: true });
+			return () => {
+				window.removeEventListener('scroll', handleWindowScroll);
+			};
+		}
+	});
+
 	onMount(async () => {
 		await authStore.initAuth();
 		if (typeof window !== 'undefined') {
@@ -456,12 +514,14 @@
 		{#if currentScreen === 'CHALLENGE' || currentScreen === 'REWARD'}
 			<div class="hidden md:block">
 				<Navbar
+					isVisible={isNavbarVisible}
 					onSelectMode={handleSelectNavbarMode}
 					onOpenProfile={handleOpenProfile}
 				/>
 			</div>
 		{:else}
 			<Navbar
+				isVisible={isNavbarVisible}
 				onSelectMode={handleSelectNavbarMode}
 				onOpenProfile={handleOpenProfile}
 			/>
@@ -493,7 +553,11 @@
 		{/if}
 
 		<!-- Main Stage -->
-		<main class="flex-1 flex flex-col {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'p-1.5 sm:p-2.5 landscape:p-1 portrait:h-auto portrait:overflow-y-auto portrait:pb-24 landscape:h-full landscape:max-h-full landscape:overflow-hidden md:h-full md:max-h-full md:overflow-hidden' : currentScreen === 'LOGIN' ? 'p-2 sm:p-4 overflow-y-auto' : 'p-2 sm:p-4 md:p-6 pb-20 lg:pb-6 overflow-y-auto'} min-h-0">
+		<main
+			bind:this={mainContainerEl}
+			onscroll={handleMainScroll}
+			class="flex-1 flex flex-col {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'p-1.5 sm:p-2.5 landscape:p-1 portrait:h-auto portrait:overflow-y-auto portrait:pb-24 landscape:h-full landscape:max-h-full landscape:overflow-hidden md:h-full md:max-h-full md:overflow-hidden' : currentScreen === 'LOGIN' ? 'p-2 sm:p-4 overflow-y-auto' : 'p-2 sm:p-4 md:p-6 pb-20 lg:pb-6 overflow-y-auto'} min-h-0"
+		>
 			<!-- 0. LOGIN SCREEN (Real Google Sign-In) -->
 			{#if currentScreen === 'LOGIN'}
 				<LoginView
@@ -675,6 +739,7 @@
 	<!-- Mobile Fixed Bottom Navigation Bar -->
 	{#if currentScreen !== 'CHALLENGE' && currentScreen !== 'REWARD' && currentScreen !== 'QUESTION' && currentScreen !== 'PROFILE_SETUP' && currentScreen !== 'LOGIN'}
 		<BottomNav
+			isVisible={isNavbarVisible}
 			currentMode={activeNavbarMode}
 			onSelectMode={handleSelectNavbarMode}
 			onOpenProfile={handleOpenProfile}

@@ -906,29 +906,25 @@
 										title="Ketik jumlah perulangan secara manual"
 									/>
 									<span class="text-[11px] sm:text-xs text-white/95 font-bold">KALI</span>
-								{:else}
-									<span class="text-[10px] font-mono text-purple-200 bg-black/20 px-1.5 py-0.5 rounded border border-purple-400/30">
-										Loop Aman
-									</span>
 								{/if}
 
 								<!-- Inner puzzle tab protrusion hanging into C-mouth (aligned directly with child socket) -->
-								<div class="absolute -bottom-1.5 left-10 w-6 h-1.5 rounded-b-sm border-x border-b border-black/30 shadow-xs pointer-events-none {block.type === 'REPEAT' ? 'bg-indigo-600' : 'bg-purple-600'} z-20"></div>
+								<div class="absolute -bottom-1.5 left-9 w-6 h-1.5 rounded-b-sm border-x border-b border-black/30 shadow-xs pointer-events-none {block.type === 'REPEAT' ? 'bg-indigo-600' : 'bg-purple-600'} z-20"></div>
 							</div>
 
-							<!-- C-Block Nested Body (Connected Inner Slot with Left Spine) -->
+							<!-- C-Block Nested Body (Connected Inner Slot with Left Spine - Scratch Style) -->
 							<div
 								data-repeat-inner-id={block.id}
 								data-child-count={block.children?.length || 0}
-								class="pl-2 pr-2.5 pt-0 pb-0 flex flex-col items-start space-y-0 border-l-[16px] {block.type === 'REPEAT'
-									? 'border-indigo-600 bg-indigo-950/30'
-									: 'border-purple-600 bg-purple-950/30'}"
+								class="pl-0 pr-2 pt-0 pb-0 flex flex-col items-start space-y-0 border-l-[16px] {block.type === 'REPEAT'
+									? 'border-indigo-600 bg-indigo-950/20'
+									: 'border-purple-600 bg-purple-950/20'}"
 							>
 								{#if !block.children || block.children.length === 0}
 									<div
 										data-slot-parent={block.id}
 										data-slot-index="0"
-										class="py-2 px-3 my-0.5 border-2 border-dashed rounded-xl text-xs font-bold transition-all duration-150 {isDragging && dropTarget?.parentId === block.id
+										class="py-2 px-3 my-0.5 ml-1 border-2 border-dashed rounded-xl text-xs font-bold transition-all duration-150 {isDragging && dropTarget?.parentId === block.id
 											? 'border-cyan-400 bg-cyan-950/70 text-cyan-200'
 											: 'border-indigo-500/40 text-indigo-300/80 bg-indigo-950/40'}"
 									>
@@ -960,15 +956,15 @@
 												e.stopPropagation();
 												handlePointerDown(e, 'workspace', child.type, child.id, block.id, ci, child);
 											}}
-											class="relative flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold shadow-sm cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-0.5 select-none w-fit min-w-[120px] {childMeta.bgClass} {isDragging && dragInfo?.blockId === child.id
+											class="relative flex items-center gap-2 px-3 py-1.5 rounded-r-xl rounded-l-none border-y border-r text-xs font-bold shadow-sm cursor-grab active:cursor-grabbing transition-transform hover:-translate-y-0.5 select-none w-full max-w-[210px] sm:max-w-[230px] {childMeta.bgClass} {isDragging && dragInfo?.blockId === child.id
 												? 'opacity-40 border-dashed scale-95'
 												: ''}"
 										>
 											<!-- Inner child notch socket receiving parent/preceding tab -->
-											<div class="absolute -top-[2px] left-4 w-6 h-1.5 bg-slate-900/90 rounded-b-sm border-x border-b border-black/50 z-10 pointer-events-none"></div>
+											<div class="absolute -top-[2px] left-5 w-6 h-1.5 bg-slate-900/90 rounded-b-sm border-x border-b border-black/50 z-10 pointer-events-none"></div>
 
 											<!-- Inner child bottom tab protrusion -->
-											<div class="absolute -bottom-1.5 left-4 w-6 h-1.5 rounded-b-sm border-x border-b border-black/30 shadow-xs z-10 pointer-events-none {childMeta.tabColor}"></div>
+											<div class="absolute -bottom-1.5 left-5 w-6 h-1.5 rounded-b-sm border-x border-b border-black/30 shadow-xs z-10 pointer-events-none {childMeta.tabColor}"></div>
 
 											<div class="w-5 h-5 rounded bg-black/20 border border-white/20 flex items-center justify-center shrink-0">
 												<Icon name={childMeta.icon} size={13} class="text-white" />
@@ -1003,7 +999,7 @@
 									: 'bg-purple-600'}"
 							>
 								<!-- Inner top notch socket receiving child bottom tab -->
-								<div class="absolute -top-[2px] left-10 w-6 h-1.5 bg-slate-900/90 rounded-b-sm border-x border-b border-black/50 z-20 pointer-events-none"></div>
+								<div class="absolute -top-[2px] left-9 w-6 h-1.5 bg-slate-900/90 rounded-b-sm border-x border-b border-black/50 z-20 pointer-events-none"></div>
 
 								<!-- Bottom puzzle tab protrusion on C-block foot -->
 								<div class="absolute -bottom-1.5 left-5 sm:left-6 w-6 h-1.5 rounded-b-sm border-x border-b border-black/40 shadow-xs z-20 pointer-events-none {block.type === 'REPEAT' ? 'bg-indigo-600' : 'bg-purple-600'}"></div>

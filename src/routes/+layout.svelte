@@ -3,12 +3,14 @@
 	import favicon from '#lib/assets/favicon.svg';
 	import { onMount } from 'svelte';
 	import { pwaStore } from '$lib/stores/pwaStore';
+	import { themeStore } from '$lib/stores/themeStore';
 	import Icon from '$lib/components/Icon.svelte';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
 
 	onMount(() => {
+		themeStore.init();
 		pwaStore.init();
 
 		// Service Worker handling

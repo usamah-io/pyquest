@@ -4,5 +4,92 @@
   body {
     @apply bg-slate-950 text-slate-100 antialiased selection:bg-indigo-500 selection:text-white font-sans;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
+}
+
+/* ========================================================================= */
+/* PYQUEST GLOBAL THEME SYSTEM: HIGH-CONTRAST LIGHT MODE                      */
+/* Preserves Dark Mode 100% as default, applies cleanly via [data-theme="light"] */
+/* ========================================================================= */
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Tailwind CSS v4 Palette Overrides for Light Mode */
+  --color-slate-950: #F5F7FC; /* Main application background */
+  --color-slate-900: #FFFFFF; /* Main cards, top header, sidebars, modals */
+  --color-slate-800: #EDF1F8; /* Inputs, inner cards, subtle surface buttons */
+  --color-slate-700: #D5DCE8; /* Borders, dividers, subtle outlines */
+  --color-slate-600: #8896AB; /* Subtle icon fills */
+  --color-slate-500: #667085; /* Muted text / labels */
+  --color-slate-400: #4B556B; /* Secondary text (WCAG AA 7.5:1) */
+  --color-slate-300: #334155; /* Body text (WCAG AA 10.5:1) */
+  --color-slate-200: #1E293B; /* Emphasized text (WCAG AA 13.8:1) */
+  --color-slate-100: #172033; /* Primary dark heading & body text (14.8:1) */
+
+  /* Primary Light Mode Accents */
+  --color-indigo-400: #5145CD;
+  --color-indigo-300: #4338CA;
+  --color-cyan-400: #0E7490;
+  --color-cyan-300: #0891B2;
+}
+
+/* Headings on light surfaces must be deep high-contrast text */
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] h4,
+[data-theme="light"] h5,
+[data-theme="light"] h6 {
+  color: #172033;
+}
+
+/* In Light Mode, text-white on neutral surfaces becomes dark primary text,
+   while preserving pure white text on solid buttons, badges, and coding blocks */
+[data-theme="light"] .text-white:not(
+  button.bg-indigo-600 *,
+  button.bg-indigo-500 *,
+  button.bg-emerald-500 *,
+  button.bg-emerald-600 *,
+  button.bg-rose-500 *,
+  button.bg-rose-600 *,
+  button.bg-amber-500 *,
+  button[class*="bg-indigo-"] *,
+  button[class*="bg-emerald-"] *,
+  button[class*="bg-rose-"] *,
+  [class*="bg-emerald-600"] *,
+  [class*="bg-emerald-500"] *,
+  [class*="bg-amber-600"] *,
+  [class*="bg-amber-500"] *,
+  [class*="bg-purple-600"] *,
+  [class*="bg-purple-700"] *,
+  [class*="bg-indigo-600"] *,
+  [class*="bg-indigo-700"] *,
+  [data-block-id] *,
+  [data-block-parent] *,
+  .badge-solid *
+) {
+  color: #172033;
+}
+
+/* In Light Mode, modal overlays maintain focus via darkened translucent backdrop */
+[data-theme="light"] .fixed.inset-0.bg-slate-950\/80,
+[data-theme="light"] .fixed.inset-0.bg-black\/80,
+[data-theme="light"] .fixed.inset-0.bg-black\/70 {
+  background-color: rgba(15, 23, 42, 0.65) !important;
+}
+
+/* Light mode card shadow refinement */
+[data-theme="light"] .shadow-xl {
+  box-shadow: 0 10px 25px -5px rgba(23, 32, 51, 0.08), 0 8px 10px -6px rgba(23, 32, 51, 0.04);
+}
+
+[data-theme="light"] .shadow-2xl {
+  box-shadow: 0 20px 35px -5px rgba(23, 32, 51, 0.12), 0 10px 15px -7px rgba(23, 32, 51, 0.06);
+}
+
+/* Light mode inputs have crisp border and clear text */
+[data-theme="light"] input:not([type="number"]) {
+  color: #172033;
 }

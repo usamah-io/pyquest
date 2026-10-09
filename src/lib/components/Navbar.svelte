@@ -1,15 +1,18 @@
 <script lang="ts">
 	import { authStore, dashboardUserStore } from '$lib/stores/authStore';
+	import { themeStore } from '$lib/stores/themeStore';
 	import PyQuestLogo from './PyQuestLogo.svelte';
 	import PwaInstallButton from './PwaInstallButton.svelte';
 	import Icon from './Icon.svelte';
 
 	let {
 		onSelectMode,
-		onOpenProfile
+		onOpenProfile,
+		isVisible = true
 	}: {
 		onSelectMode?: (mode: 'HOME' | 'LEARN' | 'GAME') => void;
 		onOpenProfile?: () => void;
+		isVisible?: boolean;
 	} = $props();
 
 	let isProfileMenuOpen = $state(false);
@@ -29,7 +32,11 @@
 	}
 </script>
 
-<header class="flex items-center justify-between px-3 sm:px-6 py-2.5 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 text-slate-100 select-none z-30 sticky top-0">
+<header
+	class="flex items-center justify-between px-3 sm:px-6 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 text-slate-100 select-none z-30 sticky top-0 transition-all duration-300 ease-in-out {isVisible
+		? 'translate-y-0 opacity-100 max-h-20 py-2.5 shadow-sm'
+		: '-translate-y-full opacity-0 max-h-0 py-0 border-b-transparent overflow-hidden pointer-events-none'}"
+>
 	<!-- Left: Logo & Brand -->
 	<div class="flex items-center gap-3 sm:gap-6">
 		<PyQuestLogo
@@ -40,8 +47,22 @@
 		/>
 	</div>
 
-	<!-- Right: ONLY User's Profile Avatar -->
-	<div class="flex items-center relative">
+	<!-- Right: Quick Theme Toggle & User Profile Avatar -->
+	<div class="flex items-center gap-2.5 relative">
+		<!-- Quick Theme Toggle Button -->
+		<button
+			type="button"
+			onclick={() => themeStore.toggleTheme()}
+			class="w-9 h-9 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/70 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+			title={$themeStore === 'light' ? 'Ubah ke Mode Gelap' : 'Ubah ke Mode Terang'}
+			aria-label="Ganti Tema"
+		>
+			{#if $themeStore === 'light'}
+				<Icon name="moon" size={16} class="text-indigo-400" />
+			{:else}
+				<Icon name="sun" size={16} class="text-amber-400" />
+			{/if}
+		</button>
 		<!-- Profile Avatar Button (Clickable) -->
 		<button
 			type="button"
@@ -88,6 +109,26 @@
 					>
 						<Icon name="user" size={15} class="text-indigo-400" />
 						<span>Buka Halaman Profil</span>
+					</button>
+
+					<!-- Quick Theme Switcher Item -->
+					<button
+						type="button"
+						onclick={() => themeStore.toggleTheme()}
+						class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-200 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer text-left"
+					>
+						<span class="flex items-center gap-2.5">
+							{#if $themeStore === 'light'}
+								<Icon name="moon" size={15} class="text-indigo-400" />
+								<span>Mode Gelap</span>
+							{:else}
+								<Icon name="sun" size={15} class="text-amber-400" />
+								<span>Mode Terang</span>
+							{/if}
+						</span>
+						<span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700/60">
+							{$themeStore}
+						</span>
 					</button>
 
 					{#if !$dashboardUserStore.isAuthenticated}

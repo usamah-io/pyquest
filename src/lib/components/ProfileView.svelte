@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { authStore, dashboardUserStore } from '$lib/stores/authStore';
+	import { themeStore } from '$lib/stores/themeStore';
 	import { progressStore } from '$lib/stores/progressStore';
 	import { levelsData } from '$lib/challenges/levelsData';
 	import { avatarStorage, validateImageFile, processAndCompressImage } from '$lib/utils/avatarStorage';
@@ -233,7 +234,35 @@
 				</div>
 			</div>
 
-			<div class="w-full mt-6 pt-4 border-t border-slate-800">
+			<!-- Theme Selection Card -->
+			<div class="w-full pt-4 border-t border-slate-800 space-y-2 text-left">
+				<div class="flex items-center justify-between text-xs py-1 text-slate-400">
+					<span>Tema Tampilan:</span>
+					<span class="font-bold text-slate-200 capitalize text-[11px]">
+						{$themeStore === 'light' ? 'Light Mode' : 'Dark Mode'}
+					</span>
+				</div>
+				<div class="grid grid-cols-2 gap-2 pt-1">
+					<button
+						type="button"
+						onclick={() => themeStore.setTheme('dark')}
+						class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {$themeStore === 'dark' ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30' : 'bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border-slate-700/60'}"
+					>
+						<Icon name="moon" size={14} />
+						<span>Dark</span>
+					</button>
+					<button
+						type="button"
+						onclick={() => themeStore.setTheme('light')}
+						class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {$themeStore === 'light' ? 'bg-cyan-600 text-white border-cyan-500 shadow-md shadow-cyan-600/30' : 'bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border-slate-700/60'}"
+					>
+						<Icon name="sun" size={14} />
+						<span>Light</span>
+					</button>
+				</div>
+			</div>
+
+			<div class="w-full mt-4 pt-4 border-t border-slate-800">
 				<button
 					type="button"
 					onclick={handleLogout}

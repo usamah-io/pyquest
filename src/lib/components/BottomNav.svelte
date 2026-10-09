@@ -4,15 +4,17 @@
 	let {
 		currentMode = 'HOME',
 		onSelectMode,
-		onOpenProfile
+		onOpenProfile,
+		isVisible = true
 	}: {
 		currentMode?: 'HOME' | 'LEARN' | 'GAME' | 'PROFILE';
 		onSelectMode?: (mode: 'HOME' | 'LEARN' | 'GAME') => void;
 		onOpenProfile?: () => void;
+		isVisible?: boolean;
 	} = $props();
 </script>
 
-<nav class="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-2xl">
+<nav class="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-2xl transition-transform duration-300 ease-in-out {isVisible ? 'translate-y-0' : 'translate-y-full pointer-events-none'}">
 	<div class="grid grid-cols-4 gap-1 max-w-md mx-auto">
 		<!-- Beranda -->
 		<button
