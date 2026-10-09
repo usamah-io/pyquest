@@ -858,7 +858,7 @@
 							data-block-id={block.id}
 							data-block-parent="root"
 							data-block-index={i}
-							class="relative rounded-2xl border-2 shadow-lg overflow-visible transition-all duration-150 w-fit min-w-[200px] max-w-full select-none {block.type === 'REPEAT'
+							class="relative rounded-2xl border-2 shadow-lg overflow-visible transition-all duration-150 w-fit max-w-full select-none {block.type === 'REPEAT'
 								? 'border-indigo-500 bg-indigo-950/40 shadow-indigo-900/20'
 								: 'border-purple-500 bg-purple-950/40 shadow-purple-900/20'} {isDragging && dragInfo?.blockId === block.id
 								? 'opacity-40 border-dashed scale-95'
@@ -920,7 +920,7 @@
 							<div
 								data-repeat-inner-id={block.id}
 								data-child-count={block.children?.length || 0}
-								class="pl-2 pr-3 pt-0.5 pb-1 flex flex-col items-start space-y-0.5 border-l-[16px] {block.type === 'REPEAT'
+								class="pl-2 pr-2.5 pt-0 pb-0 flex flex-col items-start space-y-0 border-l-[16px] {block.type === 'REPEAT'
 									? 'border-indigo-600 bg-indigo-950/30'
 									: 'border-purple-600 bg-purple-950/30'}"
 							>
@@ -991,14 +991,14 @@
 								{/if}
 							</div>
 
-							<!-- C-Block Bottom Closing Foot Bar (Scratch Style with Return Arrow) -->
+							<!-- C-Block Bottom Closing Foot Bar (Scratch Style) -->
 							<div
 								role="button"
 								tabindex="0"
 								aria-label="Tarik penutup loop"
 								style="touch-action: none;"
 								onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
-								class="h-5 sm:h-6 rounded-b-[14px] px-3 relative flex items-center justify-between cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
+								class="h-4 sm:h-4.5 rounded-b-[14px] px-3 relative flex items-center cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
 									? 'bg-indigo-600'
 									: 'bg-purple-600'}"
 							>
@@ -1007,11 +1007,6 @@
 
 								<!-- Bottom puzzle tab protrusion on C-block foot -->
 								<div class="absolute -bottom-1.5 left-5 sm:left-6 w-6 h-1.5 rounded-b-sm border-x border-b border-black/40 shadow-xs z-20 pointer-events-none {block.type === 'REPEAT' ? 'bg-indigo-600' : 'bg-purple-600'}"></div>
-
-								<!-- Scratch Signature Return Loop Arrow Icon -->
-								<div class="ml-auto text-white/80 pr-0.5 flex items-center" title="Kembali ke awal perulangan">
-									<Icon name="rotate-ccw" size={13} class="rotate-45 text-white/90" />
-								</div>
 							</div>
 						</div>
 					{:else}
