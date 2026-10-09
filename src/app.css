@@ -147,3 +147,78 @@
 [data-theme="light"] input:not([type="number"]) {
   color: #172033;
 }
+
+/* Light Mode Adventure Card in Landing Hero */
+[data-theme="light"] .adventure-pill {
+  background-color: #ECFEFF !important;
+  color: #0E7490 !important;
+  border-color: #A5F3FC !important;
+}
+
+[data-theme="light"] .adventure-title {
+  color: #172033 !important;
+}
+
+[data-theme="light"] .adventure-desc {
+  color: #4B556B !important;
+}
+
+[data-theme="light"] .adventure-progress-track {
+  background-color: #EDF1F8 !important;
+  border-color: #CBD5E1 !important;
+}
+
+[data-theme="light"] .adventure-progress-text {
+  color: #4B556B !important;
+}
+
+/* Light Mode Level Badges in Profile: Unlocked & Locked */
+[data-theme="light"] .badge-card-unlocked {
+  background-color: #FFFDF5 !important;
+  border-color: #FDE68A !important;
+}
+
+[data-theme="light"] .badge-icon-unlocked {
+  background-color: #FEF3C7 !important;
+  color: #B45309 !important;
+  border-color: #FCD34D !important;
+}
+
+[data-theme="light"] .badge-card-title {
+  color: #172033 !important;
+}
+
+[data-theme="light"] .badge-pill-unlocked {
+  background-color: #FEF3C7 !important;
+  color: #92400E !important;
+  border-color: #FCD34D !important;
+}
+
+[data-theme="light"] .badge-card-desc {
+  color: #334155 !important;
+}
+
+[data-theme="light"] .badge-card-locked {
+  background-color: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
+}
+
+[data-theme="light"] .badge-icon-locked {
+  background-color: #EDF1F8 !important;
+  color: #64748B !important;
+  border-color: #D5DCE8 !important;
+}
+
+[data-theme="light"] .badge-card-locked-title {
+  color: #334155 !important;
+}
+
+[data-theme="light"] .badge-pill-locked {
+  background-color: #EDF1F8 !important;
+  color: #64748B !important;
+  border-color: #D5DCE8 !important;
+}
+
+[data-theme="light"] .badge-card-locked-desc {
+  color: #64748B !important;
+}

@@ -407,11 +407,11 @@
 			<!-- Koleksi Lencana Pencapaian (Achievements Showcase) -->
 			<div class="bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl backdrop-blur-md">
 				<div class="flex items-center justify-between mb-4">
-					<h4 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-						<Icon name="trophy" size={18} class="text-amber-500 dark:text-amber-400" />
+					<h4 class="text-base font-black text-white flex items-center gap-2">
+						<Icon name="trophy" size={18} class="text-amber-400" />
 						<span>Koleksi Lencana Level</span>
 					</h4>
-					<span class="text-xs font-bold text-slate-600 dark:text-slate-400 font-mono">
+					<span class="text-xs font-bold text-slate-400 font-mono">
 						{($progressStore.completedLevels || []).length} / {levelsData.length} Lencana
 					</span>
 				</div>
@@ -420,23 +420,23 @@
 					{#each levelsData as lvl}
 						{@const isUnlocked = ($progressStore.completedLevels || []).includes(lvl.id)}
 						<div class="p-3 rounded-2xl border transition-all flex items-start gap-3 {isUnlocked
-							? 'bg-amber-50/90 dark:bg-amber-950/20 border-amber-300 dark:border-amber-500/40 shadow-xs'
-							: 'bg-slate-100/90 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800/80'}">
+							? 'bg-amber-950/20 border-amber-500/40 shadow-xs badge-card-unlocked'
+							: 'bg-slate-950/40 border-slate-800/80 badge-card-locked'}">
 							<div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 {isUnlocked
-								? 'bg-amber-100 dark:bg-amber-400/20 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-400/30'
-								: 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-500 border border-slate-300/60 dark:border-transparent'}">
+								? 'bg-amber-400/20 text-amber-400 border border-amber-400/30 badge-icon-unlocked'
+								: 'bg-slate-800 text-slate-400 border border-slate-700/60 badge-icon-locked'}">
 								<Icon name={isUnlocked ? (lvl.achievement?.icon || 'trophy') : 'lock'} size={18} />
 							</div>
 							<div class="flex-1 min-w-0">
 								<div class="flex items-center justify-between gap-1 mb-0.5">
-									<span class="text-xs font-black {isUnlocked ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-400'} truncate">
+									<span class="text-xs font-black truncate {isUnlocked ? 'text-white badge-card-title' : 'text-slate-300 badge-card-locked-title'}">
 										{lvl.achievement?.title || `Level ${lvl.id}`}
 									</span>
-									<span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded {isUnlocked ? 'bg-amber-200/80 dark:bg-amber-400/20 text-amber-900 dark:text-amber-300 border border-amber-300/80 dark:border-transparent' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-500'}">
+									<span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded {isUnlocked ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30 badge-pill-unlocked' : 'bg-slate-800 text-slate-400 border border-slate-700/60 badge-pill-locked'}">
 										Lvl {lvl.id}
 									</span>
 								</div>
-								<p class="text-[10px] {isUnlocked ? 'text-slate-600 dark:text-slate-400' : 'text-slate-500 dark:text-slate-500'} leading-snug line-clamp-2">
+								<p class="text-[10px] leading-snug line-clamp-2 {isUnlocked ? 'text-slate-400 badge-card-desc' : 'text-slate-400 badge-card-locked-desc'}">
 									{isUnlocked
 										? (lvl.achievement?.description || 'Berhasil menuntaskan level!')
 										: `Selesaikan Level ${lvl.id} (${lvl.title}) untuk membuka lencana ini.`}
