@@ -336,26 +336,26 @@
 			<!-- Mission Info & Progress -->
 			<div class="flex-1 min-w-0 text-left">
 				<div class="flex items-center gap-2 mb-1">
-					<span class="text-[10px] font-black uppercase tracking-wider text-cyan-400 bg-cyan-950/70 border border-cyan-500/40 px-2 py-0.5 rounded-full">
+					<span class="text-[10px] font-black uppercase tracking-wider bg-cyan-100 dark:bg-cyan-950/70 text-cyan-800 dark:text-cyan-400 border border-cyan-300 dark:border-cyan-500/40 px-2.5 py-0.5 rounded-full shadow-xs">
 						Lanjutkan Petualangan
 					</span>
 				</div>
-				<h3 class="text-sm sm:text-base font-black text-white truncate group-hover:text-cyan-300 transition-colors">
+				<h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-white truncate group-hover:text-cyan-600 dark:group-hover:text-cyan-300 transition-colors">
 					{nextCodingAdventure.levelTitle} · {nextCodingAdventure.challengeTitle}
 				</h3>
-				<p class="text-xs text-slate-400 line-clamp-1 mt-0.5 leading-relaxed">
+				<p class="text-xs text-slate-600 dark:text-slate-400 line-clamp-1 mt-0.5 leading-relaxed">
 					{nextCodingAdventure.objective}
 				</p>
 
 				<!-- Progress Bar -->
 				<div class="mt-2.5 flex items-center gap-3">
-					<div class="flex-1 h-2 rounded-full bg-slate-950 border border-slate-800 overflow-hidden max-w-xs">
+					<div class="flex-1 h-2 rounded-full bg-slate-200 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 overflow-hidden max-w-xs">
 						<div
-							class="h-full bg-cyan-400 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(34,211,238,0.5)]"
+							class="h-full bg-cyan-500 rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(34,211,238,0.5)]"
 							style="width: {nextCodingAdventure.progressPercent}%;"
 						></div>
 					</div>
-					<span class="text-[11px] font-mono text-slate-400 font-bold shrink-0">
+					<span class="text-[11px] font-mono text-slate-600 dark:text-slate-400 font-bold shrink-0">
 						{nextCodingAdventure.progressStr}
 					</span>
 				</div>
