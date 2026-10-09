@@ -30,11 +30,11 @@
 				<button
 					type="button"
 					onclick={() => onSelectMode && onSelectMode('HOME')}
-					class="w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-sm transition-all cursor-pointer {currentMode === 'HOME'
+					class="w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-sm transition-all cursor-pointer group {currentMode === 'HOME'
 						? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-						: 'text-slate-400 hover:text-white hover:bg-slate-800/70'}"
+						: 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/80'}"
 				>
-					<Icon name="home" size={18} class={currentMode === 'HOME' ? 'text-white' : 'text-slate-400'} />
+					<Icon name="home" size={18} class={currentMode === 'HOME' ? 'text-white' : 'text-slate-400 group-hover:text-slate-100'} />
 					<span>Beranda</span>
 				</button>
 
@@ -42,11 +42,11 @@
 				<button
 					type="button"
 					onclick={() => onSelectMode && onSelectMode('LEARN')}
-					class="w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-sm transition-all cursor-pointer {currentMode === 'LEARN'
+					class="w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-sm transition-all cursor-pointer group {currentMode === 'LEARN'
 						? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-						: 'text-slate-400 hover:text-white hover:bg-slate-800/70'}"
+						: 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/80'}"
 				>
-					<Icon name="book-open" size={18} class={currentMode === 'LEARN' ? 'text-white' : 'text-slate-400'} />
+					<Icon name="book-open" size={18} class={currentMode === 'LEARN' ? 'text-white' : 'text-slate-400 group-hover:text-slate-100'} />
 					<span>Modul Belajar</span>
 				</button>
 
@@ -54,11 +54,11 @@
 				<button
 					type="button"
 					onclick={() => onSelectMode && onSelectMode('GAME')}
-					class="w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-sm transition-all cursor-pointer {currentMode === 'GAME'
+					class="w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-sm transition-all cursor-pointer group {currentMode === 'GAME'
 						? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-						: 'text-slate-400 hover:text-white hover:bg-slate-800/70'}"
+						: 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/80'}"
 				>
-					<Icon name="gamepad" size={18} class={currentMode === 'GAME' ? 'text-white' : 'text-slate-400'} />
+					<Icon name="gamepad" size={18} class={currentMode === 'GAME' ? 'text-white' : 'text-slate-400 group-hover:text-slate-100'} />
 					<span>Coding Game</span>
 				</button>
 
@@ -66,11 +66,11 @@
 				<button
 					type="button"
 					onclick={() => onOpenProfile && onOpenProfile()}
-					class="w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-sm transition-all cursor-pointer {currentMode === 'PROFILE'
+					class="w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-sm transition-all cursor-pointer group {currentMode === 'PROFILE'
 						? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-						: 'text-slate-400 hover:text-white hover:bg-slate-800/70'}"
+						: 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/80'}"
 				>
-					<Icon name="user" size={18} class={currentMode === 'PROFILE' ? 'text-white' : 'text-slate-400'} />
+					<Icon name="user" size={18} class={currentMode === 'PROFILE' ? 'text-white' : 'text-slate-400 group-hover:text-slate-100'} />
 					<span>Profil Siswa</span>
 				</button>
 			</nav>

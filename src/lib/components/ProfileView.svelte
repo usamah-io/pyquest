@@ -129,7 +129,7 @@
 		<button
 			type="button"
 			onclick={onBackToHome}
-			class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold transition-all cursor-pointer border border-slate-700"
+			class="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-bold transition-all cursor-pointer border border-slate-300 dark:border-slate-700 shadow-xs"
 		>
 			<Icon name="arrow-left" size={15} />
 			<span>Kembali ke Beranda</span>
@@ -195,16 +195,16 @@
 					type="button"
 					onclick={handleOpenFilePicker}
 					disabled={isUploading}
-					class="px-3 py-1 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+					class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-600/30 dark:hover:bg-indigo-600/50 border border-indigo-200 dark:border-indigo-500/40 text-indigo-700 dark:text-indigo-200 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
 				>
-					<Icon name="upload" size={13} />
+					<Icon name="upload" size={13} class="text-indigo-600 dark:text-indigo-200" />
 					<span>{isUploading ? 'Memproses...' : 'Ubah Foto'}</span>
 				</button>
 				{#if chosenAvatar !== DEFAULT_AVATAR}
 					<button
 						type="button"
 						onclick={handleRemovePhoto}
-						class="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs font-semibold transition-all cursor-pointer"
+						class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-300 text-xs font-semibold transition-all cursor-pointer shadow-xs"
 					>
 						Hapus
 					</button>
@@ -246,17 +246,17 @@
 					<button
 						type="button"
 						onclick={() => themeStore.setTheme('dark')}
-						class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {$themeStore === 'dark' ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30' : 'bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border-slate-700/60'}"
+						class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {$themeStore === 'dark' ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-slate-300 dark:border-slate-700/60'}"
 					>
-						<Icon name="moon" size={14} />
+						<Icon name="moon" size={14} class={$themeStore === 'dark' ? 'text-white' : 'text-slate-600 dark:text-slate-400'} />
 						<span>Dark</span>
 					</button>
 					<button
 						type="button"
 						onclick={() => themeStore.setTheme('light')}
-						class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {$themeStore === 'light' ? 'bg-cyan-600 text-white border-cyan-500 shadow-md shadow-cyan-600/30' : 'bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border-slate-700/60'}"
+						class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {$themeStore === 'light' ? 'bg-cyan-600 text-white border-cyan-500 shadow-md shadow-cyan-600/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-slate-300 dark:border-slate-700/60'}"
 					>
-						<Icon name="sun" size={14} />
+						<Icon name="sun" size={14} class={$themeStore === 'light' ? 'text-white' : 'text-slate-600 dark:text-slate-400'} />
 						<span>Light</span>
 					</button>
 				</div>
@@ -266,9 +266,9 @@
 				<button
 					type="button"
 					onclick={handleLogout}
-					class="w-full py-2.5 px-4 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 text-rose-300 hover:text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2"
+					class="w-full py-2.5 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-300 dark:border-rose-500/30 text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
 				>
-					<Icon name="log-out" size={15} />
+					<Icon name="log-out" size={15} class="text-rose-600 dark:text-rose-400" />
 					<span>Keluar Akun</span>
 				</button>
 			</div>

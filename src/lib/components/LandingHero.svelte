@@ -199,13 +199,13 @@
 		class="relative w-full rounded-3xl overflow-hidden border border-slate-800/80 bg-slate-900/90 shadow-2xl backdrop-blur-md"
 	>
 		<!-- Background Panorama Artwork -->
-		<div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+		<div class="hero-panorama-container absolute inset-0 z-0 overflow-hidden pointer-events-none">
 			<img
 				src="/art/hero_banner_panorama.png"
 				alt="Dunia Petualangan Python"
 				class="w-full h-full object-cover object-right md:object-center opacity-55 scale-105"
 			/>
-			<div class="absolute inset-0 bg-slate-950/45"></div>
+			<div class="hero-panorama-overlay absolute inset-0 bg-slate-950/45"></div>
 		</div>
 
 		<!-- Hero Content Grid -->
@@ -316,7 +316,7 @@
 		class="w-full rounded-3xl bg-slate-900/90 border border-slate-800 p-4 sm:p-5 shadow-xl backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6 hover:border-slate-700 transition-all relative overflow-hidden group"
 	>
 		<!-- Background Artwork Layer -->
-		<div class="absolute inset-0 z-0 opacity-20 pointer-events-none overflow-hidden">
+		<div class="ambient-card-art absolute inset-0 z-0 opacity-20 pointer-events-none overflow-hidden">
 			<img src="/art/adventure_maze_thumb.png" alt="" class="w-full h-full object-cover filter blur-xs scale-105" />
 			<div class="absolute inset-0 bg-slate-900/90"></div>
 		</div>
@@ -390,7 +390,7 @@
 			class="rounded-3xl bg-slate-900/90 border border-slate-800 p-5 sm:p-6 shadow-xl backdrop-blur-md flex flex-col justify-between hover:border-indigo-500/50 transition-all relative overflow-hidden group"
 		>
 			<!-- Ambient Card Art Overlay -->
-			<div class="absolute inset-0 z-0 opacity-15 pointer-events-none overflow-hidden">
+			<div class="ambient-card-art absolute inset-0 z-0 opacity-15 pointer-events-none overflow-hidden">
 				<img src="/art/module_learn_art.png" alt="" class="w-full h-full object-cover filter blur-[2px] scale-105" />
 				<div class="absolute inset-0 bg-slate-900/80"></div>
 			</div>
@@ -455,7 +455,7 @@
 			class="rounded-3xl bg-slate-900/90 border border-slate-800 p-5 sm:p-6 shadow-xl backdrop-blur-md flex flex-col justify-between hover:border-emerald-500/50 transition-all relative overflow-hidden group"
 		>
 			<!-- Ambient Card Art Overlay -->
-			<div class="absolute inset-0 z-0 opacity-15 pointer-events-none overflow-hidden">
+			<div class="ambient-card-art absolute inset-0 z-0 opacity-15 pointer-events-none overflow-hidden">
 				<img src="/art/coding_game_art.png" alt="" class="w-full h-full object-cover filter blur-[2px] scale-105" />
 				<div class="absolute inset-0 bg-slate-900/80"></div>
 			</div>

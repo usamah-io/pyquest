@@ -28,11 +28,27 @@
   --color-slate-200: #1E293B; /* Emphasized text (WCAG AA 13.8:1) */
   --color-slate-100: #172033; /* Primary dark heading & body text (14.8:1) */
 
-  /* Primary Light Mode Accents */
-  --color-indigo-400: #5145CD;
-  --color-indigo-300: #4338CA;
+  /* High-Contrast Light Mode Accents */
+  --color-indigo-400: #4338CA;
+  --color-indigo-300: #3730A3;
+  --color-indigo-200: #312E81;
   --color-cyan-400: #0E7490;
-  --color-cyan-300: #0891B2;
+  --color-cyan-300: #155E75;
+  --color-cyan-200: #164E63;
+  --color-purple-400: #6B21A8;
+  --color-purple-300: #581C87;
+  --color-purple-200: #3B0764;
+  --color-emerald-400: #047857;
+  --color-emerald-300: #065F46;
+  --color-emerald-200: #064E3B;
+  --color-amber-400: #B45309;
+  --color-amber-300: #92400E;
+  --color-amber-200: #78350F;
+  --color-rose-950: #FFF1F2;
+  --color-rose-900: #FFE4E6;
+  --color-rose-400: #E11D48;
+  --color-rose-300: #BE123C;
+  --color-rose-200: #9F1239;
 }
 
 /* Headings on light surfaces must be deep high-contrast text */
@@ -43,6 +59,42 @@
 [data-theme="light"] h5,
 [data-theme="light"] h6 {
   color: #172033;
+}
+
+/* Light Mode Navigation Contrast: Guarantee dark text and icons on hover */
+[data-theme="light"] aside nav button:not(.bg-indigo-600):hover,
+[data-theme="light"] aside nav button:not(.bg-indigo-600):hover * {
+  color: #172033 !important;
+}
+
+[data-theme="light"] aside nav button:not(.bg-indigo-600):hover {
+  background-color: #E2E8F0 !important;
+}
+
+/* Light Mode Card and Section Boundaries: Crisp borders against #F5F7FC */
+[data-theme="light"] .border-slate-800,
+[data-theme="light"] .border-slate-800\/80 {
+  border-color: #D5DCE8 !important;
+}
+
+/* Light Mode Hero Banner Panorama Illustration: Keep atmospheric and clearly visible */
+[data-theme="light"] .hero-panorama-container img {
+  opacity: 0.88 !important;
+  filter: contrast(1.05) saturate(1.1) !important;
+}
+
+[data-theme="light"] .hero-panorama-container .hero-panorama-overlay {
+  background-color: rgba(245, 247, 252, 0.22) !important;
+}
+
+/* Light Mode Module Cards Ambient Art: Visible atmosphere without washing out */
+[data-theme="light"] .ambient-card-art img {
+  opacity: 0.32 !important;
+  filter: contrast(1.05) saturate(1.15) !important;
+}
+
+[data-theme="light"] .ambient-card-art > div {
+  background-color: rgba(255, 255, 255, 0.45) !important;
 }
 
 /* In Light Mode, text-white on neutral surfaces becomes dark primary text,

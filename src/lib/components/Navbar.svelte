@@ -33,9 +33,9 @@
 </script>
 
 <header
-	class="flex items-center justify-between px-3 sm:px-6 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 text-slate-100 select-none z-30 sticky top-0 transition-all duration-300 ease-in-out {isVisible
-		? 'translate-y-0 opacity-100 max-h-20 py-2.5 shadow-sm'
-		: '-translate-y-full opacity-0 max-h-0 py-0 border-b-transparent overflow-hidden pointer-events-none'}"
+	class="fixed top-0 left-0 right-0 z-30 h-14 flex items-center justify-between px-3 sm:px-6 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 text-slate-100 select-none transition-transform duration-300 ease-in-out {isVisible
+		? 'translate-y-0 shadow-sm'
+		: '-translate-y-full pointer-events-none'}"
 >
 	<!-- Left: Logo & Brand -->
 	<div class="flex items-center gap-3 sm:gap-6">

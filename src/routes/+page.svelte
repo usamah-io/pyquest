@@ -54,14 +54,20 @@
 		if (!target) return;
 		const currentScrollTop = target.scrollTop;
 
+		// Always visible when at or near top (threshold <= 15px)
 		if (currentScrollTop <= 15) {
 			isNavbarVisible = true;
 			lastScrollTop = currentScrollTop;
 			return;
 		}
 
+		// Prevent jitter at bottom bounce
+		if (target.scrollHeight > 0 && currentScrollTop + target.clientHeight >= target.scrollHeight - 10) {
+			return;
+		}
+
 		const diff = currentScrollTop - lastScrollTop;
-		if (Math.abs(diff) > 5) {
+		if (Math.abs(diff) >= 10) {
 			isNavbarVisible = diff < 0;
 			lastScrollTop = currentScrollTop;
 		}
@@ -75,7 +81,7 @@
 			return;
 		}
 		const diff = currentScrollTop - lastScrollTop;
-		if (Math.abs(diff) > 5) {
+		if (Math.abs(diff) >= 10) {
 			isNavbarVisible = diff < 0;
 			lastScrollTop = currentScrollTop;
 		}
@@ -541,7 +547,7 @@
 	/>
 
 	<!-- Body Layout with Desktop Sidebar -->
-	<div class="flex-1 flex {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'portrait:h-auto portrait:overflow-visible landscape:overflow-hidden md:overflow-hidden' : 'overflow-hidden'} min-h-0">
+	<div class="flex-1 flex {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'portrait:h-auto portrait:overflow-visible landscape:overflow-hidden md:overflow-hidden md:pt-14' : currentScreen === 'LOGIN' || currentScreen === 'PROFILE_SETUP' ? 'overflow-hidden' : 'overflow-hidden pt-14'} min-h-0">
 		{#if currentScreen === 'LANDING' || currentScreen === 'LEARN_SELECT' || currentScreen === 'LEVEL_SELECT' || currentScreen === 'PROFILE' || currentScreen === 'MISSIONS' || currentScreen === 'XP_PROGRESS' || currentScreen === 'STREAK_VIEW'}
 			<Sidebar
 				currentMode={activeNavbarMode}
