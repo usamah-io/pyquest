@@ -51,13 +51,13 @@
 	function getMascotSprite(dir: Direction): string {
 		switch (dir) {
 			case 'LEFT':
-				return '/mascot/pybot-looking-left.png';
+				return '/mascot/pybot-looking-left.webp';
 			case 'RIGHT':
-				return '/mascot/pybot-looking-right.png';
+				return '/mascot/pybot-looking-right.webp';
 			case 'DOWN':
 			case 'UP':
 			default:
-				return '/mascot/pybot-front-idle.png';
+				return '/mascot/pybot-front-idle.webp';
 		}
 	}
 </script>

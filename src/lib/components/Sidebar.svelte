@@ -128,9 +128,12 @@
 				<img
 					src={$dashboardUserStore.avatar}
 					alt="Avatar"
+					width="40"
+					height="40"
+					decoding="async"
 					class="w-full h-full object-contain"
 					onerror={(e) => {
-						(e.currentTarget as HTMLImageElement).src = '/mascot/pybot-front-idle.png';
+						(e.currentTarget as HTMLImageElement).src = '/mascot/pybot-front-idle.webp';
 					}}
 				/>
 			</div>

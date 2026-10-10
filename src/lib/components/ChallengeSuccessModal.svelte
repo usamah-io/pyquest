@@ -40,8 +40,11 @@
 		{#if isLevelCompleted}
 			<div class="relative w-20 h-20 mx-auto mb-2.5">
 				<img
-					src="/mascot/pybot-happy-success.png"
+					src="/mascot/pybot-happy-success.webp"
 					alt="PyBot Juara"
+					width="80"
+					height="80"
+					decoding="async"
 					class="w-full h-full object-contain animate-bounce drop-shadow-[0_4px_16px_rgba(16,185,129,0.4)]"
 				/>
 				<div class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center shadow-md">

@@ -276,8 +276,11 @@
 										</div>
 									</div>
 									<img
-										src="/mascot/pybot-looking-right.png"
+										src="/mascot/pybot-looking-right.webp"
 										alt="PyBot Companion"
+										width="64"
+										height="64"
+										decoding="async"
 										class="w-14 h-14 sm:w-16 sm:h-16 object-contain drop-shadow-[0_4px_12px_rgba(6,182,212,0.4)] animate-bounce"
 									/>
 								</div>

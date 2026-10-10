@@ -809,8 +809,11 @@
 			>
 				<div class="relative mb-3 flex items-center justify-center">
 					<img
-						src="/mascot/pybot-front-idle.png"
+						src="/mascot/pybot-front-idle.webp"
 						alt="PyBot Mascot"
+						width="80"
+						height="80"
+						decoding="async"
 						class="w-16 h-16 sm:w-20 sm:h-20 object-contain drop-shadow-[0_8px_16px_rgba(6,182,212,0.3)] animate-pulse"
 					/>
 				</div>

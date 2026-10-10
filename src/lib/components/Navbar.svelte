@@ -72,11 +72,14 @@
 			aria-label="Buka Menu Profil"
 		>
 			<img
-				src={$dashboardUserStore.avatar || '/mascot/pybot-front-idle.png'}
+				src={$dashboardUserStore.avatar || '/mascot/pybot-front-idle.webp'}
 				alt={$dashboardUserStore.name}
+				width="40"
+				height="40"
+				decoding="async"
 				class="w-full h-full object-cover rounded-full"
 				onerror={(e) => {
-					(e.currentTarget as HTMLImageElement).src = '/mascot/pybot-front-idle.png';
+					(e.currentTarget as HTMLImageElement).src = '/mascot/pybot-front-idle.webp';
 				}}
 			/>
 		</button>

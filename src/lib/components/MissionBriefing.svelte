@@ -41,8 +41,11 @@
 		<!-- Large Mission Art Banner -->
 		<div class="relative w-full h-48 sm:h-64 bg-slate-950 overflow-hidden">
 			<img
-				src="/art/adventure_maze_thumb.png"
+				src="/art/adventure_maze_thumb.webp"
 				alt="Arena Misi Labirin"
+				width="600"
+				height="338"
+				decoding="async"
 				class="w-full h-full object-cover object-center transform hover:scale-105 transition-transform duration-700 opacity-90"
 			/>
 			<div class="absolute inset-0 bg-slate-950/40"></div>
@@ -51,8 +54,11 @@
 			<div class="absolute bottom-4 left-4 sm:left-6 flex items-center gap-3">
 				<div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-indigo-950/80 border-2 border-cyan-400/60 p-1 shadow-xl shadow-cyan-500/20 backdrop-blur-md shrink-0">
 					<img
-						src="/mascot/pybot-front-idle.png"
+						src="/mascot/pybot-front-idle.webp"
 						alt="PyBot"
+						width="64"
+						height="64"
+						decoding="async"
 						class="w-full h-full object-contain"
 					/>
 				</div>

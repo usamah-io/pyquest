@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 	import { authStore, getGoogleClientId } from '$lib/stores/authStore';
+	import { loadGoogleGis, isGoogleGisAvailable } from '$lib/utils/googleAuth';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -23,7 +24,7 @@
 	let timeoutTimer: any = null;
 
 	function checkGisReady(): boolean {
-		return typeof window !== 'undefined' && !!(window as any).google?.accounts?.id;
+		return isGoogleGisAvailable();
 	}
 
 	async function handleCredentialResponse(response: any) {
@@ -109,6 +110,14 @@
 			if (checkGisReady()) {
 				setTimeout(renderGisButton, 50);
 			} else {
+				loadGoogleGis().then((ready) => {
+					if (ready) {
+						renderGisButton();
+					} else {
+						isGisFailed = true;
+					}
+				});
+
 				pollInterval = setInterval(() => {
 					if (checkGisReady()) {
 						renderGisButton();
@@ -124,7 +133,7 @@
 							isGisFailed = true;
 						}
 					}
-				}, 4000);
+				}, 3000);
 			}
 		} else {
 			clearTimers();
@@ -136,8 +145,17 @@
 		clearTimers();
 	});
 
-	function handleFallbackPrompt() {
+	async function handleFallbackPrompt() {
 		if (!activeClientId) return;
+		errorMessage = null;
+
+		if (!checkGisReady()) {
+			const ready = await loadGoogleGis();
+			if (ready) {
+				renderGisButton();
+				return;
+			}
+		}
 
 		if (checkGisReady()) {
 			try {
@@ -154,9 +172,17 @@
 				});
 			} catch (e) {
 				console.error('Google prompt error:', e);
+				errorMessage = 'Login Google gagal. Coba lagi.';
 			}
 		} else {
-			errorMessage = 'Layanan Google Identity sedang dimuat. Silakan periksa koneksi internet.';
+			// Direct Google OAuth 2.0 redirect fallback
+			const redirectUri = `${window.location.origin}/api/auth/callback/google`;
+			const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(
+				activeClientId
+			)}&redirect_uri=${encodeURIComponent(
+				redirectUri
+			)}&response_type=code&scope=openid%20email%20profile&access_type=online&prompt=select_account`;
+			window.location.href = oauthUrl;
 		}
 	}
 </script>
@@ -182,8 +208,11 @@
 			<div class="text-center mb-6">
 				<div class="w-16 h-16 mx-auto rounded-2xl bg-indigo-500/10 border border-indigo-500/20 p-2 mb-3 flex items-center justify-center">
 					<img
-						src="/mascot/pybot-front-idle.png"
+						src="/mascot/pybot-front-idle.webp"
 						alt="PyBot"
+						width="64"
+						height="64"
+						decoding="async"
 						class="w-full h-full object-contain"
 					/>
 				</div>

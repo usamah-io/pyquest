@@ -222,3 +222,31 @@
 [data-theme="light"] .badge-card-locked-desc {
   color: #64748B !important;
 }
+
+/* ========================================================================= */
+/* PERFORMANCE OPTIMIZATIONS: HARDWARE ACCELERATION & MOBILE FLUIDITY       */
+/* ========================================================================= */
+
+@keyframes gentle-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-float {
+  animation: gentle-float 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* On mobile viewports, disable heavy backdrop-filter blur on static cards to eliminate frame drops & scroll lag */
+@media (max-width: 768px) {
+  .backdrop-blur-md,
+  .backdrop-blur-sm {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+

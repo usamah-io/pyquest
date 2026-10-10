@@ -18,13 +18,13 @@
 		onOpenMissions?: () => void;
 	} = $props();
 
-	const DEFAULT_AVATAR = '/mascot/pybot-front-idle.png';
+	const DEFAULT_AVATAR = '/mascot/pybot-front-idle.webp';
 	const AVATAR_OPTIONS = [
-		{ id: 'pybot-idle', src: '/mascot/pybot-front-idle.png', label: 'PyBot Normal' },
-		{ id: 'pybot-happy', src: '/mascot/pybot-happy-success.png', label: 'PyBot Juara' },
-		{ id: 'pybot-waving', src: '/mascot/pybot-waving.png', label: 'PyBot Ramah' },
-		{ id: 'pybot-left', src: '/mascot/pybot-looking-left.png', label: 'PyBot Waspada' },
-		{ id: 'pybot-right', src: '/mascot/pybot-looking-right.png', label: 'PyBot Fokus' }
+		{ id: 'pybot-idle', src: '/mascot/pybot-front-idle.webp', label: 'PyBot Normal' },
+		{ id: 'pybot-happy', src: '/mascot/pybot-happy-success.webp', label: 'PyBot Juara' },
+		{ id: 'pybot-waving', src: '/mascot/pybot-waving.webp', label: 'PyBot Ramah' },
+		{ id: 'pybot-left', src: '/mascot/pybot-looking-left.webp', label: 'PyBot Waspada' },
+		{ id: 'pybot-right', src: '/mascot/pybot-looking-right.webp', label: 'PyBot Fokus' }
 	];
 
 	let displayName = $state($dashboardUserStore.name || 'Penjelajah Kode');

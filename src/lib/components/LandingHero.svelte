@@ -29,11 +29,11 @@
 	let isHoveringMascot = $state(false);
 
 	const poseMap: Record<MascotPose, string> = {
-		idle: '/mascot/pybot-front-idle.png',
-		left: '/mascot/pybot-looking-left.png',
-		right: '/mascot/pybot-looking-right.png',
-		waving: '/mascot/pybot-waving.png',
-		happy: '/mascot/pybot-happy-success.png'
+		idle: '/mascot/pybot-front-idle.webp',
+		left: '/mascot/pybot-looking-left.webp',
+		right: '/mascot/pybot-looking-right.webp',
+		waving: '/mascot/pybot-waving.webp',
+		happy: '/mascot/pybot-happy-success.webp'
 	};
 
 	let mascotContainer = $state<HTMLDivElement | null>(null);
@@ -201,8 +201,11 @@
 		<!-- Background Panorama Artwork -->
 		<div class="hero-panorama-container absolute inset-0 z-0 overflow-hidden pointer-events-none">
 			<img
-				src="/art/hero_banner_panorama.png"
+				src="/art/hero_banner_panorama.webp"
 				alt="Dunia Petualangan Python"
+				width="1376"
+				height="768"
+				decoding="async"
 				class="w-full h-full object-cover object-right md:object-center opacity-55 scale-105"
 			/>
 			<div class="hero-panorama-overlay absolute inset-0 bg-slate-950/45"></div>
@@ -302,6 +305,9 @@
 					<img
 						src={poseMap[mascotPose]}
 						alt="PyBot Mascot"
+						width="192"
+						height="192"
+						decoding="async"
 						class="w-full h-full object-contain filter drop-shadow-[0_15px_25px_rgba(34,211,238,0.25)] transition-all duration-300"
 					/>
 				</div>
@@ -317,7 +323,7 @@
 	>
 		<!-- Background Artwork Layer -->
 		<div class="ambient-card-art absolute inset-0 z-0 opacity-20 pointer-events-none overflow-hidden">
-			<img src="/art/adventure_maze_thumb.png" alt="" class="w-full h-full object-cover filter blur-xs scale-105" />
+			<img src="/art/adventure_maze_thumb.webp" alt="" width="300" height="170" decoding="async" loading="lazy" class="w-full h-full object-cover filter blur-xs scale-105" />
 			<div class="absolute inset-0 bg-slate-900/90"></div>
 		</div>
 
@@ -326,8 +332,11 @@
 			<!-- Maze Thumbnail Art -->
 			<div class="w-28 sm:w-36 aspect-video rounded-2xl overflow-hidden border border-slate-700/80 bg-slate-950 shrink-0 shadow-md relative group-hover:scale-[1.02] transition-transform">
 				<img
-					src="/art/adventure_maze_thumb.png"
+					src="/art/adventure_maze_thumb.webp"
 					alt="Thumbnail Labirin Petualangan"
+					width="144"
+					height="81"
+					decoding="async"
 					class="w-full h-full object-cover object-center"
 				/>
 				<div class="absolute inset-0 bg-slate-950/15"></div>
@@ -391,7 +400,7 @@
 		>
 			<!-- Ambient Card Art Overlay -->
 			<div class="ambient-card-art absolute inset-0 z-0 opacity-15 pointer-events-none overflow-hidden">
-				<img src="/art/module_learn_art.png" alt="" class="w-full h-full object-cover filter blur-[2px] scale-105" />
+				<img src="/art/module_learn_art.webp" alt="" width="300" height="200" decoding="async" loading="lazy" class="w-full h-full object-cover filter blur-[2px] scale-105" />
 				<div class="absolute inset-0 bg-slate-900/80"></div>
 			</div>
 
@@ -412,8 +421,12 @@
 				<!-- Artwork Thumbnail -->
 				<div class="w-24 h-20 sm:w-28 sm:h-22 rounded-2xl overflow-hidden border border-slate-700/80 bg-slate-950 shrink-0 shadow-lg group-hover:scale-105 transition-transform">
 					<img
-						src="/art/module_learn_art.png"
+						src="/art/module_learn_art.webp"
 						alt="Modul Belajar Python"
+						width="112"
+						height="88"
+						decoding="async"
+						loading="lazy"
 						class="w-full h-full object-cover"
 					/>
 				</div>
@@ -456,7 +469,7 @@
 		>
 			<!-- Ambient Card Art Overlay -->
 			<div class="ambient-card-art absolute inset-0 z-0 opacity-15 pointer-events-none overflow-hidden">
-				<img src="/art/coding_game_art.png" alt="" class="w-full h-full object-cover filter blur-[2px] scale-105" />
+				<img src="/art/coding_game_art.webp" alt="" width="300" height="200" decoding="async" loading="lazy" class="w-full h-full object-cover filter blur-[2px] scale-105" />
 				<div class="absolute inset-0 bg-slate-900/80"></div>
 			</div>
 
@@ -477,8 +490,12 @@
 				<!-- Artwork Thumbnail -->
 				<div class="w-24 h-20 sm:w-28 sm:h-22 rounded-2xl overflow-hidden border border-slate-700/80 bg-slate-950 shrink-0 shadow-lg group-hover:scale-105 transition-transform">
 					<img
-						src="/art/coding_game_art.png"
+						src="/art/coding_game_art.webp"
 						alt="Coding Game"
+						width="112"
+						height="88"
+						decoding="async"
+						loading="lazy"
 						class="w-full h-full object-cover"
 					/>
 				</div>

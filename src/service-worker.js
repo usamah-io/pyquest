@@ -9,7 +9,8 @@ import { resolve } from '$app/paths';
 
 const CACHE_NAME = `pyquest-v${version}`;
 
-// Assets to precache: application shell, built immutable chunks, and static assets
+// Assets to precache: lightweight application shell and built immutable chunks only.
+// Heavy media and art are cached on-demand at runtime to prevent mobile network starvation.
 const PRECACHE_ASSETS = [
 	resolve('/'),
 	resolve('/manifest.webmanifest'),
@@ -18,7 +19,13 @@ const PRECACHE_ASSETS = [
 	resolve('/favicon.ico'),
 	resolve('/apple-touch-icon.png'),
 	...immutable,
-	...assets.filter((file) => !file.includes('.DS_Store') && !file.includes('robots.txt')),
+	...assets.filter(
+		(file) =>
+			!file.includes('.DS_Store') &&
+			!file.includes('robots.txt') &&
+			!file.startsWith('/art/') &&
+			!file.startsWith('/mascot/')
+	),
 	...prerendered
 ];
 
