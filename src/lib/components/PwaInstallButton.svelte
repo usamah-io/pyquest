@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { pwaStore } from '$lib/stores/pwaStore';
+	import { playClick } from '$lib/stores/soundStore';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -9,16 +10,13 @@
 	} = $props();
 
 	function handleInstallClick() {
-		if ($pwaStore.canInstall) {
-			pwaStore.promptInstall();
-		} else if ($pwaStore.isIOS) {
-			pwaStore.toggleIOSGuide();
-		}
+		playClick();
+		pwaStore.promptInstall();
 	}
 </script>
 
-{#if $pwaStore.canInstall || $pwaStore.isIOS}
-	<div class="relative inline-block">
+{#if !$pwaStore.isInstalled}
+	<div class="relative inline-block w-full">
 		{#if compact}
 			<button
 				type="button"
@@ -50,59 +48,6 @@
 				</div>
 				<Icon name="chevron-right" size={14} class="text-slate-500 group-hover:translate-x-0.5 transition-transform" />
 			</button>
-		{/if}
-
-		<!-- iOS Safari Add to Home Screen Modal / Popover -->
-		{#if $pwaStore.showIOSInstallGuide}
-			<div
-				role="dialog"
-				aria-modal="true"
-				class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-fade-in"
-			>
-				<div class="w-full max-w-sm bg-slate-900 border border-indigo-500/40 rounded-3xl p-5 shadow-2xl relative text-left">
-					<button
-						type="button"
-						onclick={() => pwaStore.toggleIOSGuide(false)}
-						class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg"
-						aria-label="Tutup"
-					>
-						<Icon name="x" size={16} />
-					</button>
-
-					<div class="flex items-center gap-2.5 mb-3">
-						<div class="w-9 h-9 rounded-xl bg-indigo-500/20 text-cyan-400 flex items-center justify-center border border-indigo-500/30">
-							<Icon name="download" size={18} />
-						</div>
-						<div>
-							<h3 class="text-sm font-black text-white">Pasang di iPhone / iPad</h3>
-							<p class="text-[11px] text-slate-400">Instal lewat peramban Safari</p>
-						</div>
-					</div>
-
-					<ol class="space-y-2 text-xs text-slate-300 py-2 border-y border-slate-800">
-						<li class="flex items-start gap-2">
-							<span class="w-5 h-5 rounded-full bg-slate-800 font-bold flex items-center justify-center text-[10px] text-cyan-400 shrink-0">1</span>
-							<span>Ketuk tombol <strong>Bagikan (Share)</strong> di bilah navigasi Safari bawah.</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<span class="w-5 h-5 rounded-full bg-slate-800 font-bold flex items-center justify-center text-[10px] text-cyan-400 shrink-0">2</span>
-							<span>Gulir dan pilih menu <strong>Tambahkan ke Layar Utama</strong> (Add to Home Screen).</span>
-						</li>
-						<li class="flex items-start gap-2">
-							<span class="w-5 h-5 rounded-full bg-slate-800 font-bold flex items-center justify-center text-[10px] text-cyan-400 shrink-0">3</span>
-							<span>Ketuk <strong>Tambah</strong> di pojok kanan atas.</span>
-						</li>
-					</ol>
-
-					<button
-						type="button"
-						onclick={() => pwaStore.toggleIOSGuide(false)}
-						class="w-full mt-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
-					>
-						Mengerti
-					</button>
-				</div>
-			</div>
 		{/if}
 	</div>
 {/if}

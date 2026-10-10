@@ -5,6 +5,7 @@
 	import { pwaStore } from '$lib/stores/pwaStore';
 	import { themeStore } from '$lib/stores/themeStore';
 	import Icon from '$lib/components/Icon.svelte';
+	import InstallGuideModal from '$lib/components/InstallGuideModal.svelte';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
@@ -55,3 +56,6 @@
 {/if}
 
 {@render children()}
+
+<!-- Universal PWA Install Guide Modal -->
+<InstallGuideModal />

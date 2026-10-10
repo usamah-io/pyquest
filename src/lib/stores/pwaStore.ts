@@ -5,7 +5,9 @@ export interface PwaState {
 	isInstalled: boolean;
 	isOffline: boolean;
 	isIOS: boolean;
+	isAndroid: boolean;
 	showIOSInstallGuide: boolean;
+	showInstallGuide: boolean;
 }
 
 function createPwaStore() {
@@ -16,7 +18,9 @@ function createPwaStore() {
 		isInstalled: false,
 		isOffline: false,
 		isIOS: false,
-		showIOSInstallGuide: false
+		isAndroid: false,
+		showIOSInstallGuide: false,
+		showInstallGuide: false
 	});
 
 	function init() {
@@ -29,11 +33,13 @@ function createPwaStore() {
 		const userAgent = window.navigator.userAgent.toLowerCase();
 		const isIOSDevice =
 			/iphone|ipad|ipod/.test(userAgent) && !(window as any).MSStream;
+		const isAndroidDevice = /android/.test(userAgent);
 
 		update((s) => ({
 			...s,
 			isInstalled: isStandalone,
 			isIOS: isIOSDevice && !isStandalone,
+			isAndroid: isAndroidDevice,
 			isOffline: !navigator.onLine
 		}));
 
@@ -47,7 +53,13 @@ function createPwaStore() {
 		// Listen for app installed event
 		window.addEventListener('appinstalled', () => {
 			deferredPrompt = null;
-			update((s) => ({ ...s, canInstall: false, isInstalled: true }));
+			update((s) => ({
+				...s,
+				canInstall: false,
+				isInstalled: true,
+				showInstallGuide: false,
+				showIOSInstallGuide: false
+			}));
 			console.log('[PWA] PyQuest was successfully installed!');
 		});
 
@@ -68,19 +80,35 @@ function createPwaStore() {
 				const { outcome } = await deferredPrompt.userChoice;
 				deferredPrompt = null;
 				update((s) => ({ ...s, canInstall: false }));
-				return outcome === 'accepted';
+				if (outcome === 'accepted') {
+					update((s) => ({ ...s, isInstalled: true }));
+					return true;
+				}
+				return false;
 			} catch (err) {
 				console.error('[PWA] Prompt error:', err);
+				update((s) => ({ ...s, showInstallGuide: true }));
 				return false;
 			}
 		}
+
+		// When browser does not provide deferredPrompt (e.g. iOS or manual browser menu required)
+		update((s) => ({ ...s, showInstallGuide: true }));
 		return false;
+	}
+
+	function toggleInstallGuide(show?: boolean) {
+		update((s) => ({
+			...s,
+			showInstallGuide: show !== undefined ? show : !s.showInstallGuide
+		}));
 	}
 
 	function toggleIOSGuide(show?: boolean) {
 		update((s) => ({
 			...s,
-			showIOSInstallGuide: show !== undefined ? show : !s.showIOSInstallGuide
+			showIOSInstallGuide: show !== undefined ? show : !s.showIOSInstallGuide,
+			showInstallGuide: show !== undefined ? show : !s.showInstallGuide
 		}));
 	}
 
@@ -88,6 +116,7 @@ function createPwaStore() {
 		subscribe,
 		init,
 		promptInstall,
+		toggleInstallGuide,
 		toggleIOSGuide
 	};
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { authStore, dashboardUserStore } from '$lib/stores/authStore';
 	import { soundStore, playClick } from '$lib/stores/soundStore';
+	import { pwaStore } from '$lib/stores/pwaStore';
 	import { progressStore } from '$lib/stores/progressStore';
 	import { levelsData } from '$lib/challenges/levelsData';
 	import { avatarStorage, validateImageFile, processAndCompressImage } from '$lib/utils/avatarStorage';
@@ -117,7 +118,37 @@
 		}, 3000);
 	}
 
+	const BANNER_STORAGE_KEY = 'pyquest-profile-pwa-dismissed';
+	let showInstallBanner = $state(true);
+
+	$effect(() => {
+		if (typeof window !== 'undefined') {
+			try {
+				const dismissed = localStorage.getItem(BANNER_STORAGE_KEY);
+				if (dismissed === 'true') {
+					showInstallBanner = false;
+				}
+			} catch {}
+		}
+	});
+
+	function dismissBanner() {
+		playClick();
+		showInstallBanner = false;
+		if (typeof window !== 'undefined') {
+			try {
+				localStorage.setItem(BANNER_STORAGE_KEY, 'true');
+			} catch {}
+		}
+	}
+
+	async function handleInstallApp() {
+		playClick();
+		await pwaStore.promptInstall();
+	}
+
 	function handleLogout() {
+		playClick();
 		authStore.logout();
 		onBackToHome();
 	}
@@ -138,6 +169,46 @@
 			Pengaturan Akun
 		</div>
 	</div>
+
+	<!-- Dismissible PWA Install Notification Banner -->
+	{#if !$pwaStore.isInstalled && showInstallBanner}
+		<div class="relative p-3.5 sm:p-4 rounded-2xl bg-indigo-50/90 dark:bg-slate-900/95 border border-indigo-200 dark:border-indigo-500/40 shadow-sm dark:shadow-xl flex items-center justify-between gap-3 text-left animate-fade-in backdrop-blur-md">
+			<div class="flex items-center gap-3 min-w-0">
+				<div class="w-10 h-10 rounded-2xl bg-indigo-600/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-cyan-400 flex items-center justify-center border border-indigo-200 dark:border-indigo-500/30 shrink-0">
+					<Icon name="download" size={20} />
+				</div>
+				<div class="min-w-0">
+					<div class="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+						<span>Pasang Aplikasi PyQuest</span>
+						<span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/30 text-indigo-700 dark:text-cyan-300 font-mono font-bold">PWA</span>
+					</div>
+					<p class="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-1 sm:line-clamp-none">
+						Akses lebih cepat & mainkan langsung dari layar utama HP kamu!
+					</p>
+				</div>
+			</div>
+
+			<div class="flex items-center gap-2 shrink-0">
+				<button
+					type="button"
+					onclick={handleInstallApp}
+					class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all cursor-pointer shadow-md shadow-indigo-600/20 active:scale-95 flex items-center gap-1.5"
+				>
+					<Icon name="download" size={13} class="text-white" />
+					<span>Pasang</span>
+				</button>
+				<button
+					type="button"
+					onclick={dismissBanner}
+					class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center justify-center cursor-pointer"
+					aria-label="Tutup pemberitahuan"
+					title="Tutup"
+				>
+					<Icon name="x" size={16} />
+				</button>
+			</div>
+		</div>
+	{/if}
 
 	<!-- Success Banner -->
 	{#if saveSuccessMessage}
@@ -267,14 +338,34 @@
 				</div>
 			</div>
 
-			<div class="w-full mt-4 pt-4 border-t border-slate-800">
+			<div class="w-full mt-4 pt-4 border-t border-slate-800 flex items-center gap-2">
+				{#if !$pwaStore.isInstalled}
+					<button
+						type="button"
+						onclick={handleInstallApp}
+						class="flex-1 py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/25 active:scale-98"
+						title="Pasang aplikasi PyQuest di HP / Perangkat"
+					>
+						<Icon name="download" size={15} class="text-cyan-300" />
+						<span>Pasang Aplikasi</span>
+					</button>
+				{:else}
+					<div
+						class="flex-1 py-2 px-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 font-bold text-[11px] flex items-center justify-center gap-1.5"
+					>
+						<Icon name="check-circle" size={14} class="text-emerald-400" />
+						<span>Aplikasi Terpasang</span>
+					</div>
+				{/if}
+
 				<button
 					type="button"
 					onclick={handleLogout}
-					class="w-full py-2.5 px-4 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-300 dark:border-rose-500/30 text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs"
+					class="py-2.5 px-3.5 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-300 dark:border-rose-500/30 text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs shrink-0"
+					title="Keluar dari akun"
 				>
 					<Icon name="log-out" size={15} class="text-rose-600 dark:text-rose-400" />
-					<span>Keluar Akun</span>
+					<span>Keluar</span>
 				</button>
 			</div>
 		</div>
