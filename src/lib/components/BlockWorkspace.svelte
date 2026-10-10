@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { CodingBlock, BlockType } from '$lib/types';
 	import { blocksToPythonCode } from '$lib/game/compiler';
+	import { playClick } from '$lib/stores/soundStore';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -82,6 +83,7 @@
 
 	function deleteBlock(id: string) {
 		if (isRunning) return;
+		playClick();
 		workspaceBlocks = removeBlockById(workspaceBlocks, id);
 		if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
 			try {
@@ -615,6 +617,7 @@
 				// Dragged outside workspace canvas or to trash -> Delete block
 				if (currentDragInfo.blockId) {
 					workspaceBlocks = removeBlockById(workspaceBlocks, currentDragInfo.blockId);
+					playClick();
 					if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
 						try { navigator.vibrate(25); } catch {}
 					}
@@ -629,6 +632,7 @@
 						finalDropTarget.parentId,
 						finalDropTarget.index
 					);
+					playClick();
 					if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
 						try { navigator.vibrate(20); } catch {}
 					}
@@ -662,6 +666,7 @@
 								finalDropTarget.parentId,
 								targetIndex
 							);
+							playClick();
 							if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
 								try { navigator.vibrate(15); } catch {}
 							}
@@ -715,7 +720,10 @@
 			{/if}
 			<button
 				type="button"
-				onclick={() => (showPythonCode = !showPythonCode)}
+				onclick={() => {
+					playClick();
+					showPythonCode = !showPythonCode;
+				}}
 				class="text-[11px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border font-mono transition-colors flex items-center gap-1.5 cursor-pointer shrink-0 whitespace-nowrap {showPythonCode
 					? 'bg-indigo-500/20 border-indigo-500 text-indigo-300'
 					: 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white'}"

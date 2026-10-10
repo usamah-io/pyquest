@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { authStore, dashboardUserStore } from '$lib/stores/authStore';
 	import { themeStore } from '$lib/stores/themeStore';
+	import { playClick } from '$lib/stores/soundStore';
 	import PyQuestLogo from './PyQuestLogo.svelte';
 	import PwaInstallButton from './PwaInstallButton.svelte';
 	import Icon from './Icon.svelte';
@@ -18,15 +19,18 @@
 	let isProfileMenuOpen = $state(false);
 
 	function toggleProfileMenu() {
+		playClick();
 		isProfileMenuOpen = !isProfileMenuOpen;
 	}
 
 	function handleOpenLogin() {
+		playClick();
 		isProfileMenuOpen = false;
 		authStore.openGoogleModal();
 	}
 
 	function handleNavigateProfile() {
+		playClick();
 		isProfileMenuOpen = false;
 		if (onOpenProfile) onOpenProfile();
 	}
@@ -52,7 +56,10 @@
 		<!-- Quick Theme Toggle Button -->
 		<button
 			type="button"
-			onclick={() => themeStore.toggleTheme()}
+			onclick={() => {
+				playClick();
+				themeStore.toggleTheme();
+			}}
 			class="w-9 h-9 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/70 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
 			title={$themeStore === 'light' ? 'Ubah ke Mode Gelap' : 'Ubah ke Mode Terang'}
 			aria-label="Ganti Tema"
@@ -117,7 +124,10 @@
 					<!-- Quick Theme Switcher Item -->
 					<button
 						type="button"
-						onclick={() => themeStore.toggleTheme()}
+						onclick={() => {
+							playClick();
+							themeStore.toggleTheme();
+						}}
 						class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-200 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer text-left"
 					>
 						<span class="flex items-center gap-2.5">
@@ -147,6 +157,7 @@
 						<button
 							type="button"
 							onclick={() => {
+								playClick();
 								authStore.logout();
 								isProfileMenuOpen = false;
 							}}

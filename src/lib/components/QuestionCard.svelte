@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Question } from '$lib/types';
 	import { shuffleArray } from '$lib/questions/questionsData';
+	import { playClick } from '$lib/stores/soundStore';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -43,6 +44,7 @@
 	let remainingHintsQuota = $derived(Math.max(0, maxAvailableHints - hintsUsedCount));
 
 	function chooseOption(id: string) {
+		playClick();
 		selectedId = id;
 	}
 
@@ -53,6 +55,7 @@
 	}
 
 	function handleRequestNextHint() {
+		playClick();
 		if (hintsUsedCount >= maxAvailableHints) {
 			showExhaustedNotice = true;
 			return;

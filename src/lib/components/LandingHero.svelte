@@ -3,6 +3,7 @@
 	import { dashboardUserStore } from '$lib/stores/authStore';
 	import { levelsData } from '$lib/challenges/levelsData';
 	import { learningLevelsData } from '$lib/questions/learningLevelsData';
+	import { playClick } from '$lib/stores/soundStore';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -55,6 +56,7 @@
 	}
 
 	function handleMascotClick() {
+		playClick();
 		mascotPose = 'happy';
 		setTimeout(() => {
 			mascotPose = 'waving';

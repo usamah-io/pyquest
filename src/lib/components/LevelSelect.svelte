@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { GameLevel } from '$lib/types';
 	import { progressStore } from '$lib/stores/progressStore';
+	import { playClick } from '$lib/stores/soundStore';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -169,6 +170,7 @@
 		);
 		selectedMissionIndex = firstUncompletedIdx !== -1 ? firstUncompletedIdx : 0;
 		isExplainOpen = false;
+		playClick();
 		activeDetailLevel = level;
 		activeDetailIndex = index;
 	}
@@ -385,7 +387,10 @@
 				<!-- Close Button -->
 				<button
 					type="button"
-					onclick={() => (activeDetailLevel = null)}
+					onclick={() => {
+						playClick();
+						activeDetailLevel = null;
+					}}
 					class="absolute top-3.5 right-3.5 p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
 					aria-label="Tutup Ringkasan Level"
 				>

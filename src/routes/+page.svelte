@@ -33,6 +33,16 @@
 	import { simulateCommands, type SimulationStep } from '$lib/game/engine';
 	import { progressStore } from '$lib/stores/progressStore';
 	import { authStore } from '$lib/stores/authStore';
+	import {
+		soundStore,
+		playClick,
+		playCorrect,
+		playIncorrect,
+		playMissionComplete,
+		playCollectReward,
+		playRobotMove,
+		playCodeStart
+	} from '$lib/stores/soundStore';
 	import { requestAppFullscreen, isFullscreenActive } from '$lib/utils/fullscreen';
 	import type { AppScreen, CodingBlock, Direction, GridCoord } from '$lib/types';
 
@@ -241,14 +251,17 @@
 
 	// Mode Entry Handlers
 	function handleStartLearning() {
+		playClick();
 		currentScreen = 'LEARN_SELECT';
 	}
 
 	function handleStartCodingGame() {
+		playClick();
 		currentScreen = 'LEVEL_SELECT';
 	}
 
 	function handleSelectNavbarMode(mode: 'HOME' | 'LEARN' | 'GAME') {
+		playClick();
 		stopSimulation();
 		if (mode === 'HOME') {
 			currentScreen = 'LANDING';
@@ -260,6 +273,7 @@
 	}
 
 	function handleOpenProfile() {
+		playClick();
 		stopSimulation();
 		currentScreen = 'PROFILE';
 	}
@@ -267,6 +281,7 @@
 
 	// Learning Level Flow
 	function handleSelectLearningLevel(levelId: number) {
+		playClick();
 		const idx = learningLevelsData.findIndex((lvl) => lvl.id === levelId);
 		currentLearningLevelIndex = idx !== -1 ? idx : 0;
 		currentQuestionInLevelIndex = 0;
@@ -291,10 +306,17 @@
 			}
 		}
 
+		if (result.isCorrect) {
+			playCorrect();
+		} else {
+			playIncorrect();
+		}
+
 		currentScreen = 'FEEDBACK';
 	}
 
 	function handleContinueAfterQuestionFeedback() {
+		playClick();
 		if (currentQuestionInLevelIndex < activeLevelQuestions.length - 1) {
 			currentQuestionInLevelIndex++;
 			userSelectedOptionId = null;
@@ -319,10 +341,17 @@
 
 			earnedLearningXpThisRun = isFirst ? summary.earnedLevelXp : 0;
 			currentScreen = 'LEARN_SUCCESS';
+			playMissionComplete();
+			if (earnedLearningXpThisRun > 0) {
+				setTimeout(() => {
+					playCollectReward();
+				}, 600);
+			}
 		}
 	}
 
 	function handleNextLearningLevel() {
+		playClick();
 		if (currentLearningLevelIndex < learningLevelsData.length - 1) {
 			currentLearningLevelIndex++;
 			currentQuestionInLevelIndex = 0;
@@ -337,6 +366,7 @@
 	}
 
 	function handleReplayLearningLevel() {
+		playClick();
 		currentQuestionInLevelIndex = 0;
 		userSelectedOptionId = null;
 		earnedLearningXpThisRun = 0;
@@ -347,6 +377,7 @@
 
 	// Coding Game Flow Handlers
 	function handleSelectLevelChallenge(lvlIdx: number, chIdx: number) {
+		playClick();
 		stopSimulation();
 		currentLevelIndex = lvlIdx;
 		currentChallengeIndex = chIdx;
@@ -357,11 +388,13 @@
 	}
 
 	function handleStartActualMission() {
+		playClick();
 		currentScreen = 'CHALLENGE';
 		requestAppFullscreen();
 	}
 
 	function handleResetGame() {
+		playClick();
 		stopSimulation();
 		resetRobotPosition();
 	}
@@ -373,6 +406,7 @@
 		stopSimulation();
 		isRunning = true;
 		attemptsCount++;
+		playCodeStart();
 
 		// Instantly reset PyBot visual position to startPos
 		if (activeChallenge) {
@@ -424,6 +458,9 @@
 			}
 
 			const frame = steps[stepIdx];
+			const didMove = frame.playerPos.x !== playerPos.x || frame.playerPos.y !== playerPos.y;
+			const didCollectCoin = frame.collectedCoins.length > collectedCoins.length;
+
 			playerPos = frame.playerPos;
 			playerDirection = frame.playerDirection;
 			collectedCoins = frame.collectedCoins;
@@ -432,6 +469,12 @@
 				frame.status === 'FAILED' && frame.message.includes('Batas maksimum') && hasForeverBlock(workspaceBlocks)
 					? 'Kodenya berjalan terlalu lama. Coba periksa blok SELAMANYA.'
 					: frame.message;
+
+			if (didCollectCoin) {
+				playCollectReward();
+			} else if (didMove) {
+				playRobotMove();
+			}
 
 			if (frame.status === 'SUCCESS') {
 				stopSimulation();
@@ -451,8 +494,13 @@
 					progressStore.completeLevel(targetLevel.id, achXp);
 				}
 
+				playMissionComplete();
+
 				rewardModalTimer = setTimeout(() => {
 					currentScreen = 'REWARD';
+					if (earnedXpThisRun > 0) {
+						playCollectReward();
+					}
 					rewardModalTimer = null;
 				}, 600);
 			} else if (frame.status === 'FAILED' || frame.status === 'OUT_OF_BOUNDS') {
@@ -464,6 +512,7 @@
 	}
 
 	function handleNextChallengeOrLevel() {
+		playClick();
 		stopSimulation();
 		if (currentChallengeIndex < activeLevel.challenges.length - 1) {
 			// Next challenge in current level
@@ -488,6 +537,7 @@
 	}
 
 	function handleReplayCurrentChallenge() {
+		playClick();
 		stopSimulation();
 		handleResetGame();
 		earnedXpThisRun = 0;
@@ -496,6 +546,7 @@
 	}
 
 	function handleRestartAll() {
+		playClick();
 		stopSimulation();
 		progressStore.reset();
 		currentLearningLevelIndex = 0;

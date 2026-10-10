@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { authStore, dashboardUserStore } from '$lib/stores/authStore';
-	import { themeStore } from '$lib/stores/themeStore';
+	import { soundStore, playClick } from '$lib/stores/soundStore';
 	import { progressStore } from '$lib/stores/progressStore';
 	import { levelsData } from '$lib/challenges/levelsData';
 	import { avatarStorage, validateImageFile, processAndCompressImage } from '$lib/utils/avatarStorage';
@@ -234,30 +234,35 @@
 				</div>
 			</div>
 
-			<!-- Theme Selection Card -->
+			<!-- Sound Effects Preference Setting -->
 			<div class="w-full pt-4 border-t border-slate-800 space-y-2 text-left">
 				<div class="flex items-center justify-between text-xs py-1 text-slate-400">
-					<span>Tema Tampilan:</span>
-					<span class="font-bold text-slate-200 capitalize text-[11px]">
-						{$themeStore === 'light' ? 'Light Mode' : 'Dark Mode'}
+					<span>Efek Suara:</span>
+					<span class="font-bold {$soundStore ? 'text-emerald-400' : 'text-slate-400'} capitalize text-[11px]">
+						{$soundStore ? 'Aktif' : 'Nonaktif'}
 					</span>
 				</div>
 				<div class="grid grid-cols-2 gap-2 pt-1">
 					<button
 						type="button"
-						onclick={() => themeStore.setTheme('dark')}
-						class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {$themeStore === 'dark' ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-slate-300 dark:border-slate-700/60'}"
+						onclick={() => {
+							soundStore.setSound(true);
+							playClick();
+						}}
+						class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {$soundStore ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-600/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-slate-300 dark:border-slate-700/60'}"
 					>
-						<Icon name="moon" size={14} class={$themeStore === 'dark' ? 'text-white' : 'text-slate-600 dark:text-slate-400'} />
-						<span>Dark</span>
+						<Icon name="volume-2" size={14} class={$soundStore ? 'text-white' : 'text-slate-600 dark:text-slate-400'} />
+						<span>Aktif</span>
 					</button>
 					<button
 						type="button"
-						onclick={() => themeStore.setTheme('light')}
-						class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {$themeStore === 'light' ? 'bg-cyan-600 text-white border-cyan-500 shadow-md shadow-cyan-600/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-slate-300 dark:border-slate-700/60'}"
+						onclick={() => {
+							soundStore.setSound(false);
+						}}
+						class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {!$soundStore ? 'bg-rose-600 text-white border-rose-500 shadow-md shadow-rose-600/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-slate-300 dark:border-slate-700/60'}"
 					>
-						<Icon name="sun" size={14} class={$themeStore === 'light' ? 'text-white' : 'text-slate-600 dark:text-slate-400'} />
-						<span>Light</span>
+						<Icon name="volume-x" size={14} class={!$soundStore ? 'text-white' : 'text-slate-600 dark:text-slate-400'} />
+						<span>Nonaktif</span>
 					</button>
 				</div>
 			</div>
