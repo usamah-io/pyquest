@@ -887,9 +887,9 @@
 								aria-label="Tarik blok loop"
 								style="touch-action: none;"
 								onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
-								class="px-3 sm:px-3.5 py-1.5 sm:py-2 {isFirst
+								class="px-3 sm:px-3.5 py-1.5 {isFirst
 									? 'rounded-t-[14px]'
-									: 'rounded-t-none'} flex items-center gap-2 text-xs sm:text-sm font-black text-white cursor-grab active:cursor-grabbing relative {block.type === 'REPEAT'
+									: 'rounded-tl-none rounded-tr-[14px]'} flex items-center gap-2 text-xs sm:text-sm font-black text-white cursor-grab active:cursor-grabbing relative {block.type === 'REPEAT'
 									? 'bg-indigo-600 border-t border-x border-indigo-400/40'
 									: 'bg-purple-600 border-t border-x border-purple-400/40'}"
 							>
@@ -1014,7 +1014,7 @@
 								aria-label="Tarik penutup loop"
 								style="touch-action: none;"
 								onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
-								class="h-3 sm:h-3.5 w-full {hasNext ? 'rounded-b-none' : 'rounded-b-[14px]'} {block.children && block.children.length > 0 ? '-mt-[2px]' : 'mt-0'} px-3 relative flex items-center cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
+								class="h-3 sm:h-3.5 w-full {hasNext ? 'rounded-bl-none rounded-br-[14px]' : 'rounded-b-[14px]'} {block.children && block.children.length > 0 ? '-mt-[2px]' : 'mt-0'} px-3 relative flex items-center cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
 									? 'bg-indigo-600 border-b border-x border-indigo-400/40'
 									: 'bg-purple-600 border-b border-x border-purple-400/40'}"
 							>
@@ -1033,15 +1033,15 @@
 							data-block-index={i}
 							style="touch-action: none;"
 							onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
-							class="group relative flex items-center gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 {hasPrevious
+							class="group relative flex items-center gap-2 px-3 sm:px-3.5 py-1.5 {hasPrevious
 								? '-mt-[2px]'
 								: ''} {isFirst && isLast
 								? 'rounded-xl'
 								: isFirst
-									? 'rounded-t-xl rounded-b-none'
+									? 'rounded-t-xl rounded-br-xl rounded-bl-none'
 									: isLast
-										? 'rounded-b-xl rounded-t-none'
-										: 'rounded-none'} border text-xs sm:text-sm font-black shadow-xs cursor-grab active:cursor-grabbing select-none w-fit min-w-[130px] sm:min-w-[140px] {meta.bgClass} {isDragging && dragInfo?.blockId === block.id
+										? 'rounded-b-xl rounded-tr-xl rounded-tl-none'
+										: 'rounded-r-xl rounded-l-none'} border text-xs sm:text-sm font-black shadow-xs cursor-grab active:cursor-grabbing select-none w-fit min-w-[130px] sm:min-w-[140px] {meta.bgClass} {isDragging && dragInfo?.blockId === block.id
 								? 'opacity-40 border-dashed scale-95'
 								: ''}"
 						>
