@@ -18,14 +18,17 @@ const PRECACHE_ASSETS = [
 	resolve('/favicon.svg'),
 	resolve('/favicon.ico'),
 	resolve('/apple-touch-icon.png'),
-	...immutable,
-	...assets.filter(
-		(file) =>
-			!file.includes('.DS_Store') &&
-			!file.includes('robots.txt') &&
-			!file.startsWith('/art/') &&
-			!file.startsWith('/mascot/')
-	),
+	...immutable.map((i) => (typeof i === 'string' ? i : i?.path ? '/' + i.path.replace(/^\//, '') : '')).filter(Boolean),
+	...assets
+		.map((f) => (typeof f === 'string' ? f : f?.path ? '/' + f.path.replace(/^\//, '') : ''))
+		.filter(
+			(file) =>
+				file &&
+				!file.includes('.DS_Store') &&
+				!file.includes('robots.txt') &&
+				!file.startsWith('/art/') &&
+				!file.startsWith('/mascot/')
+		),
 	...prerendered
 ];
 

@@ -338,35 +338,39 @@
 				</div>
 			</div>
 
-			<div class="w-full mt-4 pt-4 border-t border-slate-800 flex items-center gap-2">
+			<div class="w-full mt-4 pt-4 border-t border-slate-800">
 				{#if !$pwaStore.isInstalled}
+					<div class="flex items-center gap-2">
+						<button
+							type="button"
+							onclick={handleInstallApp}
+							class="flex-1 py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/25 active:scale-98"
+							title="Pasang aplikasi PyQuest di HP / Perangkat"
+						>
+							<Icon name="download" size={15} class="text-cyan-300" />
+							<span>Pasang Aplikasi</span>
+						</button>
+						<button
+							type="button"
+							onclick={handleLogout}
+							class="py-2.5 px-3.5 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-300 dark:border-rose-500/30 text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs shrink-0"
+							title="Keluar dari akun"
+						>
+							<Icon name="log-out" size={15} class="text-rose-600 dark:text-rose-400" />
+							<span>Keluar</span>
+						</button>
+					</div>
+				{:else}
 					<button
 						type="button"
-						onclick={handleInstallApp}
-						class="flex-1 py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-indigo-600/25 active:scale-98"
-						title="Pasang aplikasi PyQuest di HP / Perangkat"
+						onclick={handleLogout}
+						class="w-full py-2.5 px-3.5 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-300 dark:border-rose-500/30 text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+						title="Keluar dari akun"
 					>
-						<Icon name="download" size={15} class="text-cyan-300" />
-						<span>Pasang Aplikasi</span>
+						<Icon name="log-out" size={15} class="text-rose-600 dark:text-rose-400" />
+						<span>Keluar Akun</span>
 					</button>
-				{:else}
-					<div
-						class="flex-1 py-2 px-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 font-bold text-[11px] flex items-center justify-center gap-1.5"
-					>
-						<Icon name="check-circle" size={14} class="text-emerald-400" />
-						<span>Aplikasi Terpasang</span>
-					</div>
 				{/if}
-
-				<button
-					type="button"
-					onclick={handleLogout}
-					class="py-2.5 px-3.5 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 border border-rose-300 dark:border-rose-500/30 text-rose-700 hover:text-rose-800 dark:text-rose-300 dark:hover:text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs shrink-0"
-					title="Keluar dari akun"
-				>
-					<Icon name="log-out" size={15} class="text-rose-600 dark:text-rose-400" />
-					<span>Keluar</span>
-				</button>
 			</div>
 		</div>
 

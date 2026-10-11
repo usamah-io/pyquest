@@ -10,6 +10,8 @@ export interface PwaState {
 	showInstallGuide: boolean;
 }
 
+const STORAGE_KEY_INSTALLED = 'pyquest-pwa-installed';
+
 function createPwaStore() {
 	let deferredPrompt: any = null;
 
@@ -23,12 +25,34 @@ function createPwaStore() {
 		showInstallGuide: false
 	});
 
+	function markAsInstalled() {
+		try {
+			if (typeof window !== 'undefined') {
+				localStorage.setItem(STORAGE_KEY_INSTALLED, 'true');
+			}
+		} catch {}
+		update((s) => ({
+			...s,
+			isInstalled: true,
+			canInstall: false,
+			showInstallGuide: false,
+			showIOSInstallGuide: false
+		}));
+	}
+
 	function init() {
 		if (typeof window === 'undefined') return;
 
 		const isStandalone =
 			window.matchMedia('(display-mode: standalone)').matches ||
 			(window.navigator as any).standalone === true;
+
+		let savedInstalled = false;
+		try {
+			savedInstalled = localStorage.getItem(STORAGE_KEY_INSTALLED) === 'true';
+		} catch {}
+
+		const isInstalled = isStandalone || savedInstalled;
 
 		const userAgent = window.navigator.userAgent.toLowerCase();
 		const isIOSDevice =
@@ -37,29 +61,53 @@ function createPwaStore() {
 
 		update((s) => ({
 			...s,
-			isInstalled: isStandalone,
-			isIOS: isIOSDevice && !isStandalone,
+			isInstalled,
+			isIOS: isIOSDevice && !isInstalled,
 			isAndroid: isAndroidDevice,
 			isOffline: !navigator.onLine
 		}));
+
+		if (isStandalone && !savedInstalled) {
+			try {
+				localStorage.setItem(STORAGE_KEY_INSTALLED, 'true');
+			} catch {}
+		}
+
+		// Check getInstalledRelatedApps on Chromium browsers
+		if ('getInstalledRelatedApps' in navigator && typeof (navigator as any).getInstalledRelatedApps === 'function') {
+			(navigator as any).getInstalledRelatedApps().then((relatedApps: any[]) => {
+				if (Array.isArray(relatedApps) && relatedApps.length > 0) {
+					markAsInstalled();
+				}
+			}).catch(() => {});
+		}
+
+		// Listen for display-mode standalone changes
+		try {
+			const mql = window.matchMedia('(display-mode: standalone)');
+			mql.addEventListener?.('change', (e) => {
+				if (e.matches) {
+					markAsInstalled();
+				}
+			});
+		} catch {}
 
 		// Listen for PWA installation prompt event
 		window.addEventListener('beforeinstallprompt', (e: Event) => {
 			e.preventDefault();
 			deferredPrompt = e;
-			update((s) => ({ ...s, canInstall: true }));
+			if (!isStandalone) {
+				try {
+					localStorage.removeItem(STORAGE_KEY_INSTALLED);
+				} catch {}
+				update((s) => ({ ...s, canInstall: true, isInstalled: false }));
+			}
 		});
 
 		// Listen for app installed event
 		window.addEventListener('appinstalled', () => {
 			deferredPrompt = null;
-			update((s) => ({
-				...s,
-				canInstall: false,
-				isInstalled: true,
-				showInstallGuide: false,
-				showIOSInstallGuide: false
-			}));
+			markAsInstalled();
 			console.log('[PWA] PyQuest was successfully installed!');
 		});
 
@@ -81,7 +129,7 @@ function createPwaStore() {
 				deferredPrompt = null;
 				update((s) => ({ ...s, canInstall: false }));
 				if (outcome === 'accepted') {
-					update((s) => ({ ...s, isInstalled: true }));
+					markAsInstalled();
 					return true;
 				}
 				return false;
@@ -115,6 +163,7 @@ function createPwaStore() {
 	return {
 		subscribe,
 		init,
+		markAsInstalled,
 		promptInstall,
 		toggleInstallGuide,
 		toggleIOSGuide

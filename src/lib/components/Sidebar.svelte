@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { dashboardUserStore } from '$lib/stores/authStore';
+	import { pwaStore } from '$lib/stores/pwaStore';
 	import PwaInstallButton from './PwaInstallButton.svelte';
 	import Icon from './Icon.svelte';
 
@@ -111,9 +112,11 @@
 			</div>
 
 			<!-- PWA Install Prompt (Subtle, visible when installable) -->
-			<div class="pt-1">
-				<PwaInstallButton />
-			</div>
+			{#if !$pwaStore.isInstalled}
+				<div class="pt-1">
+					<PwaInstallButton />
+				</div>
+			{/if}
 		</div>
 	</div>
 
