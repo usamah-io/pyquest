@@ -915,7 +915,7 @@
 										class="loop-number-input w-12 sm:w-14 text-center font-black text-xs sm:text-sm rounded-full py-0.5 px-1 shadow-inner select-text shrink-0"
 										title="Ketik jumlah perulangan secara manual"
 									/>
-									<span class="text-[11px] sm:text-xs text-white/95 font-bold">KALI</span>
+									<span class="text-[11px] sm:text-xs text-white font-black drop-shadow-xs tracking-wider select-none">KALI</span>
 								{/if}
 
 								<!-- Inner puzzle tab protrusion hanging into C-mouth (aligned directly with child socket) -->
@@ -944,7 +944,7 @@
 										<div
 											data-slot-parent={block.id}
 											data-slot-index="0"
-											class="h-4 sm:h-5 w-28 sm:w-36 pointer-events-auto"
+											class="h-3.5 sm:h-4 w-28 sm:w-36 pointer-events-auto"
 										></div>
 									{/if}
 								{:else}
@@ -1011,7 +1011,7 @@
 								aria-label="Tarik penutup loop"
 								style="touch-action: none;"
 								onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
-								class="h-4 sm:h-4.5 rounded-b-[14px] px-3 relative flex items-center cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
+								class="h-2.5 rounded-b-[10px] px-3 relative flex items-center cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
 									? 'bg-indigo-600 border-b border-x border-indigo-400/40'
 									: 'bg-purple-600 border-b border-x border-purple-400/40'}"
 							>
@@ -1153,6 +1153,7 @@
 		border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
 		color-scheme: dark !important;
 		caret-color: #38bdf8 !important;
+		font-weight: 900 !important;
 	}
 	.loop-number-input:hover {
 		border-color: rgba(255, 255, 255, 0.75) !important;
