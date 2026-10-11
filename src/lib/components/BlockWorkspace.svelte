@@ -880,11 +880,6 @@
 								? 'opacity-40 scale-95'
 								: ''}"
 						>
-							<!-- Top puzzle notch socket on C-block (shown ONLY when connected to an instruction above) -->
-							{#if hasPrevious}
-								<div class="block-socket-notch absolute -top-[2px] left-5 w-6 h-1.5 rounded-b-sm border-x border-b z-10 pointer-events-none"></div>
-							{/if}
-
 							<!-- C-Block Top Header (Scratch Style) -->
 							<div
 								role="button"
@@ -937,9 +932,9 @@
 							<div
 								data-repeat-inner-id={block.id}
 								data-child-count={block.children?.length || 0}
-								class="pl-0 pr-0 pt-0 pb-0 flex flex-col items-start space-y-0 border-l-[16px] bg-transparent {block.type === 'REPEAT'
+								class="pl-0 pr-0 pt-0 pb-0 flex flex-col items-stretch space-y-0 border-l-[16px] bg-transparent {block.type === 'REPEAT'
 									? 'border-indigo-600'
-									: 'border-purple-600'}"
+									: 'border-purple-600'} w-full"
 							>
 								{#if !block.children || block.children.length === 0}
 									{#if isDragging && dropTarget?.parentId === block.id}
@@ -973,8 +968,6 @@
 										{/if}
 
 										{@const childMeta = getBlockMeta(child.type)}
-										{@const isFirstChild = ci === 0}
-										{@const isLastChild = ci === block.children.length - 1}
 										<div
 											role="group"
 											aria-label="Aksi dalam loop"
@@ -986,21 +979,10 @@
 												e.stopPropagation();
 												handlePointerDown(e, 'workspace', child.type, child.id, block.id, ci, child);
 											}}
-											class="relative flex items-center gap-2 px-3 py-1.5 {isFirstChild
-												? 'mt-0'
-												: '-mt-[2px]'} {isFirstChild && isLastChild
-												? 'rounded-r-xl'
-												: isFirstChild
-													? 'rounded-tr-xl rounded-br-none'
-													: isLastChild
-														? 'rounded-br-xl rounded-tr-none'
-														: 'rounded-r-none'} rounded-l-none border-y border-r text-xs font-bold shadow-xs cursor-grab active:cursor-grabbing select-none w-full max-w-[210px] sm:max-w-[230px] {childMeta.bgClass} {isDragging && dragInfo?.blockId === child.id
+											class="relative flex items-center gap-2 px-3 py-1.5 -mt-[2px] rounded-none border-y border-r text-xs font-bold shadow-xs cursor-grab active:cursor-grabbing select-none w-full {childMeta.bgClass} {isDragging && dragInfo?.blockId === child.id
 												? 'opacity-40 border-dashed scale-95'
 												: ''}"
 										>
-											<!-- Inner child notch socket receiving parent/preceding tab -->
-											<div class="block-socket-notch absolute -top-[2px] left-5 w-6 h-1.5 rounded-b-sm border-x border-b z-10 pointer-events-none"></div>
-
 											<!-- Inner child bottom tab protrusion -->
 											<div class="absolute -bottom-1.5 left-5 w-6 h-1.5 rounded-b-sm border-x border-b border-black/30 shadow-xs z-20 pointer-events-none {childMeta.tabColor}"></div>
 
@@ -1032,13 +1014,10 @@
 								aria-label="Tarik penutup loop"
 								style="touch-action: none;"
 								onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
-								class="h-3 sm:h-3.5 {hasNext ? 'rounded-b-none' : 'rounded-b-[14px]'} {block.children && block.children.length > 0 ? '-mt-[2px]' : 'mt-0'} px-3 relative flex items-center cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
+								class="h-3 sm:h-3.5 w-full {hasNext ? 'rounded-b-none' : 'rounded-b-[14px]'} {block.children && block.children.length > 0 ? '-mt-[2px]' : 'mt-0'} px-3 relative flex items-center cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
 									? 'bg-indigo-600 border-b border-x border-indigo-400/40'
 									: 'bg-purple-600 border-b border-x border-purple-400/40'}"
 							>
-								<!-- Inner top notch socket receiving child bottom tab -->
-								<div class="block-socket-notch absolute -top-[2px] left-9 w-6 h-1.5 rounded-b-sm border-x border-b z-10 pointer-events-none"></div>
-
 								<!-- Bottom puzzle tab protrusion on C-block foot -->
 								<div class="absolute -bottom-1.5 left-5 w-6 h-1.5 rounded-b-sm border-x border-b border-black/40 shadow-xs z-20 pointer-events-none {block.type === 'REPEAT' ? 'bg-indigo-600' : 'bg-purple-600'}"></div>
 							</div>
@@ -1062,15 +1041,10 @@
 									? 'rounded-t-xl rounded-b-none'
 									: isLast
 										? 'rounded-b-xl rounded-t-none'
-										: 'rounded-none'} border text-xs sm:text-sm font-black shadow-xs cursor-grab active:cursor-grabbing select-none w-fit min-w-[120px] {meta.bgClass} {isDragging && dragInfo?.blockId === block.id
+										: 'rounded-none'} border text-xs sm:text-sm font-black shadow-xs cursor-grab active:cursor-grabbing select-none w-fit min-w-[130px] sm:min-w-[140px] {meta.bgClass} {isDragging && dragInfo?.blockId === block.id
 								? 'opacity-40 border-dashed scale-95'
 								: ''}"
 						>
-							<!-- Top puzzle notch socket: rendered ONLY if connected to an instruction above -->
-							{#if hasPrevious}
-								<div class="block-socket-notch absolute -top-[2px] left-5 w-6 h-1.5 rounded-b-sm border-x border-b z-10 pointer-events-none"></div>
-							{/if}
-
 							<!-- Bottom puzzle tab protrusion -->
 							<div class="absolute -bottom-1.5 left-5 w-6 h-1.5 rounded-b-sm border-x border-b border-black/40 shadow-xs z-20 pointer-events-none {meta.tabColor}"></div>
 
