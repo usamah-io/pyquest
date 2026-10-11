@@ -869,10 +869,8 @@
 							data-block-id={block.id}
 							data-block-parent="root"
 							data-block-index={i}
-							class="relative rounded-2xl border-2 shadow-lg overflow-visible transition-all duration-150 w-fit max-w-full select-none {block.type === 'REPEAT'
-								? 'border-indigo-500 bg-indigo-950/40 shadow-indigo-900/20'
-								: 'border-purple-500 bg-purple-950/40 shadow-purple-900/20'} {isDragging && dragInfo?.blockId === block.id
-								? 'opacity-40 border-dashed scale-95'
+							class="relative rounded-2xl shadow-lg overflow-visible transition-all duration-150 w-fit max-w-full select-none {isDragging && dragInfo?.blockId === block.id
+								? 'opacity-40 scale-95'
 								: ''}"
 						>
 							<!-- Top puzzle notch socket on C-block -->
@@ -886,8 +884,8 @@
 								style="touch-action: none;"
 								onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
 								class="px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-t-[14px] flex items-center gap-2 text-xs sm:text-sm font-black text-white cursor-grab active:cursor-grabbing relative {block.type === 'REPEAT'
-									? 'bg-indigo-600'
-									: 'bg-purple-600'}"
+									? 'bg-indigo-600 border-t border-x border-indigo-400/40'
+									: 'bg-purple-600 border-t border-x border-purple-400/40'}"
 							>
 								<!-- Exactly ONE icon -->
 								<div class="w-5 h-5 rounded-md bg-black/20 border border-white/20 flex items-center justify-center shrink-0">
@@ -896,7 +894,7 @@
 								<span>{block.type === 'REPEAT' ? 'ULANGI' : 'SELAMANYA'}</span>
 
 								{#if block.type === 'REPEAT'}
-									<!-- Directly editable Scratch-style white numeric pill input -->
+									<!-- Directly editable Scratch-style high-contrast numeric pill input -->
 									<input
 										type="number"
 										min="1"
@@ -905,6 +903,7 @@
 										disabled={isRunning}
 										onpointerdown={(e) => e.stopPropagation()}
 										onclick={(e) => e.stopPropagation()}
+										onkeydown={(e) => e.stopPropagation()}
 										onchange={(e) => {
 											const val = parseInt((e.target as HTMLInputElement).value, 10);
 											if (!isNaN(val) && val >= 1) updateRepeatCount(block.id, val);
@@ -913,7 +912,7 @@
 											const val = parseInt((e.target as HTMLInputElement).value, 10);
 											if (!isNaN(val) && val >= 1) updateRepeatCount(block.id, val);
 										}}
-										class="w-11 sm:w-12 text-center bg-white text-slate-950 font-black text-xs sm:text-sm rounded-full py-0.5 shadow-sm outline-none focus:ring-2 focus:ring-cyan-300 select-text shrink-0"
+										class="loop-number-input w-12 sm:w-14 text-center font-black text-xs sm:text-sm rounded-full py-0.5 px-1 shadow-inner select-text shrink-0"
 										title="Ketik jumlah perulangan secara manual"
 									/>
 									<span class="text-[11px] sm:text-xs text-white/95 font-bold">KALI</span>
@@ -927,20 +926,27 @@
 							<div
 								data-repeat-inner-id={block.id}
 								data-child-count={block.children?.length || 0}
-								class="pl-0 pr-2 pt-0 pb-0 flex flex-col items-start space-y-0 border-l-[16px] {block.type === 'REPEAT'
-									? 'border-indigo-600 bg-indigo-950/20'
-									: 'border-purple-600 bg-purple-950/20'}"
+								class="pl-0 pr-0 pt-0 pb-0 flex flex-col items-start space-y-0 border-l-[16px] bg-transparent {block.type === 'REPEAT'
+									? 'border-indigo-600'
+									: 'border-purple-600'}"
 							>
 								{#if !block.children || block.children.length === 0}
-									<div
-										data-slot-parent={block.id}
-										data-slot-index="0"
-										class="py-2 px-3 my-0.5 ml-1 border-2 border-dashed rounded-xl text-xs font-bold transition-all duration-150 {isDragging && dropTarget?.parentId === block.id
-											? 'border-cyan-400 bg-cyan-950/70 text-cyan-200'
-											: 'border-indigo-500/40 text-indigo-300/80 bg-indigo-950/40'}"
-									>
-										Tarik balok ke dalam loop
-									</div>
+									{#if isDragging && dropTarget?.parentId === block.id}
+										<div
+											data-slot-parent={block.id}
+											data-slot-index="0"
+											class="w-full my-0.5 py-1 px-2.5 rounded-r-lg border border-dashed border-cyan-400 bg-cyan-950/80 flex items-center justify-center gap-1 text-[10px] font-black text-cyan-300 animate-pulse select-none"
+										>
+											<Icon name="arrow-down" size={10} />
+											<span>MASUKKAN KE LOOP</span>
+										</div>
+									{:else}
+										<div
+											data-slot-parent={block.id}
+											data-slot-index="0"
+											class="h-4 sm:h-5 w-28 sm:w-36 pointer-events-auto"
+										></div>
+									{/if}
 								{:else}
 									{#each block.children as child, ci (child.id)}
 										<!-- Inner Insertion Indicator -->
@@ -948,7 +954,7 @@
 											<div
 												data-slot-parent={block.id}
 												data-slot-index={ci}
-												class="w-full my-0.5 py-0.5 rounded-lg border border-dashed border-cyan-400 bg-cyan-950/80 flex items-center justify-center gap-1 text-[10px] font-black text-cyan-300 animate-pulse select-none"
+												class="w-full my-0.5 py-0.5 px-2 rounded-r-lg border border-dashed border-cyan-400 bg-cyan-950/80 flex items-center justify-center gap-1 text-[10px] font-black text-cyan-300 animate-pulse select-none"
 											>
 												<Icon name="arrow-down" size={10} />
 												<span>MASUKKAN KE LOOP</span>
@@ -989,7 +995,7 @@
 										<div
 											data-slot-parent={block.id}
 											data-slot-index={block.children.length}
-											class="w-full my-0.5 py-0.5 rounded-lg border border-dashed border-cyan-400 bg-cyan-950/80 flex items-center justify-center gap-1 text-[10px] font-black text-cyan-300 animate-pulse select-none"
+											class="w-full my-0.5 py-0.5 px-2 rounded-r-lg border border-dashed border-cyan-400 bg-cyan-950/80 flex items-center justify-center gap-1 text-[10px] font-black text-cyan-300 animate-pulse select-none"
 										>
 											<Icon name="arrow-down" size={10} />
 											<span>MASUKKAN KE LOOP</span>
@@ -1006,8 +1012,8 @@
 								style="touch-action: none;"
 								onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
 								class="h-4 sm:h-4.5 rounded-b-[14px] px-3 relative flex items-center cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
-									? 'bg-indigo-600'
-									: 'bg-purple-600'}"
+									? 'bg-indigo-600 border-b border-x border-indigo-400/40'
+									: 'bg-purple-600 border-b border-x border-purple-400/40'}"
 							>
 								<!-- Inner top notch socket receiving child bottom tab -->
 								<div class="absolute -top-[2px] left-9 w-6 h-1.5 bg-slate-900/90 rounded-b-sm border-x border-b border-black/50 z-20 pointer-events-none"></div>
@@ -1138,3 +1144,33 @@
 		</div>
 	</div>
 {/if}
+
+<style>
+	/* High-contrast Scratch-style numeric input for ULANGI repeat loop */
+	.loop-number-input {
+		background-color: #111827 !important;
+		color: #ffffff !important;
+		border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
+		color-scheme: dark !important;
+		caret-color: #38bdf8 !important;
+	}
+	.loop-number-input:hover {
+		border-color: rgba(255, 255, 255, 0.75) !important;
+		background-color: #0f172a !important;
+	}
+	.loop-number-input:focus,
+	.loop-number-input:focus-visible {
+		outline: none !important;
+		border-color: #38bdf8 !important;
+		box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.6) !important;
+		background-color: #030712 !important;
+	}
+	.loop-number-input::selection {
+		background-color: #0284c7 !important;
+		color: #ffffff !important;
+	}
+	.loop-number-input:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+</style>
