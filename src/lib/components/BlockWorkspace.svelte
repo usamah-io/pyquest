@@ -932,7 +932,7 @@
 							<div
 								data-repeat-inner-id={block.id}
 								data-child-count={block.children?.length || 0}
-								class="pl-0 pr-0 pt-0 pb-0 flex flex-col items-stretch space-y-0 border-l-[16px] bg-transparent {block.type === 'REPEAT'
+								class="pl-0 pr-0 pt-0 pb-0 flex flex-col items-start space-y-0 border-l-[16px] bg-transparent {block.type === 'REPEAT'
 									? 'border-indigo-600'
 									: 'border-purple-600'} w-full"
 							>
@@ -968,6 +968,8 @@
 										{/if}
 
 										{@const childMeta = getBlockMeta(child.type)}
+										{@const isFirstChild = ci === 0}
+										{@const isLastChild = ci === block.children.length - 1}
 										<div
 											role="group"
 											aria-label="Aksi dalam loop"
@@ -979,7 +981,13 @@
 												e.stopPropagation();
 												handlePointerDown(e, 'workspace', child.type, child.id, block.id, ci, child);
 											}}
-											class="relative flex items-center gap-2 px-3 py-1.5 -mt-[2px] rounded-none border-y border-r text-xs font-bold shadow-xs cursor-grab active:cursor-grabbing select-none w-full {childMeta.bgClass} {isDragging && dragInfo?.blockId === child.id
+											class="relative flex items-center gap-2 px-3 sm:px-3.5 py-1.5 -mt-[2px] {isFirstChild && isLastChild
+												? 'rounded-xl'
+												: isFirstChild
+													? 'rounded-t-xl rounded-br-xl rounded-bl-none'
+													: isLastChild
+														? 'rounded-b-xl rounded-tr-xl rounded-tl-none'
+														: 'rounded-r-xl rounded-l-none'} border text-xs sm:text-sm font-black shadow-xs cursor-grab active:cursor-grabbing select-none w-fit min-w-[130px] sm:min-w-[140px] {childMeta.bgClass} {isDragging && dragInfo?.blockId === child.id
 												? 'opacity-40 border-dashed scale-95'
 												: ''}"
 										>
