@@ -925,7 +925,7 @@
 								{/if}
 
 								<!-- Inner puzzle tab protrusion hanging into C-mouth (aligned directly with child socket at X=36px) -->
-								<div class="absolute -bottom-1.5 left-9 w-6 h-1.5 rounded-b-sm border-x border-b border-black/30 shadow-xs pointer-events-none {block.type === 'REPEAT' ? 'bg-indigo-600' : 'bg-purple-600'} z-20"></div>
+								<div class="absolute top-[calc(100%-2px)] left-9 w-6 h-2 rounded-b-sm border-x border-b border-black/30 shadow-xs pointer-events-none {block.type === 'REPEAT' ? 'bg-indigo-600' : 'bg-purple-600'} z-20"></div>
 							</div>
 
 							<!-- C-Block Nested Body (Connected Inner Slot with Left Spine - Scratch Style) -->
@@ -984,7 +984,7 @@
 												: ''}"
 										>
 											<!-- Inner child bottom tab protrusion -->
-											<div class="absolute -bottom-1.5 left-5 w-6 h-1.5 rounded-b-sm border-x border-b border-black/30 shadow-xs z-20 pointer-events-none {childMeta.tabColor}"></div>
+											<div class="absolute top-[calc(100%-2px)] left-5 w-6 h-2 rounded-b-sm border-x border-b border-black/30 shadow-xs z-20 pointer-events-none {childMeta.tabColor}"></div>
 
 											<div class="w-5 h-5 rounded bg-black/20 border border-white/20 flex items-center justify-center shrink-0">
 												<Icon name={childMeta.icon} size={13} class="text-white" />
@@ -1014,12 +1014,12 @@
 								aria-label="Tarik penutup loop"
 								style="touch-action: none;"
 								onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
-								class="h-3 sm:h-3.5 w-full {hasNext ? 'rounded-bl-none rounded-br-[14px]' : 'rounded-b-[14px]'} {block.children && block.children.length > 0 ? '-mt-[2px]' : 'mt-0'} px-3 relative flex items-center cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
+								class="h-2.5 sm:h-3 w-full {hasNext ? 'rounded-bl-none rounded-br-[14px]' : 'rounded-b-[14px]'} {block.children && block.children.length > 0 ? '-mt-[2px]' : 'mt-0'} px-3 relative flex items-center cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
 									? 'bg-indigo-600 border-b border-x border-indigo-400/40'
 									: 'bg-purple-600 border-b border-x border-purple-400/40'}"
 							>
 								<!-- Bottom puzzle tab protrusion on C-block foot -->
-								<div class="absolute -bottom-1.5 left-5 w-6 h-1.5 rounded-b-sm border-x border-b border-black/40 shadow-xs z-20 pointer-events-none {block.type === 'REPEAT' ? 'bg-indigo-600' : 'bg-purple-600'}"></div>
+								<div class="absolute top-[calc(100%-2px)] left-5 w-6 h-2 rounded-b-sm border-x border-b border-black/40 shadow-xs z-20 pointer-events-none {block.type === 'REPEAT' ? 'bg-indigo-600' : 'bg-purple-600'}"></div>
 							</div>
 						</div>
 					{:else}
@@ -1046,7 +1046,7 @@
 								: ''}"
 						>
 							<!-- Bottom puzzle tab protrusion -->
-							<div class="absolute -bottom-1.5 left-5 w-6 h-1.5 rounded-b-sm border-x border-b border-black/40 shadow-xs z-20 pointer-events-none {meta.tabColor}"></div>
+							<div class="absolute top-[calc(100%-2px)] left-5 w-6 h-2 rounded-b-sm border-x border-b border-black/40 shadow-xs z-20 pointer-events-none {meta.tabColor}"></div>
 
 							<div class="flex items-center gap-2">
 								<!-- EXACTLY ONE ICON -->
