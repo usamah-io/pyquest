@@ -888,8 +888,8 @@
 								style="touch-action: none;"
 								onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
 								class="px-3 sm:px-3.5 py-1.5 {isFirst
-									? 'rounded-t-[14px]'
-									: 'rounded-tl-none rounded-tr-[14px]'} flex items-center gap-2 text-xs sm:text-sm font-black text-white cursor-grab active:cursor-grabbing relative {block.type === 'REPEAT'
+									? 'rounded-t-xl'
+									: 'rounded-tl-none rounded-tr-xl'} flex items-center gap-2 text-xs sm:text-sm font-black text-white cursor-grab active:cursor-grabbing relative {block.type === 'REPEAT'
 									? 'bg-indigo-600 border-t border-x border-indigo-400/40'
 									: 'bg-purple-600 border-t border-x border-purple-400/40'}"
 							>
@@ -1029,7 +1029,7 @@
 								aria-label="Tarik penutup loop"
 								style="touch-action: none;"
 								onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
-								class="h-2.5 sm:h-3 w-full {hasNext ? 'rounded-bl-none rounded-br-[14px]' : 'rounded-b-[14px]'} {block.children && block.children.length > 0 ? '-mt-[2px]' : 'mt-0'} px-3 relative flex items-center cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
+								class="h-2.5 sm:h-3 w-full {hasNext ? 'rounded-bl-none rounded-br-xl' : 'rounded-b-xl'} {block.children && block.children.length > 0 ? '-mt-[2px]' : 'mt-0'} px-3 relative flex items-center cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
 									? 'bg-indigo-600 border-b border-x border-indigo-400/40'
 									: 'bg-purple-600 border-b border-x border-purple-400/40'}"
 							>
