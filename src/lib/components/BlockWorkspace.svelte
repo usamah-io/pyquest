@@ -932,7 +932,7 @@
 							<div
 								data-repeat-inner-id={block.id}
 								data-child-count={block.children?.length || 0}
-								class="pl-0 pr-0 pt-0 pb-0 flex flex-col items-start space-y-0 border-l-[16px] bg-transparent {block.type === 'REPEAT'
+								class="relative pl-0 pr-0 pt-0 pb-0 flex flex-col items-start space-y-0 border-l-[16px] bg-transparent {block.type === 'REPEAT'
 									? 'border-indigo-600'
 									: 'border-purple-600'} w-full"
 							>
@@ -954,6 +954,13 @@
 										></div>
 									{/if}
 								{:else}
+									<!-- Loop inner corner backings to fill behind nested block rounded corners without visible gaps -->
+									<div
+										class="absolute -top-[2px] -bottom-[2px] left-0 w-3.5 pointer-events-none {block.type === 'REPEAT'
+											? 'bg-indigo-600'
+											: 'bg-purple-600'}"
+									></div>
+
 									{#each block.children as child, ci (child.id)}
 										<!-- Inner Insertion Indicator -->
 										{#if isDragging && dropTarget?.parentId === block.id && dropTarget?.index === ci}
@@ -981,7 +988,7 @@
 												e.stopPropagation();
 												handlePointerDown(e, 'workspace', child.type, child.id, block.id, ci, child);
 											}}
-											class="relative flex items-center gap-2 px-3 sm:px-3.5 py-1.5 -mt-[2px] {isFirstChild && isLastChild
+											class="relative z-10 flex items-center gap-2 px-3 sm:px-3.5 py-1.5 -mt-[2px] {isFirstChild && isLastChild
 												? 'rounded-xl'
 												: isFirstChild
 													? 'rounded-t-xl rounded-br-xl rounded-bl-none'
