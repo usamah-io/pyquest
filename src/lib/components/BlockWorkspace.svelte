@@ -888,8 +888,8 @@
 								style="touch-action: none;"
 								onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
 								class="w-full px-3 sm:px-3.5 py-1.5 {isFirst
-									? 'rounded-t-xl'
-									: 'rounded-tl-none rounded-tr-xl'} flex items-center gap-2 text-xs sm:text-sm font-black text-white cursor-grab active:cursor-grabbing relative {block.type === 'REPEAT'
+									? 'rounded-t-xl rounded-br-xl'
+									: 'rounded-tl-none rounded-r-xl'} flex items-center gap-2 text-xs sm:text-sm font-black text-white cursor-grab active:cursor-grabbing relative {block.type === 'REPEAT'
 									? 'bg-indigo-600 border-t border-x border-indigo-400/40'
 									: 'bg-purple-600 border-t border-x border-purple-400/40'}"
 							>
@@ -932,7 +932,7 @@
 							<div
 								data-repeat-inner-id={block.id}
 								data-child-count={block.children?.length || 0}
-								class="relative pl-0 pr-0 pt-0 pb-0 flex flex-col items-stretch space-y-0 border-l-[16px] bg-transparent {block.type === 'REPEAT'
+								class="relative pl-0 pr-0 pt-0 pb-0 flex flex-col items-start space-y-0 border-l-[16px] bg-transparent {block.type === 'REPEAT'
 									? 'border-indigo-600'
 									: 'border-purple-600'} w-full"
 							>
@@ -991,12 +991,12 @@
 											class="relative z-10 flex items-center gap-2 px-3 sm:px-3.5 py-1.5 {isFirstChild
 												? '-mt-[2px]'
 												: '-mt-[3px]'} {isFirstChild && isLastChild
-												? 'rounded-l-xl rounded-r-none'
+												? 'rounded-xl'
 												: isFirstChild
-													? 'rounded-tl-xl rounded-r-none rounded-bl-none'
+													? 'rounded-t-xl rounded-br-xl rounded-bl-none'
 													: isLastChild
-														? 'rounded-bl-xl rounded-r-none rounded-tl-none'
-														: 'rounded-none'} border text-xs sm:text-sm font-black shadow-xs cursor-grab active:cursor-grabbing select-none w-full min-w-[130px] sm:min-w-[140px] {childMeta.bgClass} {isDragging && dragInfo?.blockId === child.id
+														? 'rounded-b-xl rounded-tr-xl rounded-tl-none'
+														: 'rounded-r-xl rounded-l-none'} border text-xs sm:text-sm font-black shadow-xs cursor-grab active:cursor-grabbing select-none w-fit min-w-[130px] sm:min-w-[140px] {childMeta.bgClass} {isDragging && dragInfo?.blockId === child.id
 												? 'opacity-40 border-dashed scale-95'
 												: ''}"
 										>
@@ -1031,7 +1031,7 @@
 								aria-label="Tarik penutup loop"
 								style="touch-action: none;"
 								onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
-								class="h-2.5 sm:h-3 w-full {hasNext ? 'rounded-bl-none rounded-br-xl' : 'rounded-b-xl'} {block.children && block.children.length > 0 ? '-mt-[3px]' : 'mt-0'} px-3 relative z-30 flex items-center cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
+								class="h-2.5 sm:h-3 w-full {hasNext ? 'rounded-bl-none rounded-r-xl' : 'rounded-b-xl rounded-tr-xl'} {block.children && block.children.length > 0 ? '-mt-[3px]' : 'mt-0'} px-3 relative z-30 flex items-center cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
 									? 'bg-indigo-600 border-b border-x border-indigo-400/40'
 									: 'bg-purple-600 border-b border-x border-purple-400/40'}"
 							>
@@ -1055,10 +1055,10 @@
 								: ''} {isFirst && isLast
 								? 'rounded-xl'
 								: isFirst
-									? 'rounded-t-xl rounded-b-none'
+									? 'rounded-t-xl rounded-br-xl rounded-bl-none'
 									: isLast
-										? 'rounded-b-xl rounded-t-none'
-										: 'rounded-none'} border text-xs sm:text-sm font-black shadow-xs cursor-grab active:cursor-grabbing select-none w-fit min-w-[130px] sm:min-w-[140px] {meta.bgClass} {isDragging && dragInfo?.blockId === block.id
+										? 'rounded-b-xl rounded-tr-xl rounded-tl-none'
+										: 'rounded-r-xl rounded-l-none'} border text-xs sm:text-sm font-black shadow-xs cursor-grab active:cursor-grabbing select-none w-fit min-w-[130px] sm:min-w-[140px] {meta.bgClass} {isDragging && dragInfo?.blockId === block.id
 								? 'opacity-40 border-dashed scale-95'
 								: ''}"
 						>
