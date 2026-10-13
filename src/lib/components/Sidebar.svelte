@@ -2,6 +2,7 @@
 	import { dashboardUserStore } from '$lib/stores/authStore';
 	import { pwaStore } from '$lib/stores/pwaStore';
 	import PwaInstallButton from './PwaInstallButton.svelte';
+	import PyQuestLogo from './PyQuestLogo.svelte';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -22,6 +23,16 @@
 <aside class="hidden lg:flex flex-col w-60 xl:w-64 bg-slate-900/90 border-r border-slate-800/80 p-4 select-none shrink-0 justify-between backdrop-blur-md z-20">
 	<!-- Navigation Links -->
 	<div class="space-y-6 pt-1">
+		<!-- Desktop Brand Logo -->
+		<div class="px-2 pt-1 pb-1">
+			<PyQuestLogo
+				size="md"
+				showSubtitle={true}
+				clickable={true}
+				onclick={() => onSelectMode && onSelectMode('HOME')}
+			/>
+		</div>
+
 		<div>
 			<span class="text-[10px] font-black uppercase tracking-wider text-slate-500 px-3 pb-2 block">
 				Navigasi Utama
@@ -35,7 +46,7 @@
 						? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
 						: 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/80'}"
 				>
-					<Icon name="home" size={18} class={currentMode === 'HOME' ? 'text-white' : 'text-slate-400 group-hover:text-slate-100'} />
+					<Icon name="house" size={18} class={currentMode === 'HOME' ? 'text-white' : 'text-slate-400 group-hover:text-slate-100'} />
 					<span>Beranda</span>
 				</button>
 
@@ -59,7 +70,7 @@
 						? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
 						: 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/80'}"
 				>
-					<Icon name="gamepad" size={18} class={currentMode === 'GAME' ? 'text-white' : 'text-slate-400 group-hover:text-slate-100'} />
+					<Icon name="gamepad-2" size={18} class={currentMode === 'GAME' ? 'text-white' : 'text-slate-400 group-hover:text-slate-100'} />
 					<span>Coding Game</span>
 				</button>
 
@@ -71,7 +82,7 @@
 						? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
 						: 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/80'}"
 				>
-					<Icon name="user" size={18} class={currentMode === 'PROFILE' ? 'text-white' : 'text-slate-400 group-hover:text-slate-100'} />
+					<Icon name="user-round" size={18} class={currentMode === 'PROFILE' ? 'text-white' : 'text-slate-400 group-hover:text-slate-100'} />
 					<span>Profil Siswa</span>
 				</button>
 			</nav>

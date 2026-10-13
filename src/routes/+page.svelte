@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
-	import Navbar from '$lib/components/Navbar.svelte';
 	import LandingHero from '$lib/components/LandingHero.svelte';
 	import LearningLevelSelect from '$lib/components/LearningLevelSelect.svelte';
 	import LearningSuccessModal from '$lib/components/LearningSuccessModal.svelte';
@@ -785,27 +784,7 @@
 	<title>PyQuest — Petualangan Logika Python</title>
 </svelte:head>
 
-<div class="bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'min-h-screen portrait:h-auto portrait:overflow-visible landscape:h-[100dvh] landscape:max-h-[100dvh] landscape:overflow-hidden md:h-[100dvh] md:max-h-[100dvh] md:overflow-hidden' : 'min-h-screen'}">
-	<!-- Top Nav with Mode Switcher -->
-	{#if currentScreen !== 'LOGIN' && currentScreen !== 'PROFILE_SETUP'}
-		{#if currentScreen === 'CHALLENGE' || currentScreen === 'REWARD'}
-			<div class="hidden md:block">
-				<Navbar
-					isVisible={isNavbarVisible}
-					onSelectMode={handleSelectNavbarMode}
-					onOpenProfile={handleOpenProfile}
-				/>
-			</div>
-		{:else}
-			<Navbar
-				isVisible={isNavbarVisible}
-				onSelectMode={handleSelectNavbarMode}
-				onOpenProfile={handleOpenProfile}
-			/>
-		{/if}
-	{/if}
-
-
+<div class="bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white pt-[env(safe-area-inset-top,0px)] {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'min-h-screen portrait:h-auto portrait:overflow-visible landscape:h-[100dvh] landscape:max-h-[100dvh] landscape:overflow-hidden md:h-[100dvh] md:max-h-[100dvh] md:overflow-hidden' : 'min-h-screen'}">
 	<!-- Google Authentication Modal -->
 	<GoogleAuthModal
 		isOpen={$authStore.isGoogleModalOpen && currentScreen !== 'LOGIN'}
@@ -818,7 +797,7 @@
 	/>
 
 	<!-- Body Layout with Desktop Sidebar -->
-	<div class="flex-1 flex {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'portrait:h-auto portrait:overflow-visible landscape:overflow-hidden md:overflow-hidden md:pt-14' : currentScreen === 'LOGIN' || currentScreen === 'PROFILE_SETUP' ? 'overflow-hidden' : 'overflow-hidden pt-14'} min-h-0">
+	<div class="flex-1 flex {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'portrait:h-auto portrait:overflow-visible landscape:overflow-hidden md:overflow-hidden' : 'overflow-hidden'} min-h-0">
 		{#if currentScreen === 'LANDING' || currentScreen === 'LEARN_SELECT' || currentScreen === 'LEVEL_SELECT' || currentScreen === 'PROFILE' || currentScreen === 'MISSIONS' || currentScreen === 'XP_PROGRESS' || currentScreen === 'STREAK_VIEW'}
 			<Sidebar
 				currentMode={activeNavbarMode}
@@ -833,7 +812,7 @@
 		<main
 			bind:this={mainContainerEl}
 			onscroll={handleMainScroll}
-			class="flex-1 flex flex-col {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'p-1.5 sm:p-2.5 landscape:p-1 portrait:h-auto portrait:overflow-y-auto portrait:pb-24 landscape:h-full landscape:max-h-full landscape:overflow-hidden md:h-full md:max-h-full md:overflow-hidden' : currentScreen === 'LOGIN' ? 'p-2 sm:p-4 overflow-y-auto' : 'p-2 sm:p-4 md:p-6 pb-20 lg:pb-6 overflow-y-auto'} min-h-0"
+			class="flex-1 flex flex-col {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'p-1.5 sm:p-2.5 landscape:p-1 portrait:h-auto portrait:overflow-y-auto portrait:pb-24 landscape:h-full landscape:max-h-full landscape:overflow-hidden md:h-full md:max-h-full md:overflow-hidden' : currentScreen === 'LOGIN' ? 'p-2 sm:p-4 overflow-y-auto' : 'p-2 sm:p-4 md:p-6 pb-24 lg:pb-6 overflow-y-auto'} min-h-0"
 		>
 			<!-- 0. LOGIN SCREEN (Real Google Sign-In) -->
 			{#if currentScreen === 'LOGIN'}

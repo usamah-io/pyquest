@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { authStore, dashboardUserStore } from '$lib/stores/authStore';
 	import { soundStore, playClick } from '$lib/stores/soundStore';
+	import { themeStore } from '$lib/stores/themeStore';
 	import { pwaStore } from '$lib/stores/pwaStore';
 	import { progressStore } from '$lib/stores/progressStore';
 	import { levelsData } from '$lib/challenges/levelsData';
+	import type { GameLevel } from '$lib/types';
 	import { avatarStorage, validateImageFile, processAndCompressImage } from '$lib/utils/avatarStorage';
 	import Icon from './Icon.svelte';
 
@@ -18,6 +20,24 @@
 		onOpenStreak?: () => void;
 		onOpenMissions?: () => void;
 	} = $props();
+
+	let selectedBadge = $state<GameLevel | null>(null);
+
+	function handleOpenBadgeDetail(lvl: GameLevel) {
+		playClick();
+		selectedBadge = lvl;
+	}
+
+	function handleCloseBadgeDetail() {
+		playClick();
+		selectedBadge = null;
+	}
+
+	function handleBadgeKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape' && selectedBadge) {
+			selectedBadge = null;
+		}
+	}
 
 	const DEFAULT_AVATAR = '/mascot/pybot-front-idle.webp';
 	const AVATAR_OPTIONS = [
@@ -246,17 +266,17 @@
 				onkeydown={(e) => e.key === 'Enter' && handleOpenFilePicker()}
 				title="Klik untuk ubah foto"
 			>
-				<div class="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-slate-950 border-2 border-indigo-500/40 p-2 shadow-xl shadow-indigo-500/20 flex items-center justify-center overflow-hidden hover:border-cyan-400 transition-colors">
+				<div class="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-slate-950 border-2 border-indigo-500/40 p-0 shadow-xl shadow-indigo-500/20 flex items-center justify-center overflow-hidden hover:border-cyan-400 transition-colors">
 					<img
 						src={chosenAvatar}
 						alt="Avatar"
-						class="w-full h-full object-cover"
+						class="w-full h-full object-cover object-center rounded-full"
 						onerror={(e) => {
 							(e.currentTarget as HTMLImageElement).src = DEFAULT_AVATAR;
 						}}
 					/>
 				</div>
-				<div class="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-indigo-600 hover:bg-indigo-500 border-2 border-slate-900 flex items-center justify-center text-white shadow transition-transform group-hover:scale-110">
+				<div class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-indigo-600 hover:bg-indigo-500 border-2 border-slate-900 flex items-center justify-center text-white shadow transition-transform group-hover:scale-110">
 					<Icon name="camera" size={14} />
 				</div>
 			</div>
@@ -305,36 +325,77 @@
 				</div>
 			</div>
 
-			<!-- Sound Effects Preference Setting -->
-			<div class="w-full pt-4 border-t border-slate-800 space-y-2 text-left">
-				<div class="flex items-center justify-between text-xs py-1 text-slate-400">
-					<span>Efek Suara:</span>
-					<span class="font-bold {$soundStore ? 'text-emerald-400' : 'text-slate-400'} capitalize text-[11px]">
-						{$soundStore ? 'Aktif' : 'Nonaktif'}
-					</span>
+			<!-- Preferensi Aplikasi (Tema & Efek Suara) -->
+			<div class="w-full pt-4 border-t border-slate-800 space-y-3 text-left">
+				<span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block">
+					Preferensi Aplikasi
+				</span>
+
+				<!-- Tema Tampilan -->
+				<div class="space-y-1.5">
+					<div class="flex items-center justify-between text-xs text-slate-400">
+						<span>Tema:</span>
+						<span class="font-bold text-indigo-400 capitalize text-[11px] font-mono">
+							{$themeStore === 'light' ? 'Terang' : 'Gelap'}
+						</span>
+					</div>
+					<div class="grid grid-cols-2 gap-2">
+						<button
+							type="button"
+							onclick={() => {
+								if ($themeStore !== 'dark') themeStore.setTheme('dark');
+								playClick();
+							}}
+							class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {$themeStore === 'dark' ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-slate-300 dark:border-slate-700/60'}"
+						>
+							<Icon name="moon" size={14} class={$themeStore === 'dark' ? 'text-white' : 'text-slate-600 dark:text-slate-400'} />
+							<span>Gelap</span>
+						</button>
+						<button
+							type="button"
+							onclick={() => {
+								if ($themeStore !== 'light') themeStore.setTheme('light');
+								playClick();
+							}}
+							class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {$themeStore === 'light' ? 'bg-amber-500 text-white border-amber-400 shadow-md shadow-amber-500/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-slate-300 dark:border-slate-700/60'}"
+						>
+							<Icon name="sun" size={14} class={$themeStore === 'light' ? 'text-white' : 'text-slate-600 dark:text-slate-400'} />
+							<span>Terang</span>
+						</button>
+					</div>
 				</div>
-				<div class="grid grid-cols-2 gap-2 pt-1">
-					<button
-						type="button"
-						onclick={() => {
-							soundStore.setSound(true);
-							playClick();
-						}}
-						class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {$soundStore ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-600/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-slate-300 dark:border-slate-700/60'}"
-					>
-						<Icon name="volume-2" size={14} class={$soundStore ? 'text-white' : 'text-slate-600 dark:text-slate-400'} />
-						<span>Aktif</span>
-					</button>
-					<button
-						type="button"
-						onclick={() => {
-							soundStore.setSound(false);
-						}}
-						class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {!$soundStore ? 'bg-rose-600 text-white border-rose-500 shadow-md shadow-rose-600/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-slate-300 dark:border-slate-700/60'}"
-					>
-						<Icon name="volume-x" size={14} class={!$soundStore ? 'text-white' : 'text-slate-600 dark:text-slate-400'} />
-						<span>Nonaktif</span>
-					</button>
+
+				<!-- Efek Suara -->
+				<div class="space-y-1.5 pt-1">
+					<div class="flex items-center justify-between text-xs text-slate-400">
+						<span>Efek Suara:</span>
+						<span class="font-bold {$soundStore ? 'text-emerald-400' : 'text-slate-400'} capitalize text-[11px]">
+							{$soundStore ? 'Aktif' : 'Nonaktif'}
+						</span>
+					</div>
+					<div class="grid grid-cols-2 gap-2">
+						<button
+							type="button"
+							onclick={() => {
+								soundStore.setSound(true);
+								playClick();
+							}}
+							class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {$soundStore ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-600/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-slate-300 dark:border-slate-700/60'}"
+						>
+							<Icon name="volume-2" size={14} class={$soundStore ? 'text-white' : 'text-slate-600 dark:text-slate-400'} />
+							<span>Aktif</span>
+						</button>
+						<button
+							type="button"
+							onclick={() => {
+								soundStore.setSound(false);
+							}}
+							class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {!$soundStore ? 'bg-rose-600 text-white border-rose-500 shadow-md shadow-rose-600/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-slate-300 dark:border-slate-700/60'}"
+						>
+							<Icon name="volume-x" size={14} class={!$soundStore ? 'text-white' : 'text-slate-600 dark:text-slate-400'} />
+							<span>Nonaktif</span>
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -516,36 +577,120 @@
 					</span>
 				</div>
 
-				<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+				<div class="grid grid-cols-2 md:grid-cols-3 gap-3">
 					{#each levelsData as lvl}
 						{@const isUnlocked = ($progressStore.completedLevels || []).includes(lvl.id)}
-						<div class="p-3 rounded-2xl border transition-all flex items-start gap-3 {isUnlocked
-							? 'bg-amber-950/20 border-amber-500/40 shadow-xs badge-card-unlocked'
-							: 'bg-slate-950/40 border-slate-800/80 badge-card-locked'}">
-							<div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 {isUnlocked
-								? 'bg-amber-400/20 text-amber-400 border border-amber-400/30 badge-icon-unlocked'
-								: 'bg-slate-800 text-slate-400 border border-slate-700/60 badge-icon-locked'}">
-								<Icon name={isUnlocked ? (lvl.achievement?.icon || 'trophy') : 'lock'} size={18} />
-							</div>
-							<div class="flex-1 min-w-0">
-								<div class="flex items-center justify-between gap-1 mb-0.5">
-									<span class="text-xs font-black truncate {isUnlocked ? 'text-white badge-card-title' : 'text-slate-300 badge-card-locked-title'}">
-										{lvl.achievement?.title || `Level ${lvl.id}`}
-									</span>
-									<span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded {isUnlocked ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30 badge-pill-unlocked' : 'bg-slate-800 text-slate-400 border border-slate-700/60 badge-pill-locked'}">
-										Lvl {lvl.id}
-									</span>
+						<button
+							type="button"
+							onclick={() => handleOpenBadgeDetail(lvl)}
+							class="p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer group active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-400/40 {isUnlocked
+								? 'bg-amber-950/20 hover:bg-amber-950/30 border-amber-500/40 hover:border-amber-400 shadow-xs'
+								: 'bg-slate-950/40 hover:bg-slate-950/60 border-slate-800/80 hover:border-slate-700'}"
+							title="Klik untuk melihat detail lencana {lvl.achievement?.title || `Level ${lvl.id}`}"
+						>
+							<div class="flex items-start justify-between gap-1 w-full mb-2">
+								<div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform {isUnlocked
+									? 'bg-amber-400/20 text-amber-400 border border-amber-400/30'
+									: 'bg-slate-800 text-slate-400 border border-slate-700/60'}">
+									<Icon name={isUnlocked ? (lvl.achievement?.icon || 'trophy') : 'lock'} size={17} />
 								</div>
-								<p class="text-[10px] leading-snug line-clamp-2 {isUnlocked ? 'text-slate-400 badge-card-desc' : 'text-slate-400 badge-card-locked-desc'}">
-									{isUnlocked
-										? (lvl.achievement?.description || 'Berhasil menuntaskan level!')
-										: `Selesaikan Level ${lvl.id} (${lvl.title}) untuk membuka lencana ini.`}
-								</p>
+								<span class="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded shrink-0 {isUnlocked ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30' : 'bg-slate-800 text-slate-400 border border-slate-700/60'}">
+									Lvl {lvl.id}
+								</span>
 							</div>
-						</div>
+
+							<div class="w-full min-w-0">
+								<div class="text-xs font-black truncate {isUnlocked ? 'text-white group-hover:text-amber-300 transition-colors' : 'text-slate-300'}">
+									{lvl.achievement?.title || `Level ${lvl.id}`}
+								</div>
+								<div class="text-[10px] text-slate-400 truncate mt-0.5 flex items-center justify-between">
+									<span>{isUnlocked ? 'Terbuka' : 'Terkunci'}</span>
+									<span class="text-cyan-400 font-mono font-semibold">+{lvl.achievement?.xpReward || 25} XP</span>
+								</div>
+							</div>
+						</button>
 					{/each}
 				</div>
 			</div>
 		</div>
 	</div>
 </div>
+
+<svelte:window onkeydown={handleBadgeKeydown} />
+
+<!-- Badge Detail Modal Dialog -->
+{#if selectedBadge}
+	{@const isUnlocked = ($progressStore.completedLevels || []).includes(selectedBadge.id)}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="badge-dialog-title"
+	>
+		<!-- Backdrop button -->
+		<button
+			type="button"
+			class="fixed inset-0 z-0 bg-transparent border-none cursor-default"
+			onclick={handleCloseBadgeDetail}
+			aria-label="Tutup dialog rincian lencana"
+		></button>
+
+		<div class="relative z-10 w-full max-w-sm rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 text-center space-y-4">
+			<!-- Close button -->
+			<button
+				type="button"
+				onclick={handleCloseBadgeDetail}
+				class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+				aria-label="Tutup"
+			>
+				<Icon name="x" size={16} />
+			</button>
+
+			<!-- Badge Icon -->
+			<div class="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center {isUnlocked ? 'bg-amber-400/20 text-amber-400 border border-amber-400/40 shadow-lg shadow-amber-400/10' : 'bg-slate-800 text-slate-400 border border-slate-700/60'}">
+				<Icon name={isUnlocked ? (selectedBadge.achievement?.icon || 'trophy') : 'lock'} size={32} />
+			</div>
+
+			<!-- Title & Status -->
+			<div>
+				<div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold mb-2 {isUnlocked ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30' : 'bg-slate-800 text-slate-400 border border-slate-700/60'}">
+					<Icon name={isUnlocked ? 'check' : 'lock'} size={12} />
+					<span>{isUnlocked ? 'Lencana Terbuka' : 'Lencana Terkunci'}</span>
+					<span>•</span>
+					<span>Level {selectedBadge.id}</span>
+				</div>
+				<h3 id="badge-dialog-title" class="text-lg font-black text-white">
+					{selectedBadge.achievement?.title || `Level ${selectedBadge.id}`}
+				</h3>
+			</div>
+
+			<!-- Description -->
+			<p class="text-xs text-slate-300 leading-relaxed bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800/80">
+				{isUnlocked
+					? (selectedBadge.achievement?.description || 'Berhasil menyelesaikan level ini!')
+					: `Selesaikan Level ${selectedBadge.id} (${selectedBadge.title}) untuk membuka lencana ini.`}
+			</p>
+
+			<!-- Details: XP & Mission -->
+			<div class="text-[11px] text-slate-400 space-y-1.5">
+				<div class="flex items-center justify-between px-3 py-1.5 bg-slate-800/50 rounded-xl">
+					<span class="text-slate-400">Hadiah XP:</span>
+					<span class="font-bold font-mono text-cyan-400">+{selectedBadge.achievement?.xpReward || 25} XP</span>
+				</div>
+				<div class="flex items-center justify-between px-3 py-1.5 bg-slate-800/50 rounded-xl">
+					<span class="text-slate-400">Target Misi:</span>
+					<span class="font-bold text-slate-200 truncate max-w-[180px]">{selectedBadge.title}</span>
+				</div>
+			</div>
+
+			<!-- Action Button -->
+			<button
+				type="button"
+				onclick={handleCloseBadgeDetail}
+				class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-colors cursor-pointer"
+			>
+				Tutup
+			</button>
+		</div>
+	</div>
+{/if}
