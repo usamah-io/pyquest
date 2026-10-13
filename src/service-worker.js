@@ -18,6 +18,8 @@ const PRECACHE_ASSETS = [
 	resolve('/favicon.svg'),
 	resolve('/favicon.ico'),
 	resolve('/apple-touch-icon.png'),
+	resolve('/mascot/pybot-front-idle.webp'),
+	resolve('/mascot/pybot-waving.webp'),
 	...immutable.map((i) => (typeof i === 'string' ? i : i?.path ? '/' + i.path.replace(/^\//, '') : '')).filter(Boolean),
 	...assets
 		.map((f) => (typeof f === 'string' ? f : f?.path ? '/' + f.path.replace(/^\//, '') : ''))

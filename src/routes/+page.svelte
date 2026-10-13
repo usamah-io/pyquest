@@ -8,8 +8,6 @@
 	import FeedbackModal from '$lib/components/FeedbackModal.svelte';
 	import LevelSelect from '$lib/components/LevelSelect.svelte';
 	import ChallengeHeader from '$lib/components/ChallengeHeader.svelte';
-	import BlockWorkspace from '$lib/components/BlockWorkspace.svelte';
-	import GameCanvas from '$lib/components/GameCanvas.svelte';
 	import ChallengeSuccessModal from '$lib/components/ChallengeSuccessModal.svelte';
 	import SummaryModal from '$lib/components/SummaryModal.svelte';
 	import OrientationGuard from '$lib/components/OrientationGuard.svelte';
@@ -22,7 +20,6 @@
 	import CompletedMissionsView from '$lib/components/CompletedMissionsView.svelte';
 	import TotalXpView from '$lib/components/TotalXpView.svelte';
 	import StreakView from '$lib/components/StreakView.svelte';
-	import ExitConfirmModal from '$lib/components/ExitConfirmModal.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 
@@ -33,7 +30,7 @@
 	import { compileBlocksToCommands, hasForeverBlock } from '$lib/game/compiler';
 	import { simulateCommands, type SimulationStep } from '$lib/game/engine';
 	import { progressStore } from '$lib/stores/progressStore';
-	import { authStore } from '$lib/stores/authStore';
+	import { authStore, loadInitialAuthState } from '$lib/stores/authStore';
 	import {
 		soundStore,
 		playClick,
@@ -47,12 +44,32 @@
 	import { requestAppFullscreen, isFullscreenActive } from '$lib/utils/fullscreen';
 	import type { AppScreen, CodingBlock, Direction, GridCoord } from '$lib/types';
 
-	// Screen Flow State (Starts at LOGIN for unauthenticated, LANDING for returning users)
+	// Fast initial screen resolution (uses synchronous localStorage check to prevent flash of login screen)
+	const initialAuth = loadInitialAuthState();
 	let currentScreen = $state<AppScreen>(
-		$authStore.isAuthenticated
-			? ($authStore.user.hasCompletedProfileSetup ? 'LANDING' : 'PROFILE_SETUP')
+		initialAuth.isAuthenticated
+			? (initialAuth.user.hasCompletedProfileSetup ? 'LANDING' : 'PROFILE_SETUP')
 			: 'LOGIN'
 	);
+
+	// Lazy-loaded heavy game components (canvas maze engine & coding block workspace)
+	let GameCanvasComponent = $state<any>(null);
+	let BlockWorkspaceComponent = $state<any>(null);
+
+	async function preloadGameComponents() {
+		if (!GameCanvasComponent || !BlockWorkspaceComponent) {
+			try {
+				const [gcMod, bwMod] = await Promise.all([
+					import('$lib/components/GameCanvas.svelte'),
+					import('$lib/components/BlockWorkspace.svelte')
+				]);
+				GameCanvasComponent = gcMod.default;
+				BlockWorkspaceComponent = bwMod.default;
+			} catch (err) {
+				console.warn('[PyQuest] Failed to load game components:', err);
+			}
+		}
+	}
 
 	// Smart Auto-Hide Navbar State
 	let isNavbarVisible = $state(true);
@@ -119,21 +136,21 @@
 	});
 
 	onMount(async () => {
-		await authStore.initAuth();
 		if (typeof window !== 'undefined') {
+			await authStore.initAuth();
+
 			const urlParams = new URLSearchParams(window.location.search);
 			const screenParam = urlParams.get('screen') as AppScreen | null;
-			const authSuccess = urlParams.get('auth_success');
-			if (authSuccess) {
-				await authStore.initAuth();
-			}
 			if (screenParam && ['LOGIN', 'LANDING', 'LEARN_SELECT', 'LEVEL_SELECT', 'PROFILE_SETUP', 'PROFILE', 'MISSIONS', 'XP_PROGRESS', 'STREAK_VIEW'].includes(screenParam)) {
 				if ($authStore.isAuthenticated) {
 					currentScreen = screenParam;
 				}
 			}
 
-			// Anchor root history to ROOT_GUARD so device back on root can be caught
+			// Preload heavy game components in background
+			preloadGameComponents();
+
+			// Anchor root history to ROOT_GUARD so device back on root can exit directly
 			window.history.replaceState({ screen: 'ROOT_GUARD', isGuard: true }, '', window.location.href);
 
 			// Seed intermediate LANDING if user enters directly on a nested screen
@@ -172,6 +189,13 @@
 			currentScreen = 'PROFILE_SETUP';
 		} else if ($authStore.isAuthenticated && $authStore.user.hasCompletedProfileSetup && currentScreen === 'LOGIN') {
 			currentScreen = 'LANDING';
+		}
+	});
+
+	// Preload heavy game canvas and block workspace on demand
+	$effect(() => {
+		if (currentScreen === 'CHALLENGE' || currentScreen === 'MISSION_BRIEFING' || currentScreen === 'LEVEL_SELECT') {
+			preloadGameComponents();
 		}
 	});
 
@@ -289,7 +313,18 @@
 		isGuard?: boolean;
 	}
 
-	let isExitDialogOpen = $state(false);
+	function handlePlatformExit() {
+		if (typeof window !== 'undefined') {
+			if ((window as any).navigator?.app?.exitApp) {
+				(window as any).navigator.app.exitApp();
+				return;
+			}
+			try {
+				window.close();
+			} catch {}
+			window.history.back();
+		}
+	}
 
 	function navigateTo(
 		screen: AppScreen,
@@ -336,8 +371,8 @@
 			navigateTo('PROFILE');
 		} else if (currentScreen === 'LEVEL_SELECT' || currentScreen === 'LEARN_SELECT' || currentScreen === 'PROFILE' || currentScreen === 'SUMMARY') {
 			navigateTo('LANDING');
-		} else {
-			isExitDialogOpen = true;
+		} else if (currentScreen === 'LANDING') {
+			handlePlatformExit();
 		}
 	}
 
@@ -375,49 +410,10 @@
 
 		const state = event.state as NavigationHistoryState | null;
 
-		// Reached the root guard (device Back pressed on root screen)
+		// Reached the root guard (device Back pressed on root screen Beranda)
 		if (!state || state.screen === 'ROOT_GUARD' || state.isGuard) {
-			if (isExitDialogOpen) {
-				// Second back press while dialog is open dismisses it
-				isExitDialogOpen = false;
-				if (typeof window !== 'undefined') {
-					window.history.pushState(
-						{
-							screen: 'LANDING',
-							levelIndex: currentLevelIndex,
-							challengeIndex: currentChallengeIndex,
-							learningLevelIndex: currentLearningLevelIndex,
-							questionIndex: currentQuestionInLevelIndex
-						},
-						'',
-						window.location.href
-					);
-				}
-				return;
-			}
-
-			// Anchor back to LANDING and display exit confirmation modal
-			if (typeof window !== 'undefined') {
-				window.history.pushState(
-					{
-						screen: 'LANDING',
-						levelIndex: currentLevelIndex,
-						challengeIndex: currentChallengeIndex,
-						learningLevelIndex: currentLearningLevelIndex,
-						questionIndex: currentQuestionInLevelIndex
-					},
-					'',
-					window.location.href
-				);
-			}
-			currentScreen = 'LANDING';
-			isExitDialogOpen = true;
+			handlePlatformExit();
 			return;
-		}
-
-		// Dismiss exit confirmation dialog if navigating back
-		if (isExitDialogOpen) {
-			isExitDialogOpen = false;
 		}
 
 		// Restore screen and state from navigation history
@@ -426,22 +422,6 @@
 		if (typeof state.challengeIndex === 'number') currentChallengeIndex = state.challengeIndex;
 		if (typeof state.learningLevelIndex === 'number') currentLearningLevelIndex = state.learningLevelIndex;
 		if (typeof state.questionIndex === 'number') currentQuestionInLevelIndex = state.questionIndex;
-	}
-
-	function handleConfirmExit() {
-		isExitDialogOpen = false;
-		if (typeof window !== 'undefined') {
-			if ((window as any).navigator?.app?.exitApp) {
-				(window as any).navigator.app.exitApp();
-				return;
-			}
-			try {
-				window.close();
-			} catch {
-				// ignore
-			}
-			window.history.go(-2);
-		}
 	}
 
 	// Mode Entry Handlers
@@ -955,28 +935,35 @@
 					/>
 
 					<div class="flex-1 flex flex-col md:grid md:grid-cols-2 landscape:grid landscape:grid-cols-2 gap-2 sm:gap-3 landscape:gap-2 min-h-0 h-full overflow-hidden">
-						<div class="w-full max-w-md mx-auto portrait:h-[295px] sm:portrait:h-[330px] landscape:h-full md:h-full min-h-0 overflow-hidden shrink-0">
-							<GameCanvas
-								grid={activeChallenge.grid}
-								{playerPos}
-								{playerDirection}
-								{collectedCoins}
-								statusMessage={gameStatusMessage}
-								status={gameStatus}
-							/>
-						</div>
+						{#if GameCanvasComponent && BlockWorkspaceComponent}
+							<div class="w-full max-w-md mx-auto portrait:h-[295px] sm:portrait:h-[330px] landscape:h-full md:h-full min-h-0 overflow-hidden shrink-0">
+								<GameCanvasComponent
+									grid={activeChallenge.grid}
+									{playerPos}
+									{playerDirection}
+									{collectedCoins}
+									statusMessage={gameStatusMessage}
+									status={gameStatus}
+								/>
+							</div>
 
-						<div class="flex-1 w-full min-h-0 h-full overflow-hidden">
-							<BlockWorkspace
-								bind:workspaceBlocks
-								availableBlocks={activeChallenge.availableBlocks}
-								maxMoves={activeChallenge.maxMoves}
-								attempts={attemptsCount}
-								onRun={handleRunCode}
-								onReset={handleResetGame}
-								{isRunning}
-							/>
-						</div>
+							<div class="flex-1 w-full min-h-0 h-full overflow-hidden">
+								<BlockWorkspaceComponent
+									bind:workspaceBlocks
+									availableBlocks={activeChallenge.availableBlocks}
+									maxMoves={activeChallenge.maxMoves}
+									attempts={attemptsCount}
+									onRun={handleRunCode}
+									onReset={handleResetGame}
+									{isRunning}
+								/>
+							</div>
+						{:else}
+							<div class="col-span-2 flex flex-col items-center justify-center p-8 text-center text-slate-400">
+								<div class="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+								<p class="text-xs font-semibold">Memuat Arena PyBot...</p>
+							</div>
+						{/if}
 					</div>
 				</div>
 
@@ -1056,11 +1043,4 @@
 			onBackToLevelSelect={handleGoBack}
 		/>
 	{/if}
-
-	<!-- Exit Confirmation Modal (Android Back & Root Navigation) -->
-	<ExitConfirmModal
-		isOpen={isExitDialogOpen}
-		onCancel={() => (isExitDialogOpen = false)}
-		onConfirm={handleConfirmExit}
-	/>
 </div>

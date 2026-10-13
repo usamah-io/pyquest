@@ -39,7 +39,7 @@ export function getGoogleClientId(): string {
 	return GOOGLE_CLIENT_ID_FALLBACK;
 }
 
-function loadInitialAuthState(): { user: UserProfile; isAuthenticated: boolean } {
+export function loadInitialAuthState(): { user: UserProfile; isAuthenticated: boolean } {
 	if (typeof window !== 'undefined') {
 		const saved = localStorage.getItem(CURRENT_USER_KEY);
 		if (saved) {
@@ -59,6 +59,14 @@ function loadInitialAuthState(): { user: UserProfile; isAuthenticated: boolean }
 		isAuthenticated: false
 	};
 }
+
+export function isReturningUser(): boolean {
+	if (typeof window === 'undefined') return false;
+	const initial = loadInitialAuthState();
+	return initial.isAuthenticated;
+}
+
+let initAuthPromise: Promise<void> | null = null;
 
 function createAuthStore() {
 	const initial = loadInitialAuthState();
@@ -107,82 +115,92 @@ function createAuthStore() {
 		// Client ID getter (always returns verified Developer configuration, never prompts user)
 		getGoogleClientId,
 
-		// Initialize & verify session with backend on startup
+		// Initialize & verify session with backend on startup (with in-flight deduplication)
 		initAuth: async () => {
 			if (typeof window === 'undefined') return;
+			if (initAuthPromise) return initAuthPromise;
 
-			// Initialize user-keyed progress if already authenticated in localStorage
-			const initial = loadInitialAuthState();
-			if (initial.isAuthenticated && initial.user?.id) {
-				progressStore.loadForUser(initial.user.id);
-			}
-
-			// Load persistent avatar from IndexedDB if stored
-			if (initial.user?.id) {
-				try {
-					const idbAvatar = await avatarStorage.getAvatar(initial.user.id);
-					if (idbAvatar) {
-						state.update((s) => ({
-							...s,
-							user: { ...s.user, avatar: idbAvatar }
-						}));
-					}
-				} catch {}
-			}
-
-			// Validate with backend session cookie
-			try {
-				const res = await fetch('/api/auth/session');
-				if (res.ok) {
-					const data = await res.json();
-					if (data.authenticated && data.user) {
-						// Session valid on server
-						const verified = data.user;
-						let userProfile: UserProfile;
-
-						// Check local registry for saved display name / avatar preferences
-						const registryRaw = localStorage.getItem(USERS_REGISTRY_KEY);
-						const registry: Record<string, UserProfile> = registryRaw ? JSON.parse(registryRaw) : {};
-						const existing = registry[verified.id];
-
-						// Check persistent avatar in IndexedDB
-						let avatarUrl = existing?.avatar || verified.avatar;
-						try {
-							const idbAvatar = await avatarStorage.getAvatar(verified.id);
-							if (idbAvatar) {
-								avatarUrl = idbAvatar;
-							}
-						} catch {}
-
-						if (existing) {
-							userProfile = {
-								...verified,
-								name: existing.name || verified.name,
-								firstName: existing.firstName || verified.firstName,
-								avatar: avatarUrl,
-								hasCompletedProfileSetup: existing.hasCompletedProfileSetup
-							};
-						} else {
-							userProfile = {
-								...verified,
-								avatar: avatarUrl,
-								hasCompletedProfileSetup: false
-							};
-						}
-
-						saveCurrentSession(userProfile, true);
-						progressStore.loadForUser(userProfile.id);
-
-						state.update((s) => ({
-							...s,
-							isAuthenticated: true,
-							user: userProfile
-						}));
-					}
+			initAuthPromise = (async () => {
+				// Initialize user-keyed progress if already authenticated in localStorage
+				const initial = loadInitialAuthState();
+				if (initial.isAuthenticated && initial.user?.id) {
+					progressStore.loadForUser(initial.user.id);
+					state.update((s) => ({
+						...s,
+						isAuthenticated: true,
+						user: initial.user
+					}));
 				}
-			} catch (err) {
-				console.warn('Session check warning:', err);
-			}
+
+				// Load persistent avatar from IndexedDB if stored
+				if (initial.user?.id) {
+					try {
+						const idbAvatar = await avatarStorage.getAvatar(initial.user.id);
+						if (idbAvatar) {
+							state.update((s) => ({
+								...s,
+								user: { ...s.user, avatar: idbAvatar }
+							}));
+						}
+					} catch {}
+				}
+
+				// Validate with backend session cookie
+				try {
+					const res = await fetch('/api/auth/session');
+					if (res.ok) {
+						const data = await res.json();
+						if (data.authenticated && data.user) {
+							// Session valid on server
+							const verified = data.user;
+							let userProfile: UserProfile;
+
+							// Check local registry for saved display name / avatar preferences
+							const registryRaw = localStorage.getItem(USERS_REGISTRY_KEY);
+							const registry: Record<string, UserProfile> = registryRaw ? JSON.parse(registryRaw) : {};
+							const existing = registry[verified.id];
+
+							// Check persistent avatar in IndexedDB
+							let avatarUrl = existing?.avatar || verified.avatar;
+							try {
+								const idbAvatar = await avatarStorage.getAvatar(verified.id);
+								if (idbAvatar) {
+									avatarUrl = idbAvatar;
+								}
+							} catch {}
+
+							if (existing) {
+								userProfile = {
+									...verified,
+									name: existing.name || verified.name,
+									firstName: existing.firstName || verified.firstName,
+									avatar: avatarUrl,
+									hasCompletedProfileSetup: existing.hasCompletedProfileSetup
+								};
+							} else {
+								userProfile = {
+									...verified,
+									avatar: avatarUrl,
+									hasCompletedProfileSetup: false
+								};
+							}
+
+							saveCurrentSession(userProfile, true);
+							progressStore.loadForUser(userProfile.id);
+
+							state.update((s) => ({
+								...s,
+								isAuthenticated: true,
+								user: userProfile
+							}));
+						}
+					}
+				} catch (err) {
+					console.warn('Session check warning:', err);
+				}
+			})();
+
+			return initAuthPromise;
 		},
 
 		// Real Google Credential Login flow (sent to server verification)
