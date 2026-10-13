@@ -2,7 +2,7 @@
 <html lang="id">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 		<title>PyQuest — Petualangan Logika Python</title>
 		<meta name="description" content="Petualangan belajar logika Python melalui soal interaktif dan coding game labirin 2D." />
 		<meta name="application-name" content="PyQuest" />
@@ -40,6 +40,46 @@
 					document.documentElement.classList.add('dark');
 				}
 			} catch (e) {}
+		</script>
+
+		<!-- Mobile Viewport Stability: Prevent unintentional multi-touch pinch-zoom while preserving native scrolling -->
+		<script>
+			(function () {
+				if (typeof window === 'undefined') return;
+
+				// Prevent multi-touch pinch zoom gestures on mobile touchscreens
+				document.addEventListener(
+					'touchmove',
+					function (e) {
+						if (e.touches && e.touches.length > 1) {
+							e.preventDefault();
+						}
+					},
+					{ passive: false }
+				);
+
+				// Prevent gesture zooming on WebKit / iOS Safari
+				document.addEventListener('gesturestart', function (e) {
+					e.preventDefault();
+				});
+				document.addEventListener('gesturechange', function (e) {
+					e.preventDefault();
+				});
+				document.addEventListener('gestureend', function (e) {
+					e.preventDefault();
+				});
+
+				// Prevent trackpad pinch-to-zoom (dispatches wheel event with ctrlKey)
+				document.addEventListener(
+					'wheel',
+					function (e) {
+						if (e.ctrlKey) {
+							e.preventDefault();
+						}
+					},
+					{ passive: false }
+				);
+			})();
 		</script>
 
 		%sveltekit.head%
