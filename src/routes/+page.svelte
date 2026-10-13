@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import Navbar from '$lib/components/Navbar.svelte';
 	import LandingHero from '$lib/components/LandingHero.svelte';
 	import LearningLevelSelect from '$lib/components/LearningLevelSelect.svelte';
@@ -22,6 +22,7 @@
 	import CompletedMissionsView from '$lib/components/CompletedMissionsView.svelte';
 	import TotalXpView from '$lib/components/TotalXpView.svelte';
 	import StreakView from '$lib/components/StreakView.svelte';
+	import ExitConfirmModal from '$lib/components/ExitConfirmModal.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 
@@ -131,6 +132,35 @@
 					currentScreen = screenParam;
 				}
 			}
+
+			// Anchor root history to ROOT_GUARD so device back on root can be caught
+			window.history.replaceState({ screen: 'ROOT_GUARD', isGuard: true }, '', window.location.href);
+
+			// Seed intermediate LANDING if user enters directly on a nested screen
+			if ($authStore.isAuthenticated && currentScreen !== 'LANDING' && currentScreen !== 'LOGIN' && currentScreen !== 'PROFILE_SETUP') {
+				window.history.pushState({ screen: 'LANDING' }, '', window.location.pathname);
+			}
+
+			// Push active screen entry
+			window.history.pushState(
+				{
+					screen: currentScreen,
+					levelIndex: currentLevelIndex,
+					challengeIndex: currentChallengeIndex,
+					learningLevelIndex: currentLearningLevelIndex,
+					questionIndex: currentQuestionInLevelIndex
+				},
+				'',
+				window.location.href
+			);
+
+			window.addEventListener('popstate', handlePopState);
+		}
+	});
+
+	onDestroy(() => {
+		if (typeof window !== 'undefined') {
+			window.removeEventListener('popstate', handlePopState);
 		}
 	});
 
@@ -249,33 +279,198 @@
 		}
 	}
 
+	// Navigation History & Back Button Infrastructure
+	interface NavigationHistoryState {
+		screen: AppScreen | 'ROOT_GUARD';
+		levelIndex?: number;
+		challengeIndex?: number;
+		learningLevelIndex?: number;
+		questionIndex?: number;
+		isGuard?: boolean;
+	}
+
+	let isExitDialogOpen = $state(false);
+
+	function navigateTo(
+		screen: AppScreen,
+		options?: {
+			levelIndex?: number;
+			challengeIndex?: number;
+			learningLevelIndex?: number;
+			questionIndex?: number;
+			replace?: boolean;
+		}
+	) {
+		stopSimulation();
+
+		if (typeof options?.levelIndex === 'number') currentLevelIndex = options.levelIndex;
+		if (typeof options?.challengeIndex === 'number') currentChallengeIndex = options.challengeIndex;
+		if (typeof options?.learningLevelIndex === 'number') currentLearningLevelIndex = options.learningLevelIndex;
+		if (typeof options?.questionIndex === 'number') currentQuestionInLevelIndex = options.questionIndex;
+
+		currentScreen = screen;
+
+		if (typeof window !== 'undefined') {
+			const state: NavigationHistoryState = {
+				screen,
+				levelIndex: currentLevelIndex,
+				challengeIndex: currentChallengeIndex,
+				learningLevelIndex: currentLearningLevelIndex,
+				questionIndex: currentQuestionInLevelIndex
+			};
+
+			if (options?.replace) {
+				window.history.replaceState(state, '', window.location.href);
+			} else {
+				window.history.pushState(state, '', window.location.href);
+			}
+		}
+	}
+
+	function handleFallbackBack() {
+		if (currentScreen === 'CHALLENGE' || currentScreen === 'MISSION_BRIEFING' || currentScreen === 'REWARD') {
+			navigateTo('LEVEL_SELECT');
+		} else if (currentScreen === 'QUESTION' || currentScreen === 'FEEDBACK' || currentScreen === 'LEARN_SUCCESS') {
+			navigateTo('LEARN_SELECT');
+		} else if (currentScreen === 'MISSIONS' || currentScreen === 'XP_PROGRESS' || currentScreen === 'STREAK_VIEW') {
+			navigateTo('PROFILE');
+		} else if (currentScreen === 'LEVEL_SELECT' || currentScreen === 'LEARN_SELECT' || currentScreen === 'PROFILE' || currentScreen === 'SUMMARY') {
+			navigateTo('LANDING');
+		} else {
+			isExitDialogOpen = true;
+		}
+	}
+
+	function handleGoBack() {
+		playClick();
+		stopSimulation();
+		if (typeof window !== 'undefined' && window.history.length > 1) {
+			window.history.back();
+		} else {
+			handleFallbackBack();
+		}
+	}
+
+	function handlePopState(event: PopStateEvent) {
+		stopSimulation();
+
+		// If Google Auth Modal is open, close it and stay on current screen
+		if ($authStore.isGoogleModalOpen) {
+			authStore.closeGoogleModal();
+			if (typeof window !== 'undefined') {
+				window.history.pushState(
+					{
+						screen: currentScreen,
+						levelIndex: currentLevelIndex,
+						challengeIndex: currentChallengeIndex,
+						learningLevelIndex: currentLearningLevelIndex,
+						questionIndex: currentQuestionInLevelIndex
+					},
+					'',
+					window.location.href
+				);
+			}
+			return;
+		}
+
+		const state = event.state as NavigationHistoryState | null;
+
+		// Reached the root guard (device Back pressed on root screen)
+		if (!state || state.screen === 'ROOT_GUARD' || state.isGuard) {
+			if (isExitDialogOpen) {
+				// Second back press while dialog is open dismisses it
+				isExitDialogOpen = false;
+				if (typeof window !== 'undefined') {
+					window.history.pushState(
+						{
+							screen: 'LANDING',
+							levelIndex: currentLevelIndex,
+							challengeIndex: currentChallengeIndex,
+							learningLevelIndex: currentLearningLevelIndex,
+							questionIndex: currentQuestionInLevelIndex
+						},
+						'',
+						window.location.href
+					);
+				}
+				return;
+			}
+
+			// Anchor back to LANDING and display exit confirmation modal
+			if (typeof window !== 'undefined') {
+				window.history.pushState(
+					{
+						screen: 'LANDING',
+						levelIndex: currentLevelIndex,
+						challengeIndex: currentChallengeIndex,
+						learningLevelIndex: currentLearningLevelIndex,
+						questionIndex: currentQuestionInLevelIndex
+					},
+					'',
+					window.location.href
+				);
+			}
+			currentScreen = 'LANDING';
+			isExitDialogOpen = true;
+			return;
+		}
+
+		// Dismiss exit confirmation dialog if navigating back
+		if (isExitDialogOpen) {
+			isExitDialogOpen = false;
+		}
+
+		// Restore screen and state from navigation history
+		currentScreen = state.screen;
+		if (typeof state.levelIndex === 'number') currentLevelIndex = state.levelIndex;
+		if (typeof state.challengeIndex === 'number') currentChallengeIndex = state.challengeIndex;
+		if (typeof state.learningLevelIndex === 'number') currentLearningLevelIndex = state.learningLevelIndex;
+		if (typeof state.questionIndex === 'number') currentQuestionInLevelIndex = state.questionIndex;
+	}
+
+	function handleConfirmExit() {
+		isExitDialogOpen = false;
+		if (typeof window !== 'undefined') {
+			if ((window as any).navigator?.app?.exitApp) {
+				(window as any).navigator.app.exitApp();
+				return;
+			}
+			try {
+				window.close();
+			} catch {
+				// ignore
+			}
+			window.history.go(-2);
+		}
+	}
+
 	// Mode Entry Handlers
 	function handleStartLearning() {
 		playClick();
-		currentScreen = 'LEARN_SELECT';
+		navigateTo('LEARN_SELECT');
 	}
 
 	function handleStartCodingGame() {
 		playClick();
-		currentScreen = 'LEVEL_SELECT';
+		navigateTo('LEVEL_SELECT');
 	}
 
 	function handleSelectNavbarMode(mode: 'HOME' | 'LEARN' | 'GAME') {
 		playClick();
 		stopSimulation();
 		if (mode === 'HOME') {
-			currentScreen = 'LANDING';
+			navigateTo('LANDING');
 		} else if (mode === 'LEARN') {
-			currentScreen = 'LEARN_SELECT';
+			navigateTo('LEARN_SELECT');
 		} else if (mode === 'GAME') {
-			currentScreen = 'LEVEL_SELECT';
+			navigateTo('LEVEL_SELECT');
 		}
 	}
 
 	function handleOpenProfile() {
 		playClick();
 		stopSimulation();
-		currentScreen = 'PROFILE';
+		navigateTo('PROFILE');
 	}
 
 
@@ -288,7 +483,10 @@
 		userSelectedOptionId = null;
 		earnedLearningXpThisRun = 0;
 		quizSessionAnswers = {}; // Reset session answers for new quiz run
-		currentScreen = 'QUESTION';
+		navigateTo('QUESTION', {
+			learningLevelIndex: currentLearningLevelIndex,
+			questionIndex: 0
+		});
 		requestAppFullscreen();
 	}
 
@@ -312,7 +510,11 @@
 			playIncorrect();
 		}
 
-		currentScreen = 'FEEDBACK';
+		navigateTo('FEEDBACK', {
+			learningLevelIndex: currentLearningLevelIndex,
+			questionIndex: currentQuestionInLevelIndex,
+			replace: true
+		});
 	}
 
 	function handleContinueAfterQuestionFeedback() {
@@ -320,7 +522,11 @@
 		if (currentQuestionInLevelIndex < activeLevelQuestions.length - 1) {
 			currentQuestionInLevelIndex++;
 			userSelectedOptionId = null;
-			currentScreen = 'QUESTION';
+			navigateTo('QUESTION', {
+				learningLevelIndex: currentLearningLevelIndex,
+				questionIndex: currentQuestionInLevelIndex,
+				replace: true
+			});
 		} else {
 			// All questions in level finished
 			const summary = calculateQuizSummary(
@@ -340,7 +546,10 @@
 			);
 
 			earnedLearningXpThisRun = isFirst ? summary.earnedLevelXp : 0;
-			currentScreen = 'LEARN_SUCCESS';
+			navigateTo('LEARN_SUCCESS', {
+				learningLevelIndex: currentLearningLevelIndex,
+				replace: true
+			});
 			playMissionComplete();
 			if (earnedLearningXpThisRun > 0) {
 				setTimeout(() => {
@@ -358,10 +567,14 @@
 			userSelectedOptionId = null;
 			earnedLearningXpThisRun = 0;
 			quizSessionAnswers = {}; // Reset session answers for next level
-			currentScreen = 'QUESTION';
+			navigateTo('QUESTION', {
+				learningLevelIndex: currentLearningLevelIndex,
+				questionIndex: 0,
+				replace: true
+			});
 			requestAppFullscreen();
 		} else {
-			currentScreen = 'LEARN_SELECT';
+			navigateTo('LEARN_SELECT', { replace: true });
 		}
 	}
 
@@ -371,7 +584,11 @@
 		userSelectedOptionId = null;
 		earnedLearningXpThisRun = 0;
 		quizSessionAnswers = {}; // Reset session answers for replay
-		currentScreen = 'QUESTION';
+		navigateTo('QUESTION', {
+			learningLevelIndex: currentLearningLevelIndex,
+			questionIndex: 0,
+			replace: true
+		});
 		requestAppFullscreen();
 	}
 
@@ -384,12 +601,19 @@
 		attemptsCount = 0;
 		earnedXpThisRun = 0;
 		syncChallengeArena();
-		currentScreen = 'MISSION_BRIEFING';
+		navigateTo('MISSION_BRIEFING', {
+			levelIndex: lvlIdx,
+			challengeIndex: chIdx
+		});
 	}
 
 	function handleStartActualMission() {
 		playClick();
-		currentScreen = 'CHALLENGE';
+		navigateTo('CHALLENGE', {
+			levelIndex: currentLevelIndex,
+			challengeIndex: currentChallengeIndex,
+			replace: true
+		});
 		requestAppFullscreen();
 	}
 
@@ -497,7 +721,11 @@
 				playMissionComplete();
 
 				rewardModalTimer = setTimeout(() => {
-					currentScreen = 'REWARD';
+					navigateTo('REWARD', {
+						levelIndex: currentLevelIndex,
+						challengeIndex: currentChallengeIndex,
+						replace: true
+					});
 					if (earnedXpThisRun > 0) {
 						playCollectReward();
 					}
@@ -520,7 +748,11 @@
 			attemptsCount = 0;
 			earnedXpThisRun = 0;
 			syncChallengeArena();
-			currentScreen = 'MISSION_BRIEFING';
+			navigateTo('CHALLENGE', {
+				levelIndex: currentLevelIndex,
+				challengeIndex: currentChallengeIndex,
+				replace: true
+			});
 		} else {
 			// Level completed! Advance directly to the next level's first challenge
 			if (currentLevelIndex < levelsData.length - 1) {
@@ -529,9 +761,13 @@
 				attemptsCount = 0;
 				earnedXpThisRun = 0;
 				syncChallengeArena();
-				currentScreen = 'MISSION_BRIEFING';
+				navigateTo('MISSION_BRIEFING', {
+					levelIndex: currentLevelIndex,
+					challengeIndex: currentChallengeIndex,
+					replace: true
+				});
 			} else {
-				currentScreen = 'SUMMARY';
+				navigateTo('SUMMARY', { replace: true });
 			}
 		}
 	}
@@ -541,7 +777,11 @@
 		stopSimulation();
 		handleResetGame();
 		earnedXpThisRun = 0;
-		currentScreen = 'CHALLENGE';
+		navigateTo('CHALLENGE', {
+			levelIndex: currentLevelIndex,
+			challengeIndex: currentChallengeIndex,
+			replace: true
+		});
 		requestAppFullscreen();
 	}
 
@@ -557,7 +797,7 @@
 		earnedXpThisRun = 0;
 		earnedLearningXpThisRun = 0;
 		quizSessionAnswers = {};
-		currentScreen = 'LANDING';
+		navigateTo('LANDING');
 	}
 </script>
 
@@ -592,7 +832,7 @@
 		onClose={() => authStore.closeGoogleModal()}
 		onLoginSuccess={(needsSetup) => {
 			if (needsSetup) {
-				currentScreen = 'PROFILE_SETUP';
+				navigateTo('PROFILE_SETUP');
 			}
 		}}
 	/>
@@ -604,8 +844,8 @@
 				currentMode={activeNavbarMode}
 				onSelectMode={handleSelectNavbarMode}
 				onOpenProfile={handleOpenProfile}
-				onOpenXp={() => (currentScreen = 'XP_PROGRESS')}
-				onOpenStreak={() => (currentScreen = 'STREAK_VIEW')}
+				onOpenXp={() => navigateTo('XP_PROGRESS')}
+				onOpenStreak={() => navigateTo('STREAK_VIEW')}
 			/>
 		{/if}
 
@@ -620,9 +860,9 @@
 				<LoginView
 					onSuccess={(needsSetup) => {
 						if (needsSetup) {
-							currentScreen = 'PROFILE_SETUP';
+							navigateTo('PROFILE_SETUP');
 						} else {
-							currentScreen = 'LANDING';
+							navigateTo('LANDING');
 						}
 					}}
 				/>
@@ -634,9 +874,9 @@
 					onStartCodingGame={handleStartCodingGame}
 					onContinueCoding={(lvlIdx, chIdx) => handleSelectLevelChallenge(lvlIdx, chIdx)}
 					onContinueLearning={(levelId) => handleSelectLearningLevel(levelId)}
-					onOpenMissions={() => (currentScreen = 'MISSIONS')}
-					onOpenXp={() => (currentScreen = 'XP_PROGRESS')}
-					onOpenStreak={() => (currentScreen = 'STREAK_VIEW')}
+					onOpenMissions={() => navigateTo('MISSIONS')}
+					onOpenXp={() => navigateTo('XP_PROGRESS')}
+					onOpenStreak={() => navigateTo('STREAK_VIEW')}
 				/>
 
 			<!-- 2. LEARNING LEVEL SELECTION (10 LEVELS) -->
@@ -644,7 +884,7 @@
 				<LearningLevelSelect
 					learningLevels={learningLevelsData}
 					onSelectLearningLevel={handleSelectLearningLevel}
-					onBackToHome={() => (currentScreen = 'LANDING')}
+					onBackToHome={handleGoBack}
 				/>
 
 			<!-- 3. LEARNING / QUESTION MODE -->
@@ -654,7 +894,7 @@
 					questionNumber={currentQuestionInLevelIndex + 1}
 					totalQuestions={activeLevelQuestions.length}
 					onAnswer={handleAnswerQuestion}
-					onBackToLevels={() => (currentScreen = 'LEARN_SELECT')}
+					onBackToLevels={handleGoBack}
 				/>
 
 			<!-- 4. LEARNING FEEDBACK -->
@@ -676,7 +916,7 @@
 					isLastLevel={currentLearningLevelIndex === learningLevelsData.length - 1}
 					onNextLevel={handleNextLearningLevel}
 					onReplayLevel={handleReplayLearningLevel}
-					onBackToSelect={() => (currentScreen = 'LEARN_SELECT')}
+					onBackToSelect={handleGoBack}
 				/>
 
 			<!-- 6. LEVEL SELECTION (CODING GAME) -->
@@ -684,7 +924,7 @@
 				<LevelSelect
 					levels={levelsData}
 					onSelectLevelChallenge={handleSelectLevelChallenge}
-					onBackToHome={() => (currentScreen = 'LANDING')}
+					onBackToHome={handleGoBack}
 				/>
 
 			<!-- 7. MISSION BRIEFING SCREEN -->
@@ -695,7 +935,7 @@
 					challengeIndex={currentChallengeIndex}
 					totalChallengesInLevel={activeLevel.challenges.length}
 					onStartMission={handleStartActualMission}
-					onBack={() => (currentScreen = 'LEVEL_SELECT')}
+					onBack={handleGoBack}
 				/>
 
 			<!-- 8. CODING GAME CHALLENGE -->
@@ -711,10 +951,7 @@
 						hints={activeChallenge.hints}
 						playerXp={$progressStore.xp}
 						rewardXp={activeChallenge.xpReward || activeChallenge.xp || 30}
-						onBackToModes={() => {
-							stopSimulation();
-							currentScreen = 'LEVEL_SELECT';
-						}}
+						onBackToModes={handleGoBack}
 					/>
 
 					<div class="flex-1 flex flex-col md:grid md:grid-cols-2 landscape:grid landscape:grid-cols-2 gap-2 sm:gap-3 landscape:gap-2 min-h-0 h-full overflow-hidden">
@@ -747,29 +984,29 @@
 			{:else if currentScreen === 'SUMMARY'}
 				<SummaryModal
 					progress={$progressStore}
-					onBackToHome={() => (currentScreen = 'LANDING')}
+					onBackToHome={handleGoBack}
 					onRestart={handleRestartAll}
 				/>
 
 			<!-- 10. PROFILE SETUP SCREEN (First Google Login) -->
 			{:else if currentScreen === 'PROFILE_SETUP'}
 				<ProfileSetup
-					onComplete={() => (currentScreen = 'LANDING')}
+					onComplete={() => navigateTo('LANDING')}
 				/>
 
 			<!-- 11. DEDICATED PROFILE PAGE -->
 			{:else if currentScreen === 'PROFILE'}
 				<ProfileView
-					onBackToHome={() => (currentScreen = 'LANDING')}
-					onOpenMissions={() => (currentScreen = 'MISSIONS')}
-					onOpenXp={() => (currentScreen = 'XP_PROGRESS')}
-					onOpenStreak={() => (currentScreen = 'STREAK_VIEW')}
+					onBackToHome={handleGoBack}
+					onOpenMissions={() => navigateTo('MISSIONS')}
+					onOpenXp={() => navigateTo('XP_PROGRESS')}
+					onOpenStreak={() => navigateTo('STREAK_VIEW')}
 				/>
 
 			<!-- 12. DEDICATED COMPLETED MISSIONS PAGE -->
 			{:else if currentScreen === 'MISSIONS'}
 				<CompletedMissionsView
-					onBackToHome={() => (currentScreen = 'LANDING')}
+					onBackToHome={handleGoBack}
 					onPlayChallenge={(lvlIdx, chIdx) => {
 						handleSelectLevelChallenge(lvlIdx, chIdx);
 					}}
@@ -781,13 +1018,13 @@
 			<!-- 13. DEDICATED TOTAL XP PAGE -->
 			{:else if currentScreen === 'XP_PROGRESS'}
 				<TotalXpView
-					onBackToHome={() => (currentScreen = 'LANDING')}
+					onBackToHome={handleGoBack}
 				/>
 
 			<!-- 14. DEDICATED STREAK PAGE -->
 			{:else if currentScreen === 'STREAK_VIEW'}
 				<StreakView
-					onBackToHome={() => (currentScreen = 'LANDING')}
+					onBackToHome={handleGoBack}
 				/>
 			{/if}
 		</main>
@@ -816,10 +1053,14 @@
 			isLastLevel={currentLevelIndex === levelsData.length - 1}
 			onNext={handleNextChallengeOrLevel}
 			onReplay={handleReplayCurrentChallenge}
-			onBackToLevelSelect={() => {
-				stopSimulation();
-				currentScreen = 'LEVEL_SELECT';
-			}}
+			onBackToLevelSelect={handleGoBack}
 		/>
 	{/if}
+
+	<!-- Exit Confirmation Modal (Android Back & Root Navigation) -->
+	<ExitConfirmModal
+		isOpen={isExitDialogOpen}
+		onCancel={() => (isExitDialogOpen = false)}
+		onConfirm={handleConfirmExit}
+	/>
 </div>

@@ -6,9 +6,12 @@
 	import { themeStore } from '$lib/stores/themeStore';
 	import Icon from '$lib/components/Icon.svelte';
 	import InstallGuideModal from '$lib/components/InstallGuideModal.svelte';
+	import SplashScreen from '$lib/components/SplashScreen.svelte';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
+
+	let showSplash = $state(true);
 
 	onMount(() => {
 		themeStore.init();
@@ -53,6 +56,10 @@
 		<Icon name="wifi-off" size={15} class="text-amber-400 shrink-0" />
 		<span>Koneksi sedang tidak tersedia. Mode offline aktif.</span>
 	</div>
+{/if}
+
+{#if showSplash}
+	<SplashScreen onFinish={() => (showSplash = false)} />
 {/if}
 
 {@render children()}
