@@ -3,7 +3,6 @@
 	import { themeStore } from '$lib/stores/themeStore';
 	import { playClick } from '$lib/stores/soundStore';
 	import PyQuestLogo from './PyQuestLogo.svelte';
-	import PwaInstallButton from './PwaInstallButton.svelte';
 	import Icon from './Icon.svelte';
 
 	let {

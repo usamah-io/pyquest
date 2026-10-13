@@ -144,8 +144,11 @@
 	$effect(() => {
 		if (typeof window !== 'undefined') {
 			try {
-				const dismissed = localStorage.getItem(BANNER_STORAGE_KEY);
-				if (dismissed === 'true') {
+				const dismissed =
+					localStorage.getItem(BANNER_STORAGE_KEY) === 'true' ||
+					document.cookie.includes('pyquest-profile-pwa-dismissed=true') ||
+					document.cookie.includes('pyquest_hide_pwa_banner=true');
+				if (dismissed) {
 					showInstallBanner = false;
 				}
 			} catch {}
@@ -158,6 +161,8 @@
 		if (typeof window !== 'undefined') {
 			try {
 				localStorage.setItem(BANNER_STORAGE_KEY, 'true');
+				document.cookie = 'pyquest-profile-pwa-dismissed=true; max-age=315360000; path=/; SameSite=Lax';
+				document.cookie = 'pyquest_hide_pwa_banner=true; max-age=315360000; path=/; SameSite=Lax';
 			} catch {}
 		}
 	}

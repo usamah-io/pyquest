@@ -9,7 +9,7 @@
 	}
 </script>
 
-{#if $pwaStore.showInstallGuide}
+{#if $pwaStore.showInstallGuide && !$pwaStore.isInstalled}
 	<div
 		role="dialog"
 		aria-modal="true"

@@ -15,6 +15,7 @@ import {
 import { learningLevelsData } from '../src/lib/questions/learningLevelsData';
 import { progressStore } from '../src/lib/stores/progressStore';
 import { authStore, dashboardUserStore, getGoogleClientId } from '../src/lib/stores/authStore';
+import { pwaStore, checkDeviceInstalled, getOrCreateDeviceId, DEVICE_INSTALLED_KEY, DEVICE_COOKIE_NAME } from '../src/lib/stores/pwaStore';
 import type { CodingBlock } from '../src/lib/types';
 
 describe('Block Compiler', () => {
@@ -963,6 +964,41 @@ describe('Google Authentication, Profile Setup & Account Persistence', () => {
 		await authStore.logout();
 		const auth = get(authStore);
 		expect(auth.isAuthenticated).toBe(false);
+	});
+});
+
+describe('Device Detection & PWA Installation Persistence Across Accounts', () => {
+	it('should generate and preserve unique device ID', () => {
+		const devId1 = getOrCreateDeviceId();
+		expect(devId1).toBeDefined();
+		const devId2 = getOrCreateDeviceId();
+		expect(devId2).toBe(devId1);
+	});
+
+	it('should mark device as installed and persist across user accounts', () => {
+		// Mark device as installed
+		pwaStore.markAsInstalled();
+		const pwaState = get(pwaStore);
+		expect(pwaState.isInstalled).toBe(true);
+		expect(pwaState.canInstall).toBe(false);
+
+		// User 1 logs in
+		authStore.completeProfileSetup({ name: 'User 1', avatar: '/mascot/pybot-front-idle.webp' });
+		expect(get(pwaStore).isInstalled).toBe(true);
+
+		// User 1 logs out
+		authStore.logout();
+		expect(get(pwaStore).isInstalled).toBe(true);
+
+		// User 2 logs in on the SAME device
+		authStore.completeProfileSetup({ name: 'User 2', avatar: '/mascot/pybot-waving.webp' });
+		// The install button must remain removed (isInstalled: true) for User 2 on the same device
+		expect(get(pwaStore).isInstalled).toBe(true);
+		expect(get(pwaStore).canInstall).toBe(false);
+	});
+
+	it('should detect installation status from persistent device markers', () => {
+		expect(checkDeviceInstalled()).toBe(true);
 	});
 });
 
