@@ -1031,7 +1031,7 @@
 								aria-label="Tarik penutup loop"
 								style="touch-action: none;"
 								onpointerdown={(e) => handlePointerDown(e, 'workspace', block.type, block.id, null, i, block)}
-								class="h-2.5 sm:h-3 w-full {hasNext ? 'rounded-bl-none rounded-r-xl' : 'rounded-b-xl rounded-tr-xl'} {block.children && block.children.length > 0 ? '-mt-[3px]' : 'mt-0'} px-3 relative z-30 flex items-center cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
+								class="h-5 sm:h-6 w-full rounded-tl-none rounded-r-xl {hasNext ? 'rounded-bl-none' : 'rounded-bl-xl'} {block.children && block.children.length > 0 ? '-mt-[3px]' : 'mt-0'} px-3 relative z-30 flex items-center cursor-grab active:cursor-grabbing {block.type === 'REPEAT'
 									? 'bg-indigo-600 border-b border-x border-indigo-400/40'
 									: 'bg-purple-600 border-b border-x border-purple-400/40'}"
 							>
