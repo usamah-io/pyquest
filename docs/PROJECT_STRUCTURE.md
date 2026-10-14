@@ -13,6 +13,9 @@ Berikut adalah peta struktur berkas utama PyQuest yang relevan bagi pengembangan
 ```
 pyquest/
 ├── docs/                               # Dokumentasi Teknis Lengkap
+│   ├── diagrams/                       # Gambar Skema Arsitektur Sistem
+│   │   ├── pyquest_system_flowchart.png# Gambar alur sistem resolusi tinggi (4510x2970)
+│   │   └── pyquest_system_flowchart.svg# Skema vektor alur sistem interaktif
 │   ├── APPLICATION_FLOWS.md            # Pemetaan 11 alur pengguna & diagram Mermaid
 │   ├── ARCHITECTURE.md                 # Spesifikasi 17 bab arsitektur sistem
 │   ├── COMPETITION_READINESS.md        # Kesiapan tema kompetisi & pedagogi

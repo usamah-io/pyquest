@@ -98,6 +98,10 @@ flowchart TD
 
 ## 4. Diagram Arsitektur Tingkat Tinggi (High-Level Architecture)
 
+![Skema Flowchart Arsitektur Sistem PyQuest](./diagrams/pyquest_system_flowchart.png)
+
+> **Berkas Visual Beresolusi Tinggi**: [PNG (4510x2970)](./diagrams/pyquest_system_flowchart.png) | [Vektor SVG](./diagrams/pyquest_system_flowchart.svg)
+
 ```mermaid
 flowchart TD
     subgraph BrowserClient ["Klien Peramban Pengguna (Client-Side)"]
