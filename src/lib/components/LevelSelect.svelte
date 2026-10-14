@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import type { GameLevel } from '$lib/types';
 	import { progressStore } from '$lib/stores/progressStore';
 	import { playClick } from '$lib/stores/soundStore';
 	import Icon from './Icon.svelte';
+	import TutorialModal from './TutorialModal.svelte';
 
 	let {
 		levels,
@@ -13,6 +15,42 @@
 		onSelectLevelChallenge: (levelIndex: number, challengeIndex: number) => void;
 		onBackToHome: () => void;
 	} = $props();
+
+	// Tutorial onboarding state (dismissed state persisted in localStorage)
+	const TUTORIAL_STORAGE_KEY = 'pyquest_coding_tutorial_dismissed';
+	let isTutorialDismissed = $state<boolean>(false);
+	let isTutorialModalOpen = $state<boolean>(false);
+
+	onMount(() => {
+		if (typeof window !== 'undefined') {
+			try {
+				isTutorialDismissed = localStorage.getItem(TUTORIAL_STORAGE_KEY) === 'true';
+			} catch (e) {
+				// Silently ignore storage errors
+			}
+		}
+	});
+
+	function handleOpenTutorial() {
+		playClick();
+		isTutorialModalOpen = true;
+	}
+
+	function handleCloseTutorial() {
+		isTutorialModalOpen = false;
+	}
+
+	function handleDismissTutorial() {
+		playClick();
+		isTutorialDismissed = true;
+		if (typeof window !== 'undefined') {
+			try {
+				localStorage.setItem(TUTORIAL_STORAGE_KEY, 'true');
+			} catch (e) {
+				// Silently ignore storage errors
+			}
+		}
+	}
 
 	// Modal detail state for viewing level objectives, concepts & achievements
 	let activeDetailLevel = $state<GameLevel | null>(null);
@@ -205,8 +243,18 @@
 			</div>
 		</div>
 
-		<!-- Progress Pills -->
+		<!-- Progress Pills & Tutorial Trigger -->
 		<div class="flex items-center gap-2 shrink-0">
+			<button
+				type="button"
+				onclick={handleOpenTutorial}
+				class="flex items-center gap-1.5 text-[11px] sm:text-xs bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-700/60 text-indigo-300 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-xl font-bold transition-all shadow-sm cursor-pointer"
+				title="Buka Video Tutorial Koding"
+				aria-label="Buka Video Tutorial Koding"
+			>
+				<Icon name="help-circle" size={14} class="text-indigo-400 shrink-0" />
+				<span class="hidden sm:inline">Tutorial</span>
+			</button>
 			<div class="flex items-center gap-1.5 text-[11px] sm:text-xs bg-slate-900 border border-slate-800 px-2.5 sm:px-3 py-1.5 rounded-xl font-bold text-emerald-400">
 				<Icon name="trophy" size={14} class="text-emerald-400 shrink-0" />
 				<span>{$progressStore.completedChallenges.length} / {levels.reduce((acc, l) => acc + l.challenges.length, 0)}</span>
@@ -224,6 +272,38 @@
 		<div class="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-rose-950/90 border border-rose-500 text-rose-200 px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-2.5 text-xs sm:text-sm font-bold backdrop-blur-md animate-fade-in">
 			<Icon name="lock" size={16} class="text-rose-400 shrink-0" />
 			<span>{lockedNotice}</span>
+		</div>
+	{/if}
+
+	<!-- Tutorial Card (Dismissible Onboarding) -->
+	{#if !isTutorialDismissed}
+		<div class="w-full max-w-xl mx-auto mb-6 bg-slate-900 border border-indigo-500/40 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-lg shadow-indigo-950/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative">
+			<div class="flex items-start gap-3 min-w-0">
+				<div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-indigo-950 border border-indigo-700/60 flex items-center justify-center text-indigo-400 shrink-0">
+					<Icon name="play" size={20} class="fill-current text-indigo-400" />
+				</div>
+				<div class="min-w-0">
+					<h3 class="text-sm sm:text-base font-black text-white">Baru pertama bermain?</h3>
+					<p class="text-xs text-slate-300 mt-0.5">Pelajari cara menyusun blok dan menggerakkan PyBot.</p>
+				</div>
+			</div>
+			<div class="flex items-center gap-2 self-end sm:self-center shrink-0 w-full sm:w-auto">
+				<button
+					type="button"
+					onclick={handleDismissTutorial}
+					class="flex-1 sm:flex-initial px-3 py-2 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer text-center"
+				>
+					Lewati
+				</button>
+				<button
+					type="button"
+					onclick={handleOpenTutorial}
+					class="flex-1 sm:flex-initial px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-600/30 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+				>
+					<Icon name="play" size={14} class="fill-current" />
+					<span>Lihat Tutorial</span>
+				</button>
+			</div>
 		</div>
 	{/if}
 
@@ -559,4 +639,7 @@
 			</div>
 		</div>
 	{/if}
+
+	<!-- Coding Game Tutorial Modal -->
+	<TutorialModal isOpen={isTutorialModalOpen} onClose={handleCloseTutorial} />
 </div>

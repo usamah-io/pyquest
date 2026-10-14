@@ -1,93 +1,139 @@
 # PyQuest — Detailed Application Flows & User Journeys
 
-> **Pemetaan Lengkap Perjalanan Pengguna, Transisi Layar, dan Status Implementasi Riil**  
+> **Pemetaan Lengkap Perjalanan Pengguna, Transisi Antarmuka, dan Status Verifikasi Implementasi Riil**  
 > Repositori: `pyquest` | Seluruh alur diverifikasi langsung terhadap kode sumber aktual.
 
 ---
 
-## 1. Alur Autentikasi Pengguna (Google Login & Returning User)
+## Daftar Isi
+1. [Alur Startup Aplikasi & Inisialisasi Sesi](#1-alur-startup-aplikasi--inisialisasi-sesi)
+2. [Alur Autentikasi Google & Pendaftaran Akun Pertama Kali](#2-alur-autentikasi-google--pendaftaran-akun-pertama-kali)
+3. [Alur Beranda & Navigasi Utama](#3-alur-beranda--navigasi-utama)
+4. [Alur Modul Belajar Python & Kuis Interaktif (150 Soal)](#4-alur-modul-belajar-python--kuis-interaktif-150-soal)
+5. [Alur Coding Game — Siklus Eksekusi Penuh (90 Misi Labirin)](#5-alur-coding-game--siklus-eksekusi-penuh-90-misi-labirin)
+6. [Alur Pengaturan Profil Siswa & Akun](#6-alur-pengaturan-profil-siswa--akun)
+7. [Alur Pengaturan Efek Suara Web Audio API](#7-alur-pengaturan-efek-suara-web-audio-api)
+8. [Alur Pengaturan Tema Gelap & Terang](#8-alur-pengaturan-tema-gelap--terang)
+9. [Alur Navigasi Tombol Back Mobile & Riwayat Browser](#9-alur-navigasi-tombol-back-mobile--riwayat-browser)
+10. [Alur Progressive Web App (PWA) & Operasi Offline](#10-alur-progressive-web-app-pwa--operasi-offline)
+11. [Alur Onboarding Siswa Baru & Tutorial Coding Game](#11-alur-onboarding-siswa-baru--tutorial-coding-game)
+
+---
+
+## 1. Alur Startup Aplikasi & Inisialisasi Sesi
 
 ### 1.1 Diagram Alur (Mermaid)
 ```mermaid
 flowchart TD
-    Start([Aplikasi Dibuka]) --> CheckLocalAuth{Ada Sesi di LocalStorage?}
-    CheckLocalAuth -->|Ya| VerifyServerSession[Verifikasi Cookie /api/auth/session]
-    CheckLocalAuth -->|Tidak| ShowLoginView[Tampilkan Layar Login: LoginView.svelte]
+    Launch([Pengguna Membuka PyQuest]) --> CheckEarlyTheme[app.html Inline Script: Terapkan data-theme Gelap/Terang]
+    CheckEarlyTheme --> InitServiceWorker{Mode Produksi?}
+    InitServiceWorker -->|Ya| RegisterSW[Daftarkan service-worker.js & Precache Shell]
+    InitServiceWorker -->|Development| UnregisterSW[Unregister SW untuk Kemudahan Debug]
+    
+    RegisterSW --> ShowSplash[Tampilkan SplashScreen: Animasi Maskot PyBot]
+    UnregisterSW --> ShowSplash
 
-    VerifyServerSession -->|Sesi Valid| CheckSetupDone{Profil Selesai Disetup?}
-    VerifyServerSession -->|Sesi Invalid/Expired| ShowLoginView
+    ShowSplash --> InitAuthStore[Panggil authStore.init & loadInitialAuthState]
+    InitAuthStore --> ReadLocalUser{Ada User di LocalStorage?}
 
-    CheckSetupDone -->|Ya| GoLanding[Masuk ke Beranda: LANDING]
-    CheckSetupDone -->|Belum| GoProfileSetup[Masuk ke: PROFILE_SETUP]
+    ReadLocalUser -->|Ada Data Akun| ValidateServerSession[Panggil GET /api/auth/session via Background Fetch]
+    ReadLocalUser -->|Tidak Ada| SetGuestState[Set Sesi Kosong / Tamu]
 
-    ShowLoginView --> UserClicksGoogle[Klik 'Masuk dengan Google']
-    UserClicksGoogle --> GISPrompt[Pop-up Google Identity Services GSI]
-    GISPrompt -->|Credential JWT| PostApiGoogle[Kirim POST ke /api/auth/google]
-    PostApiGoogle --> VerifyGoogleToken{Verifikasi Token di Google Server}
-    VerifyGoogleToken -->|Gagal| ShowError[Pesan Galat & Tombol Coba Lagi]
-    VerifyGoogleToken -->|Berhasil| SetHttpCookie[Simpan pyquest_session HTTP-Only Cookie]
-    SetHttpCookie --> CheckUserRegistry{User ID Ada di Registry Lokal?}
+    ValidateServerSession -->|200 OK: Sesi Valid| CheckSetupDone{hasCompletedProfileSetup?}
+    ValidateServerSession -->|Cookie Expired / Gagal| FallbackLocalSession[Pertahankan Data Lokal & Mode Offline]
+    FallbackLocalSession --> CheckSetupDone
 
-    CheckUserRegistry -->|User Baru| GoProfileSetup
-    CheckUserRegistry -->|User Lama| GoLanding
+    CheckSetupDone -->|Sudah Selesai| SetScreenLanding[Set State Layar: LANDING]
+    CheckSetupDone -->|Belum Selesai| SetScreenSetup[Set State Layar: PROFILE_SETUP]
+    SetGuestState --> SetScreenLogin[Set State Layar: LOGIN]
+
+    SetScreenLanding --> DismissSplash[Tutup SplashScreen & Render Tampilan Beranda]
+    SetScreenSetup --> DismissSplash
+    SetScreenLogin --> DismissSplash
+
+    DismissSplash --> InitHistoryGuard[Inisialisasi history.replaceState ROOT_GUARD]
 ```
 
 ### 1.2 Rincian Alur
-- **Titik Masuk (*Entry Point*)**: Layar `LOGIN` (`src/lib/components/LoginView.svelte`) atau modal `GoogleAuthModal.svelte`.
+- **Titik Masuk (*Entry Point*)**: `src/app.html`, `src/routes/+layout.svelte`, dan `src/routes/+page.svelte`.
 - **Langkah & Transisi**:
-  1. `loadInitialAuthState()` memeriksa `localStorage` (`pyquest_current_user_v4`). Jika ada, sesi dimuat seketika tanpa flash screen login.
-  2. Inisialisasi latar belakang memanggil `GET /api/auth/session` untuk memastikan cookie sesi server tetap valid.
-  3. Saat pengguna baru mengklik login Google, Google Identity Services merender tombol One Tap / modal Google Sign-In resmi.
-  4. Credential JWT dikirim ke `POST /api/auth/google`. Server memverifikasi token ke `oauth2.googleapis.com/tokeninfo`, memeriksa masa berlaku dan Audience ID.
-  5. Jika lolos verifikasi, cookie `pyquest_session` disetel dengan atribut `httpOnly`, `sameSite=lax`, `secure` (production), durasi 30 hari.
-  6. Bila akun belum pernah menyelesaikan setup nama/avatar (`hasCompletedProfileSetup: false`), layar berpindah ke `PROFILE_SETUP`. Jika sudah pernah, langsung diarahkan ke `LANDING`.
+  1. Skrip sinkron di `<head>` `src/app.html` langsung mengekstrak nilai tema dari `localStorage.getItem('pyquest-theme')` dan menyetel atribut `data-theme` pada elemen `<html>`. Hal ini mencegah terjadinya *flash of unstyled content* (FOUC) atau kedipan layar putih sebelum styling Svelte termuat.
+  2. Komponen `SplashScreen.svelte` dimunculkan seketika dengan gambar maskot resmi PyBot (`/mascot/pybot-waving.webp`) dan indikator pemuatan beranimasi halus.
+  3. `authStore.ts` menjalankan `loadInitialAuthState()` secara sinkron untuk memulihkan objek `currentUser` dari kunci `pyquest_current_user_v4`.
+  4. Bila data lokal ditemukan, fungsi latar belakang mengecek keabsahan cookie HTTP-Only via `GET /api/auth/session`.
+  5. Bila cookie valid atau dalam keadaan offline mandiri, sistem memeriksa flag `hasCompletedProfileSetup`:
+     - Jika `true`: Navigasi langsung menuju Beranda (`LANDING`).
+     - Jika `false`: Pengguna diarahkan menyelesaikan penyiapan nama/avatar di `PROFILE_SETUP`.
+  6. Bila tidak ada sesi pengguna sama sekali, layar diarahkan ke `LOGIN`.
+  7. Setelah status ditentukan, layar pembuka (*splash screen*) ditutup secara mulus (`isSplashVisible = false`) dan tumpukan riwayat browser diinisialisasi dengan state sentinel `ROOT_GUARD`.
+- **Berkas Terkait**:
+  - `src/app.html`
+  - `src/routes/+layout.svelte`
+  - `src/routes/+page.svelte`
+  - `src/lib/components/SplashScreen.svelte`
+  - `src/lib/stores/authStore.ts`
+  - `src/routes/api/auth/session/+server.ts`
+- **Data yang Dibaca / Ditulis**:
+  - Dibaca: `pyquest-theme`, `pyquest_current_user_v4`, cookie `pyquest_session`.
+  - Ditulis: Status reaktif `authStore`, `themeStore`, flag status splash screen.
+- **Status Implementasi**: **TERVERIFIKASI & PASS** (Teruji di environment browser dan unit tests).
+
+---
+
+## 2. Alur Autentikasi Google & Pendaftaran Akun Pertama Kali
+
+### 2.1 Diagram Alur (Mermaid)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Anak as Siswa / Orang Tua
+    participant LoginUI as LoginView.svelte / GoogleAuthModal.svelte
+    participant GSI as Google Identity Services SDK
+    participant AuthStore as authStore.ts
+    participant ServerAPI as /api/auth/google
+    participant GoogleOAuth as oauth2.googleapis.com
+    participant LocalStorage as Browser Storage (v4)
+
+    Anak->>LoginUI: Klik tombol "Masuk dengan Google"
+    LoginUI->>GSI: Inisialisasi google.accounts.id.prompt()
+    GSI-->>Anak: Tampilkan Modal Resmi Akun Google
+    Anak->>GSI: Pilih Akun Google & Beri Otorisasi
+    GSI-->>LoginUI: Callback Credential (JWT ID Token)
+    
+    LoginUI->>AuthStore: loginWithGoogleToken(credential)
+    AuthStore->>ServerAPI: POST /api/auth/google { credential }
+    ServerAPI->>GoogleOAuth: GET /tokeninfo?id_token=...
+    GoogleOAuth-->>ServerAPI: Metadata Akun (sub, email, name, picture)
+    ServerAPI-->>AuthStore: 200 OK + Set HTTP-Only Cookie pyquest_session
+    
+    AuthStore->>LocalStorage: Periksa Registri Pengguna pyquest_users_registry_v4
+    alt Siswa Baru (Belum pernah setup)
+        AuthStore->>LocalStorage: Simpan Akun Baru (hasCompletedProfileSetup = false)
+        AuthStore-->>LoginUI: Arahkan ke Layar PROFILE_SETUP
+    else Siswa Lama (Sudah pernah setup)
+        AuthStore->>LocalStorage: Muat Profil & Progres Sebelumnya
+        AuthStore-->>LoginUI: Arahkan ke Layar LANDING
+    end
+```
+
+### 2.2 Rincian Alur
+- **Titik Masuk (*Entry Point*)**: `src/lib/components/LoginView.svelte` atau modal `src/lib/components/GoogleAuthModal.svelte`.
+- **Langkah & Transisi**:
+  1. Pengguna memicu login Google resmi melalui SDK Google Identity Services (`https://accounts.google.com/gsi/client`).
+  2. Token kredensial JWT dikirimkan ke endpoint SvelteKit backend `POST /api/auth/google`.
+  3. Server memverifikasi integritas tanda tangan kriptografis token secara langsung ke server resmi Google (`oauth2.googleapis.com/tokeninfo`).
+  4. Server menyetel cookie sesi `pyquest_session` dengan keamanan tingkat tinggi: `httpOnly: true`, `sameSite: 'lax'`, `secure: true` (saat production), durasi aktif 30 hari.
+  5. `authStore.ts` mengecek `USERS_REGISTRY_KEY` lokal (`pyquest_users_registry_v4`):
+     - Jika ID Google belum ada dalam registri, profil ditandai sebagai pengguna baru (`hasCompletedProfileSetup: false`) dan layar beralih ke `PROFILE_SETUP`.
+     - Jika ID Google sudah terdaftar, profil dimuat lengkap dengan avatar kustomnya, lalu diarahkan ke Beranda (`LANDING`).
+  6. Bila pengguna membatalkan pop-up Google atau koneksi terputus, pesan galat ramah ditampilkan tanpa merusak antarmuka.
 - **Berkas Terkait**:
   - `src/lib/components/LoginView.svelte`
   - `src/lib/components/GoogleAuthModal.svelte`
   - `src/lib/stores/authStore.ts`
+  - `src/lib/utils/googleAuth.ts`
   - `src/routes/api/auth/google/+server.ts`
-  - `src/routes/api/auth/session/+server.ts`
-- **Data yang Dibaca / Ditulis**:
-  - Dibaca: Token Google JWT, cookie `pyquest_session`, `pyquest_current_user_v4`, `pyquest_users_registry_v4`.
-  - Ditulis: Cookie sesi HTTP-Only, profil akun di localStorage, state reaktif `authStore`.
-- **Status Implementasi**: **TERVERIFIKASI & PASS** (Didukung oleh 6 unit tests auth di `src/engine.test.ts`).
-- **Catatan & Keterbatasan**: Memerlukan koneksi internet saat login pertama untuk verifikasi token Google. Setelah login berhasil, seluruh sesi dan progres tersimpan lokal di perangkat dan dapat berjalan offline.
-
----
-
-## 2. Alur Pengaturan & Penyuntingan Profil
-
-### 2.1 Diagram Alur (Mermaid)
-```mermaid
-flowchart TD
-    EnterSetup[Masuk Layar PROFILE_SETUP / PROFILE] --> LoadAvatar[Muat Avatar Pilihan & Nama Pengguna]
-    LoadAvatar --> UserEdits[Ubah Nama Panggilan atau Pilih Karakter Robot / Upload Foto]
-    UserEdits --> CheckCustomPhoto{Apakah Upload Foto Kustom?}
-    CheckCustomPhoto -->|Ya| SaveIndexedDB[Simpan Base64 / Blob ke IndexedDB: avatarStorage.ts]
-    CheckCustomPhoto -->|Tidak| PickPreset[Pilih Stiker Maskot / Preset Avatar]
-    SaveIndexedDB --> SaveStore[Panggil authStore.completeProfileSetup atau updateProfile]
-    PickPreset --> SaveStore
-    SaveStore --> PersistLocal[Perbarui pyquest_current_user_v4 & USERS_REGISTRY_KEY]
-    PersistLocal --> UpdateDashboardStore[Derived dashboardUserStore Otomatis Terbarui]
-    UpdateDashboardStore --> NavigateLanding[Navigasi ke LANDING atau Kembali ke PROFILE]
-```
-
-### 2.2 Rincian Alur
-- **Titik Masuk (*Entry Point*)**: Layar `PROFILE_SETUP` (`ProfileSetup.svelte`) untuk pengguna baru, atau layar `PROFILE` (`ProfileView.svelte`) via navigasi bawah / samping.
-- **Langkah & Transisi**:
-  1. Pengguna dapat memilih preset stiker PyBot resmi (berbagai ekspresi) atau mengunggah gambar kustom.
-  2. Gambar kustom disimpan ke IndexedDB lokal melalui `avatarStorage.ts` untuk menghindari kuota penyimpanan localStorage yang sempit (5MB).
-  3. Nama anak divalidasi dan dipotong nama panggilan pertamanya (`firstName`) untuk sapaan ramah di Beranda.
-  4. Penyimpanan persisten memutakhirkan `USERS_REGISTRY_KEY` sehingga saat berganti akun Google di perangkat yang sama, data profil tetap terpisah rapi.
-- **Berkas Terkait**:
-  - `src/lib/components/ProfileSetup.svelte`
-  - `src/lib/components/ProfileView.svelte`
-  - `src/lib/utils/avatarStorage.ts`
-  - `src/lib/stores/authStore.ts`
-- **Data yang Dibaca / Ditulis**:
-  - Dibaca: Data akun Google, IndexedDB `pyquest_db/avatars`.
-  - Ditulis: Profil `UserProfile` di localStorage dan IndexedDB.
-- **Status Implementasi**: **TERVERIFIKASI & PASS** (Teruji di `src/engine.test.ts`).
+- **Status Implementasi**: **TERVERIFIKASI & PASS** (Teruji dengan 6 unit tests auth pada `src/engine.test.ts`).
 
 ---
 
@@ -95,31 +141,50 @@ flowchart TD
 
 ### 3.1 Diagram Alur (Mermaid)
 ```mermaid
-flowchart LR
-    Landing[Beranda: LANDING] --> BottomNav[Bottom Navigation Bar: 4 Destinasi]
-    BottomNav --> DestHome["1. Beranda (HOME)"]
-    BottomNav --> DestLearn["2. Modul Belajar (LEARN)"]
-    BottomNav --> DestGame["3. Coding Game (GAME)"]
-    BottomNav --> DestProfile["4. Profil Siswa (PROFILE)"]
+flowchart TD
+    subgraph Beranda ["Layar Beranda (LANDING)"]
+        Hero[Header Halo Siswa, Total XP & Daily Streak]
+        BtnLearn["Tombol: Mulai Belajar Python (Teori & Kuis)"]
+        BtnGame["Tombol: Petualangan Coding Game (Labirin 2D)"]
+        CardStats[Kartu Ringkasan Progres & Misi Selesai]
+    end
 
-    Landing --> ActionLearn["Tombol Mulai Belajar Teori"] --> DestLearn
-    Landing --> ActionGame["Tombol Mulai Coding Game"] --> DestGame
-    Landing --> CardMissions["Kartu Misi Selesai"] --> ViewMissions[Layar MISSIONS]
-    Landing --> CardXP["Kartu Total XP"] --> ViewXP[Layar XP_PROGRESS]
-    Landing --> CardStreak["Kartu Daily Streak"] --> ViewStreak[Layar STREAK_VIEW]
+    subgraph NavigasiBawah ["Bottom Navigation Bar (Mobile / Tablet)"]
+        NavHome["1. Beranda (HOME)"]
+        NavLearn["2. Modul Belajar (LEARN)"]
+        NavGame["3. Coding Game (GAME)"]
+        NavProfile["4. Profil Siswa (PROFILE)"]
+    end
+
+    BtnLearn -->|Klik| ScreenLearnSelect[Layar LEARN_SELECT: 30 Level Kurikulum]
+    BtnGame -->|Klik| ScreenLevelSelect[Layar LEVEL_SELECT: 30 Level Arena]
+    
+    NavHome -->|Klik| Beranda
+    NavLearn -->|Klik| ScreenLearnSelect
+    NavGame -->|Klik| ScreenLevelSelect
+    NavProfile -->|Klik| ScreenProfile[Layar PROFILE: Statistik & Koleksi]
+
+    CardStats -->|Klik Misi| ScreenMissions[Layar Riwayat Misi: MISSIONS]
+    CardStats -->|Klik XP| ScreenXP[Layar Rincian XP: XP_PROGRESS]
+    CardStats -->|Klik Streak| ScreenStreak[Layar Kalender Streak: STREAK_VIEW]
 ```
 
 ### 3.2 Rincian Alur
-- **Titik Masuk (*Entry Point*)**: Layar `LANDING` (`LandingHero.svelte`).
+- **Titik Masuk (*Entry Point*)**: Layar `LANDING` (`src/lib/components/LandingHero.svelte`).
 - **Langkah & Transisi**:
-  1. Header menyapa nama pengguna (`Halo, {firstName}!`), menampilkan status streak harian dan total XP.
-  2. Menyediakan 2 tombol aksi utama: *"Mulai Belajar Python"* dan *"Petualangan Coding Game"*.
-  3. Menampilkan kartu progres cepat: misi selesai, level belajar aktif, rekor streak aktif.
-  4. Pada layar mobile, bilah bawah `BottomNav.svelte` otomatis menyembunyikan diri saat pengguna menggulir ke bawah (*scroll down*) dan muncul kembali saat menggulir ke atas (*scroll up*) untuk memaksimalkan area pandang anak.
+  1. Komponen `LandingHero.svelte` menampilkan sapaan personal ramah anak menggunakan nama panggilan (`Halo, {firstName}!`), ringkasan status *Daily Streak*, dan total XP saat ini.
+  2. Dua kartu panggilan aksi (CTA) berukuran besar dan mudah ditekan:
+     - *"Mulai Belajar Python"* $\to$ membuka modul teori dan kuis (`LEARN_SELECT`).
+     - *"Petualangan Coding Game"* $\to$ membuka arena labirin koding visual (`LEVEL_SELECT`).
+  3. Pada tampilan mobile (<768px), `BottomNav.svelte` menyediakan tepat 4 destinasi tetap: Beranda, Modul, Game, dan Profil.
+  4. Bilah bawah `BottomNav.svelte` dilengkapi fitur *smart auto-hide*: otomatis menyusut saat pengguna menggulir ke bawah (*scroll down*) dan muncul kembali saat menggulir ke atas (*scroll up*) guna memperluas bidang sentuh anak.
+  5. Pada tampilan desktop, navigasi samping `Sidebar.svelte` dan bilah atas `Navbar.svelte` memudahkan transisi layar.
 - **Berkas Terkait**:
   - `src/lib/components/LandingHero.svelte`
   - `src/lib/components/BottomNav.svelte`
+  - `src/lib/components/Navbar.svelte`
   - `src/lib/components/Sidebar.svelte`
+  - `src/routes/+page.svelte`
 - **Status Implementasi**: **TERVERIFIKASI & PASS**.
 
 ---
@@ -129,247 +194,374 @@ flowchart LR
 ### 4.1 Diagram Alur (Mermaid)
 ```mermaid
 flowchart TD
-    SelectLevel[Pilih Level dari 30 Level: LearningLevelSelect.svelte] --> LoadQuestion[Muat Soal Pertama: QuestionCard.svelte]
-    LoadQuestion --> ViewHints{Perlu Bantuan?}
-    ViewHints -->|Ya| OpenTieredHint[Buka Petunjuk Bertingkat: Hint 1 / Hint 2]
-    ViewHints -->|Tidak| SelectOption[Pilih Salah Satu Jawaban]
-    OpenTieredHint --> SelectOption
+    EnterLearn[Pilih Level dari 30 Level: LearningLevelSelect.svelte] --> CheckLvlLock{Level Terbuka?}
+    CheckLvlLock -->|Terkunci| ShowToast[Munculkan Toast: Selesaikan level sebelumnya]
+    CheckLvlLock -->|Terbuka| OpenLesson[Buka Modul Belajar & Soal Pertama: QuestionCard.svelte]
 
-    SelectOption --> EvalAnswer[Evaluasi Deterministik: recordQuizAnswer]
-    EvalAnswer --> PlaySound[Putar Suara Sintesis: playCorrect / playIncorrect]
-    PlaySound --> ShowFeedback[Tampilkan Kartu Penjelasan: FeedbackModal.svelte]
+    OpenLesson --> ReadMaterial[Anak Membaca Materi, Contoh Kode Python & Petunjuk]
+    ReadMaterial --> HelpNeeded{Perlu Bantuan?}
+    HelpNeeded -->|Ya| ClickHint[Klik Petunjuk: Tampilkan Hint Bertingkat yang Mendidik]
+    HelpNeeded -->|Tidak| ChooseAnswer[Pilih Opsi Jawaban: A, B, C, atau D]
+    ClickHint --> ChooseAnswer
 
-    ShowFeedback --> NextQClick[Klik 'Lanjut Soal Berikutnya']
-    NextQClick --> CheckMoreQ{Masih Ada Soal di Level Ini?}
-    CheckMoreQ -->|Ya| LoadNextQuestion[Muat Soal Berikutnya di Level yang Sama]
-    CheckMoreQ -->|Tidak| CalcSummary[Hitung Ringkasan Skor: calculateQuizSummary]
+    ChooseAnswer --> EvalEngine[Evaluasi Jawaban Deterministik: quizEvaluator.ts]
+    EvalEngine --> PlaySfx[Web Audio API: playCorrect / playIncorrect]
+    PlaySfx --> ShowFeedbackModal[Tampilkan Modal Feedback: FeedbackModal.svelte]
 
-    CalcSummary --> CheckReward{Pertama Kali Selesai?}
-    CheckReward -->|Ya| AwardXP[progressStore.completeLearningLevel +XP]
-    CheckReward -->|Replay| KeepRecord[Rekam Nilai Tertinggi, 0 Bonus XP]
-    AwardXP --> ShowSuccessModal[Tampilkan Modal Kelulusan: LearningSuccessModal.svelte]
-    KeepRecord --> ShowSuccessModal
+    ShowFeedbackModal --> NextBtnClick[Klik 'Lanjut ke Soal Berikutnya']
+    NextBtnClick --> MoreQuestions{Masih Ada Soal di Level Ini? (Total 5 Soal)}
+    MoreQuestions -->|Ya| LoadNextQ[Muat Soal Berikutnya di Level yang Sama]
+    MoreQuestions -->|Tidak| CalculateScore[Kalkulasi Ringkasan Skor & Persentase Kelulusan]
 
-    ShowSuccessModal --> ChooseNextAction{Pilihan Siswa}
-    ChooseNextAction -->|Level Berikutnya| NextLevelFlow[Masuk ke Level Belajar Berikutnya]
-    ChooseNextAction -->|Ulangi Level| ReplayLevelFlow[Ulangi Level untuk Nilai Sempurna]
-    ChooseNextAction -->|Kembali| BackToSelect[Kembali ke Daftar Level: LEARN_SELECT]
+    CalculateScore --> CheckFirstPass{Pertama Kali Lulus Level Ini?}
+    CheckFirstPass -->|Ya| AddRewardXP[progressStore.completeLearningLevel: Tambah XP + Buka Level Berikutnya]
+    CheckFirstPass -->|Replay / Sudah Pernah| KeepHighestScore[Perbarui Rekor Skor Terbaik, 0 Tambahan XP]
+
+    AddRewardXP --> ShowSuccessModal[Tampilkan Modal Kelulusan: LearningSuccessModal.svelte]
+    KeepHighestScore --> ShowSuccessModal
+
+    ShowSuccessModal --> ActionChoice{Pilihan Siswa}
+    ActionChoice -->|Lanjut Level Berikutnya| OpenNextLevel[Buka Level Belajar Berikutnya]
+    ActionChoice -->|Ulangi Level Ini| ReplayCurrent[Ulangi Kuis untuk Nilai Sempurna 100%]
+    ActionChoice -->|Kembali ke Menu| ReturnToSelection[Kembali ke Daftar Level: LEARN_SELECT]
 ```
 
 ### 4.2 Rincian Alur
-- **Titik Masuk (*Entry Point*)**: Layar `LEARN_SELECT` (`LearningLevelSelect.svelte`).
+- **Titik Masuk (*Entry Point*)**: Layar `LEARN_SELECT` (`src/lib/components/LearningLevelSelect.svelte`).
 - **Langkah & Transisi**:
-  1. Menampilkan 30 level kurikulum Python terstruktur (Variabel, Tipe Data, Operator, Kondisi `if/else`, Perulangan `for/while`, Logika Dasar).
-  2. Setiap level terdiri dari tepat 5 pertanyaan (total 150 bank soal pada `questionsData.ts`).
-  3. `QuestionCard.svelte` menampilkan teks soal, blok kode sintaks Python, opsi pilihan acak, dan tombol petunjuk bertingkat yang tidak membocorkan kunci jawaban langsung.
-  4. Siswa memilih jawaban $\to$ dievaluasi seketika oleh `quizEvaluator.ts` dengan perlindungan anti-klik ganda.
-  5. Penjelasan edukatif ramah anak ditampilkan di `FeedbackModal.svelte`.
-  6. Setelah soal ke-5 selesai, `calculateQuizSummary()` menghitung persentase kebenaran, status kesempurnaan (*perfect score* 5/5), dan memicu selebrasi kelulusan di `LearningSuccessModal.svelte`.
+  1. Kurikulum terdiri dari 30 level bergradasi (Level 1: Konsep Variabel hingga Level 30: Proyek Terpadu).
+  2. Masing-masing level memuat tepat 5 soal kurasi bermutu (total 150 bank soal pada `questionsData.ts`).
+  3. Soal disajikan melalui `QuestionCard.svelte` yang menampilkan sintaks kode Python terformat rapi dan opsi jawaban yang diacak urutan tampilannya.
+  4. Tersedia tombol petunjuk (*hint*) pedagogis yang membimbing logika siswa tanpa membocorkan kunci jawaban langsung.
+  5. Evaluasi jawaban ditangani oleh `quizEvaluator.ts`:
+     - Jawaban benar memutar efek suara nada manis (*sweet chime*).
+     - Jawaban salah memutar nada lembut (*soft boop*) disertai penjelasan konsep yang ramah.
+     - Dilengkapi mekanisme anti-klik ganda (*double-submit protection*).
+  6. Pada akhir kuis, jika siswa pertama kali menyelesaikan level, fungsi `completeLearningLevel()` di `progressStore.ts` menambahkan reward XP dan otomatis membuka (*unlock*) level berikutnya.
+  7. Pada saat pengerjaan ulang (*replay*), skor tertinggi diperbarui namun penambahan reward XP dicegah (*anti-duplicate XP guard*).
 - **Berkas Terkait**:
   - `src/lib/components/LearningLevelSelect.svelte`
   - `src/lib/components/QuestionCard.svelte`
   - `src/lib/components/FeedbackModal.svelte`
   - `src/lib/components/LearningSuccessModal.svelte`
-  - `src/lib/questions/questionsData.ts`
   - `src/lib/questions/learningLevelsData.ts`
+  - `src/lib/questions/questionsData.ts`
   - `src/lib/questions/quizEvaluator.ts`
-- **Data yang Dibaca / Ditulis**:
-  - Dibaca: Bank soal `questionsData`, level belajar `learningLevelsData`.
-  - Ditulis: `completedLearningLevels`, `learningLevelScores`, `completedQuestions`, dan akumulasi XP di `progressStore`.
-- **Status Implementasi**: **TERVERIFIKASI & PASS** (Teruji dengan 19 unit tests khusus soal dan kuis di `src/engine.test.ts`).
+- **Status Implementasi**: **TERVERIFIKASI & PASS** (Teruji dengan 19 unit tests soal dan kuis pada `src/engine.test.ts`).
 
 ---
 
-## 5. Alur Coding Game, Drag-and-Drop & Arena Labirin (90 Misi)
+## 5. Alur Coding Game — Siklus Eksekusi Penuh (90 Misi Labirin)
 
 ### 5.1 Diagram Alur (Mermaid)
 ```mermaid
 flowchart TD
-    SelectLvl[Pilih Level Game dari 30 Level: LevelSelect.svelte] --> PickMission[Pilih Misi 1, 2, atau 3]
-    PickMission --> Briefing[Taklimat Misi: MissionBriefing.svelte]
-    Briefing --> EnterArena[Masuk Arena: CHALLENGE]
+    SelectLvl[Pilih Level dari 30 Level: LevelSelect.svelte] --> CheckTutorialCard{Tutorial Card Terlihat?}
+    CheckTutorialCard -->|Klik Lihat Tutorial| OpenTutorialModal[Buka Modal Tutorial YouTube: TutorialModal.svelte]
+    CheckTutorialCard -->|Klik Lewati / Sudah Dismiss| PickMission[Pilih Misi: Misi 1, 2, atau 3]
+    OpenTutorialModal --> CloseTutorial[Tutup Tutorial] --> PickMission
 
-    EnterArena --> CheckOrientation{Orientasi Layar}
-    CheckOrientation -->|Portrait Mobile| OrientAlert[OrientationGuard: Putar ke Landscape]
-    CheckOrientation -->|Landscape / Layar Lebar| ShowStage[Tampilkan GameCanvas & BlockWorkspace]
+    PickMission --> OpenBriefing[Taklimat Misi: MissionBriefing.svelte]
+    OpenBriefing --> EnterStage[Masuk Arena Labirin: CHALLENGE]
 
-    ShowStage --> ArrangeBlocks[Anak Menyusun Balok: MAJU, BELOK, ULANGI, SELAMANYA]
-    ArrangeBlocks --> LivePython[Lihat Kode Python Tergenerate Otomatis]
-    ArrangeBlocks --> ClickRun[Klik Tombol 'JALANKAN KODE']
+    EnterStage --> CheckOrientation{Orientasi Perangkat}
+    CheckOrientation -->|Mobile Portrait| AlertOrient[OrientationGuard: Putar Ponsel ke Landscape]
+    CheckOrientation -->|Landscape / Layar Lebar| ShowArena[Render GameCanvas & BlockWorkspace]
 
-    ClickRun --> CompileAst[Kompilasi Balok: compiler.ts]
-    CompileAst -->|Ada Galat Loop| ShowCompileErr[Pesan Peringatan Edukatif]
-    CompileAst -->|Valid| RunSim[Simulasi Langkah: engine.ts]
+    ShowArena --> DragDropPalette[Ambil Balok dari Palet: MAJU, BELOK KIRI, BELOK KANAN, ULANGI, SELAMANYA]
+    DragDropPalette --> SnapWorkspace[Tautkan ke Workspace Koding Scratch-Style]
+    SnapWorkspace --> CodeGenPreview[Sistem Otomatis Menghasilkan Kode Python Riil]
+    
+    CodeGenPreview --> ClickRun[Siswa Menekan Tombol: JALANKAN KODE]
+    ClickRun --> CompileBlock[Kompilasi Struktur Balok ke Atomic Commands: compiler.ts]
+    
+    CompileBlock -->|Sintaks Loop Valid| SimEngine[Jalankan Simulator Diskrit: engine.ts]
+    CompileBlock -->|Loop Kosong / Melebihi Batas| HaltCompile[Munculkan Peringatan Validasi Balok]
 
-    RunSim --> StepInterval[Loop Interval 380ms per Gerakan]
-    StepInterval --> RenderFrame[Perbarui Posisi Robot & Koin di GameCanvas]
+    SimEngine --> LoopTicks[Loop Interval Waktu 380ms per Langkah]
+    LoopTicks --> MoveRobot[Perbarui Koordinat PyBot, Arah Rotasi & Koin]
+    MoveRobot --> CanvasDraw[GameCanvas Menggambar Ulang Frame Canvas 2D]
 
-    RenderFrame --> CheckResult{Status Frame Terakhir}
-    CheckResult -->|Tabrak Rintangan| FailObstacle[Status: GAGAL Menabrak Rintangan]
-    CheckResult -->|Keluar Arena| FailBounds[Status: GAGAL Keluar Batas]
-    CheckResult -->|Langkah Habis| FailShort[Status: GAGAL Belum Sampai Target]
-    CheckResult -->|Capai Bintang Emas| WinSuccess[Status: BERHASIL Capai Bintang Emas!]
+    CanvasDraw --> CheckStepResult{Evaluasi Status Langkah Terakhir}
+    CheckStepResult -->|Tabrak Batu Rintangan| StepFailObstacle[Status: GAGAL Menabrak Rintangan]
+    CheckStepResult -->|Keluar Batas Grid| StepFailBounds[Status: GAGAL Keluar Batas Arena]
+    CheckStepResult -->|Perintah Habis & Belum Capai Target| StepFailMoves[Status: GAGAL Belum Sampai Target]
+    CheckStepResult -->|Menyentuh Bintang Emas Target| StepWin[Status: BERHASIL Capai Bintang Emas!]
 
-    FailObstacle --> ResetOption[Klik Reset: Robot Kembali ke Awal, Balok Tetap Ada]
-    FailBounds --> ResetOption
-    FailShort --> ResetOption
-    ResetOption --> ArrangeBlocks
+    StepFailObstacle --> ResetKeepBlocks[Klik Tombol Reset: PyBot Kembali ke Titik Awal, Susunan Balok Tetap Aman]
+    StepFailBounds --> ResetKeepBlocks
+    StepFailMoves --> ResetKeepBlocks
+    ResetKeepBlocks --> DragDropPalette
 
-    WinSuccess --> AwardGameXP[Tambah XP Misi + Cek Penyelesaian Level]
-    AwardGameXP --> ShowRewardModal[Modal Kemenangan: ChallengeSuccessModal.svelte]
-    ShowRewardModal --> NextMission[Lanjut ke Misi / Level Berikutnya]
+    StepWin --> EvalReward[Periksa Status Penyelesaian di progressStore]
+    EvalReward -->|Pertama Kali Selesai| AwardXP[Tambah XP Misi + Cek Kelulusan Level]
+    EvalReward -->|Pernah Selesai Sebelumnya| SkipXP[Pertahankan XP, Rekam Riwayat Selesai]
+    
+    AwardXP --> ShowRewardModal[Tampilkan Modal Kemenangan: ChallengeSuccessModal.svelte]
+    SkipXP --> ShowRewardModal
+    
+    ShowRewardModal --> NextAction{Pilihan Pemain}
+    NextAction -->|Misi Berikutnya| LoadNextMission[Masuk ke Misi Berikutnya]
+    NextAction -->|Main Ulang| ResetKeepBlocks
+    NextAction -->|Daftar Level| ReturnToLevelSelect[Kembali ke LevelSelect]
 ```
 
 ### 5.2 Rincian Alur
-- **Titik Masuk (*Entry Point*)**: Layar `LEVEL_SELECT` (`LevelSelect.svelte`).
+- **Titik Masuk (*Entry Point*)**: Layar `LEVEL_SELECT` (`src/lib/components/LevelSelect.svelte`).
 - **Langkah & Transisi**:
-  1. Tersedia 30 level permainan bergradasi, masing-masing memiliki 3 misi (total 90 misi tantangan).
-  2. Pemain membaca target objektif pada `MissionBriefing.svelte`.
-  3. Di dalam arena `CHALLENGE`, sisi kiri menampilkan `GameCanvas.svelte` (grid ubin 2D, koordinat, karakter PyBot, koin, rintangan, dan bintang target).
-  4. Sisi kanan menampilkan `BlockWorkspace.svelte`: palet balok Scratch-style berujung membulat halus dengan slot konektor puzzle.
-  5. Penyusunan balok secara reaktif menampilkan kode Python murni (`pybot.move()`, `pybot.turn_left()`, `pybot.turn_right()`, `for _ in range(N):`, `while True:`).
-  6. Saat tombol *"JALANKAN KODE"* ditekan, `compileBlocksToCommands()` mengonversi balok menjadi array instruksi atomic diskrit.
-  7. Engine menjalankan simulasi langkah diskrit per 380ms, memutar efek audio pergerakan robot dan pengumpulan koin.
-  8. Deteksi batas arena (`OUT_OF_BOUNDS`) dan tabrakan batu (`FAILED`) menghentikan eksekusi seketika dan memberikan petunjuk ramah.
-  9. Tombol reset menjaga susunan balok koding pemain tetap tersimpan di workspace sehingga pemain tidak perlu menyusun ulang dari nol saat melakukan debugging logika.
-  10. Kemenangan memicu `playMissionComplete()`, mencatat penyelesaian misi di `progressStore`, dan membuka modal perolehan hadiah `ChallengeSuccessModal.svelte`.
+  1. Katalog terdiri dari 30 level yang dikelompokkan ke dalam 8 Unit Pembelajaran tematik (Gerakan Dasar, Belokan & Rotasi, Loop `for`, Pola Tangga, Labirin Berkelok, dll.).
+  2. Masing-masing level memiliki 3 variasi misi (total 90 konfigurasi labirin pada `challengesData.ts`).
+  3. Di dalam arena `CHALLENGE`:
+     - Sisi kiri: `GameCanvas.svelte` merender grid 2D dengan koordinat diskrit, sprite PyBot, koin berkilau, rintangan batu, dan bintang target emas.
+     - Sisi kanan: `BlockWorkspace.svelte` menyediakan balok perintah berujung membulat halus khas Scratch 3 (`MAJU`, `BELOK KIRI`, `BELOK KANAN`, `ULANGI N KALI`, `SELAMANYA`).
+  4. Penyusunan balok secara *real-time* merefleksikan kode Python murni (`pybot.move()`, `pybot.turn_left()`, `for _ in range(3):`).
+  5. Saat tombol *"JALANKAN KODE"* ditekan:
+     - `compiler.ts` mengonversi balok visual menjadi instruksi atomik diskrit.
+     - `engine.ts` mengeksekusi langkah demi langkah pada interval 380ms per *tick*.
+     - Tabrakan rintangan (`COLLISION`) atau keluar batas arena (`OUT_OF_BOUNDS`) menghentikan simulasi seketika dengan pesan edukatif.
+     - Tombol reset mengembalikan robot ke posisi awal tanpa menghapus balok yang telah disusun, sehingga anak dapat langsung memperbaiki logika kodingnya.
+  6. Kemenangan dicapai saat PyBot menyentuh bintang emas:
+     - Misi pertama kali diselesaikan $\to$ penambahan XP misi dicatat permanen ke `progressStore`.
+     - Bila seluruh 3 misi dalam satu level rampung, bonus pencapaian level (*level achievement*) turut diberikan.
+     - Modal kemenangan `ChallengeSuccessModal.svelte` menampilkan selebrasi bintang dan skor perolehan.
 - **Berkas Terkait**:
   - `src/lib/components/LevelSelect.svelte`
   - `src/lib/components/MissionBriefing.svelte`
   - `src/lib/components/GameCanvas.svelte`
   - `src/lib/components/BlockWorkspace.svelte`
   - `src/lib/components/ChallengeSuccessModal.svelte`
+  - `src/lib/components/TutorialModal.svelte`
   - `src/lib/challenges/challengesData.ts`
   - `src/lib/challenges/levelsData.ts`
   - `src/lib/game/compiler.ts`
   - `src/lib/game/engine.ts`
   - `src/lib/game/validator.ts`
-- **Data yang Dibaca / Ditulis**:
-  - Dibaca: Konfigurasi grid `GridConfig`, batasan langkah `maxMoves`, daftar balok `availableBlocks`.
-  - Ditulis: `completedChallenges`, `completedLevels`, penambahan XP ke `progressStore`.
-- **Status Implementasi**: **TERVERIFIKASI & PASS** (Teruji dengan 20 unit tests arena game dan solver BFS di `src/engine.test.ts`).
+- **Status Implementasi**: **TERVERIFIKASI & PASS** (Teruji dengan 20 unit tests game engine dan solver BFS pada `src/engine.test.ts`).
 
 ---
 
-## 6. Alur Pelacakan Progres, XP, dan Daily Streak
+## 6. Alur Pengaturan Profil Siswa & Akun
 
 ### 6.1 Diagram Alur (Mermaid)
 ```mermaid
 flowchart TD
-    ActivityDone[Siswa Menyelesaikan Kuis atau Misi Game] --> InvokeRecord[progressStore.recordActivity]
-    InvokeRecord --> ReadDates[Ambil Tanggal Hari Ini YYYY-MM-DD & Kemarin]
-    ReadDates --> CheckLastDate{Tanggal Aktivitas Terakhir}
+    ProfileScreen[Masuk Layar Profil: ProfileView.svelte] --> RenderProfile[Tampilkan Nama, Email, Foto Avatar & Level Karakter]
+    RenderProfile --> EditAction{Aksi Pengguna}
 
-    CheckLastDate -->|Hari Ini| KeepStreak[Streak Tetap Aktif Hari Ini]
-    CheckLastDate -->|Kemarin| IncrementStreak[Streak Bertambah +1 Hari Konsekutif]
-    CheckLastDate -->|Lebih Lama / Baru| ResetTo1[Streak Dimulai dari 1 Hari]
+    EditAction -->|Ubah Nama Panggilan| InputName[Ketik Nama Baru di Kolom Input]
+    EditAction -->|Pilih Stiker Maskot| PickSticker[Pilih Salah Satu dari 6 Preset Stiker PyBot]
+    EditAction -->|Unggah Foto Kustom| UploadFile[Pilih Berkas Foto dari Perangkat]
+    EditAction -->|Ubah Preferensi Suara| ToggleSound[Klik Toggle Suara: On/Off]
+    EditAction -->|Ubah Tema| ToggleTheme[Klik Toggle Tema: Gelap/Terang]
+    EditAction -->|Keluar Akun| LogoutClick[Klik Tombol 'Keluar Akun']
 
-    KeepStreak --> UpdateLongest[Perbarui Rekor Terpanjang: longestStreak]
-    IncrementStreak --> UpdateLongest
-    ResetTo1 --> UpdateLongest
+    InputName --> SaveProfileStore[Panggil authStore.updateProfile]
+    PickSticker --> SaveProfileStore
+    UploadFile --> SaveIndexedDB[Simpan Gambar ke IndexedDB via avatarStorage.ts]
+    SaveIndexedDB --> SaveProfileStore
 
-    UpdateLongest --> SaveUserKey[Simpan ke pyquest_progress_v2_userId]
-    SaveUserKey --> DerivedHUD[dashboardUserStore Mengkalkulasi Level Karakter]
+    SaveProfileStore --> PersistStorage[Perbarui pyquest_current_user_v4 & Registry]
+    PersistStorage --> UpdateDashboard[Otomatis Sinkron ke dashboardUserStore & Beranda]
+
+    ToggleSound --> UpdateSoundStore[soundStore.toggleSound: Simpan ke pyquest-sound-enabled]
+    ToggleTheme --> UpdateThemeStore[themeStore.toggleTheme: Simpan ke pyquest-theme & Ubah DOM]
+
+    LogoutClick --> CallServerLogout[POST /api/auth/logout: Hapus Cookie HTTP-Only]
+    CallServerLogout --> ClearLocalUser[Reset authStore.currentUser = null]
+    ClearLocalUser --> RedirectLogin[Arahkan Layar ke LOGIN]
 ```
 
 ### 6.2 Rincian Alur
-- **Aturan Streak**:
-  - Dihitung berdasarkan tanggal kalender lokal perangkat (`getLocalDateStr()` format `YYYY-MM-DD`).
-  - Bila siswa beraktivitas di hari yang berurutan, nilai `streak` bertambah 1.
-  - Bila siswa melewatkan satu hari (terakhir aktif sebelum kemarin), streak aktif gugur menjadi 0 saat inisialisasi, namun rekor terbaik (`longestStreak`) tetap tersimpan permanen.
-- **Kalkulasi Level**:
-  - Level karakter dihitung secara deterministik: $\text{Level} = \max(1, \lfloor \text{XP} / 100 \rfloor + 1)$.
-- **Isolasi Akun**:
-  - Data progres disimpan dengan kunci terpisah per akun (`pyquest_progress_v2_${userId}`). Saat pengguna logout dan login dengan akun lain, data tidak tertukar.
+- **Titik Masuk (*Entry Point*)**: Layar `PROFILE` (`src/lib/components/ProfileView.svelte`) atau `PROFILE_SETUP` (`src/lib/components/ProfileSetup.svelte`).
+- **Langkah & Transisi**:
+  1. Siswa dapat menyunting nama panggilan dan memilih representasi visual avatar.
+  2. Tersedia preset stiker karakter resmi PyBot serta dukungan unggah foto kustom.
+  3. Foto kustom disimpan ke IndexedDB melalui `avatarStorage.ts` guna mencegah meluapnya kuota `localStorage` browser yang terbatas (maksimal 5MB).
+  4. Perubahan profil secara instan memicu pemutakhiran store reaktif `$dashboardUserStore` dan registri pengguna `USERS_REGISTRY_KEY`.
+  5. Pengaturan audio dan tema dapat diubah langsung melalui toggle switch di kartu pengaturan.
+  6. Tombol keluar (*Log Out*) memanggil endpoint `POST /api/auth/logout` untuk menghapus cookie sesi server dan membersihkan state aktif di peramban.
 - **Berkas Terkait**:
-  - `src/lib/stores/progressStore.ts`
+  - `src/lib/components/ProfileView.svelte`
+  - `src/lib/components/ProfileSetup.svelte`
+  - `src/lib/utils/avatarStorage.ts`
   - `src/lib/stores/authStore.ts`
-  - `src/lib/components/StreakView.svelte`
-  - `src/lib/components/TotalXpView.svelte`
-  - `src/lib/components/CompletedMissionsView.svelte`
+  - `src/routes/api/auth/logout/+server.ts`
 - **Status Implementasi**: **TERVERIFIKASI & PASS**.
 
 ---
 
-## 7. Alur Pengaturan Tema (Light/Dark) & Suara Sintesis
+## 7. Alur Pengaturan Efek Suara Web Audio API
 
 ### 7.1 Rincian Alur
-- **Tema Visual**:
-  - Disimpan pada `localStorage` dengan kunci `pyquest-theme`.
-  - Default: Dark mode bernuansa luar angkasa / sci-fi biru tua (`#020617`).
-  - Diatur melalui `src/lib/stores/themeStore.ts`.
-  - Mengubah atribut `<html data-theme="...">`, kelas Tailwind `.dark` / `.light`, dan `<meta name="theme-color">` pada status bar browser mobile.
-  - Skrip inline di `src/app.html` membaca tema secara sinkron sebelum render pertama untuk mencegah kedipan putih (*white flash*) saat halaman dimuat ulang.
-- **Efek Suara Sintesis**:
-  - Disimpan pada `localStorage` dengan kunci `pyquest-sound-enabled`.
-  - Memanfaatkan Web Audio API (`AudioContext`, `OscillatorNode`, `GainNode`).
-  - Tidak memuat berkas audio eksternal sehingga 100% instan dan bekerja tanpa kuota internet.
-  - Dilengkapi mekanisme *throttling* milidetik untuk mencegah kelelahan telinga (*ear fatigue*) akibat penekanan tombol beruntun.
-- **Status Implementasi**: **TERVERIFIKASI & PASS**.
-
----
-
-## 8. Alur Navigasi Tombol Back Mobile & Pencegahan Keluar Tidak Sengaja
-
-### 8.1 Diagram Alur (Mermaid)
-```mermaid
-flowchart TD
-    DeviceBack[Pengguna Menekan Tombol Back Android / Browser] --> CatchPopstate[Ditangkap oleh Event Listener popstate]
-    CatchPopstate --> CheckAuthModal{Apakah Modal Login Google Terbuka?}
-    CheckAuthModal -->|Ya| CloseModalOnly[Tutup Modal, Pertahankan Layar Aktif]
-    CheckAuthModal -->|Tidak| CheckState{Periksa State Riwayat Browser}
-
-    CheckState -->|State: ROOT_GUARD| ExitApp[Panggil handlePlatformExit: Keluar Aplikasi]
-    CheckState -->|Layar Bersarang: CHALLENGE / QUESTION| PopToParent[Kembali ke Layar Induk: LEVEL_SELECT / LEARN_SELECT]
-    CheckState -->|Layar Tab: LEVEL_SELECT / PROFILE| PopToHome[Kembali ke Beranda: LANDING]
-```
-
-### 8.2 Rincian Alur
-- **Masalah Asli**: Pada aplikasi web biasa di peramban mobile atau Android WebView, tombol Back fisik sering kali langsung menutup aplikasi atau melompat keluar ke halaman kosong.
-- **Solusi Implementasi**:
-  1. Pada saat aplikasi dimuat (`onMount`), tumpukan riwayat browser diinisialisasi dengan `replaceState({ screen: 'ROOT_GUARD' })`.
-  2. Saat berpindah layar, `navigateTo()` memanggil `pushState()` dengan metadata layar dan indeks level.
-  3. Handler `handlePopState(event)` memeriksa kondisi tumpukan:
-     - Jika modal sedang terbuka $\to$ menutup modal saja tanpa memindahkan halaman.
-     - Jika pengguna sedang berada di tengah misi tantangan $\to$ mundur ke daftar pemilihan misi.
-     - Jika pengguna menekan Back di beranda utama (`ROOT_GUARD`) $\to$ memanggil `handlePlatformExit()` untuk keluar secara elegan.
+- **Prinsip Tanpa Aset Eksternal (*Zero-Asset Synthesizer*)**:
+  - `soundStore.ts` menggunakan Web Audio API murni (`AudioContext`, `OscillatorNode`, `GainNode`).
+  - Aplikasi tidak memuat berkas MP3/WAV eksternal sehingga tidak memakan bandwidth data dan bekerja 100% instan di perangkat tanpa jeda jaringan.
+- **Daftar Suara yang Diimplementasikan & Terverifikasi**:
+  1. `playClick()`: Nada klik antarmuka lembut frekuensi 600Hz durasi 40ms.
+  2. `playCorrect()`: Akor harmonis dua nada (C5 & E5) untuk apresiasi jawaban kuis yang benar.
+  3. `playIncorrect()`: Nada rendah (180Hz ke 140Hz) bergelombang halus untuk evaluasi salah.
+  4. `playRobotMove()`: Frekuensi sapuan (*sweep tone*) 320Hz ke 480Hz yang menyertai setiap langkah PyBot di arena labirin.
+  5. `playCoinCollect()`: Arpeggio nada tinggi ceria (988Hz ke 1318Hz) saat PyBot memungut koin.
+  6. `playMissionComplete()`: Melodi selebrasi kemenangan akor mayor (C-E-G-C) saat menyentuh bintang emas.
+- **Penyimpanan Preferensi**:
+  - Disimpan pada `localStorage` dengan kunci `pyquest-sound-enabled` (`"true"` atau `"false"`).
+  - Dilengkapi mekanisme *throttling* waktu untuk mencegah kejenuhan pendengaran anak akibat penekanan tombol cepat berulang.
 - **Berkas Terkait**:
-  - `src/routes/+page.svelte` (baris 150–180 dan 305–425).
+  - `src/lib/stores/soundStore.ts`
 - **Status Implementasi**: **TERVERIFIKASI & PASS**.
 
 ---
 
-## 9. Alur Progressive Web App (PWA), Startup & Operasi Offline
+## 8. Alur Pengaturan Tema Gelap & Terang
+
+### 8.1 Rincian Alur
+- **Penetapan Tema Awal (*Initial Resolution*)**:
+  1. Skrip sinkron inline pada `src/app.html` langsung memeriksa `localStorage.getItem('pyquest-theme')`.
+  2. Jika belum tersimpan, default aplikasi adalah tema gelap (*dark theme*) bernuansa luar angkasa dengan latar biru dongker sci-fi (`#020617`).
+  3. Mengatur atribut `<html data-theme="dark" class="dark">` sebelum rendering DOM dimulai.
+- **Sinkronisasi Dinamis**:
+  - Perpindahan tema memutakhirkan token CSS Tailwind v4.
+  - Memutakhirkan elemen `<meta name="theme-color">` pada status bar browser mobile (Gelap: `#020617`, Terang: `#f8fafc`).
+- **Berkas Terkait**:
+  - `src/app.html`
+  - `src/app.css`
+  - `src/lib/stores/themeStore.ts`
+- **Status Implementasi**: **TERVERIFIKASI & PASS**.
+
+---
+
+## 9. Alur Navigasi Tombol Back Mobile & Riwayat Browser
 
 ### 9.1 Diagram Alur (Mermaid)
+```mermaid
+flowchart TD
+    DeviceBack[Pengguna Menekan Tombol Back Android / Browser] --> CatchPopstate[Ditangkap oleh Event Listener popstate pada +page.svelte]
+    CatchPopstate --> CheckAuthModal{Apakah Modal Login Google Terbuka?}
+    
+    CheckAuthModal -->|Ya| CloseModalOnly[Tutup Modal Saja, Pertahankan Posisi Layar Aktif]
+    CheckAuthModal -->|Tidak| CheckDetailModal{Apakah Modal Detail Misi Terbuka?}
+
+    CheckDetailModal -->|Ya| CloseDetailOnly[Tutup Modal Detail Misi]
+    CheckDetailModal -->|Tidak| CheckTutorialModal{Apakah Modal Tutorial Koding Terbuka?}
+
+    CheckTutorialModal -->|Ya| CloseTutorialOnly[Tutup Modal Tutorial]
+    CheckTutorialModal -->|Tidak| CheckCurrentScreen{Periksa Layar Aktif Saat Ini}
+
+    CheckCurrentScreen -->|CHALLENGE / MISSION_BRIEFING| NavToLevelList[Mundur ke Daftar Level: LEVEL_SELECT]
+    CheckCurrentScreen -->|QUESTION / FEEDBACK / SUCCESS| NavToLearnList[Mundur ke Daftar Modul: LEARN_SELECT]
+    CheckCurrentScreen -->|LEVEL_SELECT / LEARN_SELECT / PROFILE| NavToLanding[Mundur ke Beranda: LANDING]
+    CheckCurrentScreen -->|MISSIONS / XP_PROGRESS / STREAK_VIEW| NavToLanding
+    CheckCurrentScreen -->|LANDING (State: ROOT_GUARD)| HandleExit[Panggil handlePlatformExit: Keluar Aplikasi / Tab Terakhir]
+```
+
+### 9.2 Rincian Alur
+- **Pencegahan Keluar Tidak Sengaja**:
+  - Pada aplikasi web biasa, tombol Back fisik di Android sering menutup jendela peramban seketika.
+  - PyQuest mengelola tumpukan riwayat buatan (*synthetic history stack*) via `history.pushState` dan `history.replaceState`.
+  - Beranda diproteksi dengan sentinel `ROOT_GUARD`.
+  - Tombol Back memprioritaskan penutupan modal aktif (modal auth, modal detail misi, atau modal tutorial YouTube) sebelum memindahkan navigasi layar.
+  - Berpindah mundur secara hierarkis: dari arena permainan $\to$ daftar level $\to$ beranda $\to$ konfirmasi keluar peramban.
+- **Berkas Terkait**:
+  - `src/routes/+page.svelte` (penanganan `handlePopState`, `navigateTo`, dan `handlePlatformExit`).
+- **Status Implementasi**: **TERVERIFIKASI & PASS**.
+
+---
+
+## 10. Alur Progressive Web App (PWA) & Operasi Offline
+
+### 10.1 Diagram Alur (Mermaid)
 ```mermaid
 flowchart TD
     AppLaunch[Pengguna Membuka URL PyQuest] --> SWReg[Registrasi service-worker.js]
     SWReg --> Precache[Precache Shell: /, manifest, favicon, maskot webp]
     Precache --> AppReady[Aplikasi Siap Digunakan]
 
-    AppReady --> NetworkCheck{Status Konektivitas}
-    NetworkCheck -->|Online| NormalOp[Operasi Penuh]
-    NetworkCheck -->|Offline| OfflineBanner[Tampilkan Banner 'Mode Offline Aktif']
+    AppReady --> NetworkCheck{Status Koneksi Jaringan}
+    NetworkCheck -->|Online| NormalOp[Operasi Penuh & Pengecekan Update]
+    NetworkCheck -->|Offline| OfflineBanner[Tampilkan Banner 'Mode Offline Aktif' di Layout]
 
     NormalOp --> PromptHook[Tangkap Event beforeinstallprompt]
-    PromptHook --> ShowInstallBtn[Tampilkan Tombol 'Pasang PyQuest' di UI]
-    ShowInstallBtn --> UserInstall[Pengguna Klik Pasang]
-    UserInstall --> CheckPlatform{Platform Perangkat}
-    CheckPlatform -->|Android / Chrome| NativePrompt[Tampilkan Dialog Pasang Resmi Browser]
+    PromptHook --> CheckDeviceInstalled{Perangkat Pernah Memasang PWA?}
+    
+    CheckDeviceInstalled -->|Sudah Terpasang di Perangkat Ini| HideInstallBtn[Sembunyikan Tombol Pasang di Semua Akun]
+    CheckDeviceInstalled -->|Belum Terpasang| ShowInstallBtn[Tampilkan Tombol 'Pasang PyQuest' di Profil]
+
+    ShowInstallBtn --> UserClicksInstall[Pengguna Klik Pasang]
+    UserClicksInstall --> CheckPlatform{Platform Perangkat}
+    CheckPlatform -->|Android / Chrome Desktop| NativePrompt[Tampilkan Dialog Pasang Resmi Browser]
     CheckPlatform -->|iOS Safari| IOSModal[Buka Panduan Khusus: Bagikan -> Tambah ke Layar Utama]
-    NativePrompt --> Installed[Tandai Terpasang: pyquest-pwa-installed]
+
+    NativePrompt --> InstallSuccess{Pengguna Setuju?}
+    InstallSuccess -->|Ya| MarkDeviceInstalled[Catat Device ID & Status Terpasang Lintas Akun]
+    InstallSuccess -->|Tidak| KeepBtnVisible[Tombol Tetap Tersedia untuk Nanti]
 ```
 
-### 9.2 Rincian Alur
-- **Registrasi Service Worker**:
-  - Di development, service worker di-unregister otomatis untuk mencegah caching berkas yang sedang dikembangkan.
-  - Di production, `service-worker.js` didaftarkan dengan cakupan `/`.
-- **Strategi Caching**:
-  - **Navigasi (*Page Load*)**: *Network-first* dengan fallback instan ke shell `/` yang sudah di-cache jika offline.
-  - **Aset Statis (*Hashed JS, CSS, WebP, SVG*)**: *Cache-first* dengan background network revalidation.
-  - **Autentikasi Google**: Dikecualikan sepenuhnya dari cache untuk menjaga keamanan token.
-- **Deteksi Offline Reaktif**:
-  - Event listener `online` dan `offline` di `pwaStore.ts` memperbarui store `$pwaStore.isOffline`.
-  - `+layout.svelte` secara otomatis memunculkan bilah banner bernuansa oranye keemasan: *"Koneksi sedang tidak tersedia. Mode offline aktif."* tanpa menghentikan permainan anak.
-- **Status Implementasi**: **TERVERIFIKASI & PASS** (Teruji dengan build produksi dan service worker bundle).
+### 10.2 Rincian Alur
+- **Deteksi Perangkat Lintas Akun (*Multi-Account Device Detection*)**:
+  - Mengatasi masalah umum pada perangkat keluarga atau sekolah di mana satu tablet digunakan oleh beberapa anak.
+  - Menggunakan kombinasi penanda persisten (`pyquest_device_id_v1` dan `pyquest_device_pwa_installed_v1`) yang tersimpan di tingkat peramban lokal perangkat.
+  - Sekali aplikasi dipasang sebagai PWA di perangkat tersebut, tombol pasang aplikasi disembunyikan untuk seluruh akun yang login di perangkat yang sama.
+- **Strategi Caching Service Worker**:
+  - Shell aplikasi (`/`, berkas CSS, skrip JS yang di-*hash*, gambar WebP maskot) di-cache secara *cache-first*.
+  - Skenario tanpa internet (*offline*) didukung penuh untuk Modul Belajar, Kuis 150 Soal, dan Coding Game 90 Misi.
+- **Berkas Terkait**:
+  - `src/service-worker.js`
+  - `src/lib/stores/pwaStore.ts`
+  - `src/lib/components/ProfileView.svelte`
+  - `src/lib/components/InstallGuideModal.svelte`
+  - `static/manifest.json`
+- **Status Implementasi**: **TERVERIFIKASI & PASS**.
+
+---
+
+## 11. Alur Onboarding Siswa Baru & Tutorial Coding Game
+
+### 11.1 Diagram Alur (Mermaid)
+```mermaid
+flowchart TD
+    EnterGameMenu[Siswa Membuka Menu Coding Game: LevelSelect.svelte] --> CheckDismissed{Apakah Tutorial Pernah Dilewati/Ditutup?}
+    
+    CheckDismissed -->|Belum Pernah: Siswa Baru| ShowTutorialCard[Tampilkan Kartu Tutorial di Atas Daftar Level]
+    CheckDismissed -->|Sudah Pernah: Siswa Lama| HideCardShowPill[Sembunyikan Kartu, Tampilkan Tombol 'Tutorial' di Header Bar]
+
+    ShowTutorialCard --> CardAction{Aksi Siswa pada Kartu}
+    CardAction -->|Klik 'Lihat Tutorial'| LaunchModal[Buka TutorialModal.svelte]
+    CardAction -->|Klik 'Lewati'| DismissCard[Simpan State: pyquest_coding_tutorial_dismissed = true]
+    DismissCard --> HideCardShowPill
+
+    HideCardShowPill --> RevisitClick{Siswa Butuh Bantuan Lagi?}
+    RevisitClick -->|Klik Tombol 'Tutorial' di Header| LaunchModal
+    RevisitClick -->|Tidak| SelectGameLevel[Lanjut Memilih Level & Misi Permainan]
+
+    LaunchModal --> LoadIframe[Muat Iframe YouTube Sesuai Kebutuhan: Embed rTYO5_IfQDw]
+    LoadIframe --> UserWatches[Siswa Menonton Video Tutorial & Membaca 4 Tips Koding]
+    
+    UserWatches --> CloseAction{Menutup Modal}
+    CloseAction -->|Klik Tombol X / Tombol Mulai / Tekan ESC| CloseModal[Tutup Modal Tutorial]
+    CloseAction -->|Kendala Pemutaran Iframe| FallbackLink[Klik 'Buka di YouTube': Menuju URL YouTube Shorts]
+    
+    CloseModal --> SelectGameLevel
+```
+
+### 11.2 Rincian Alur
+- **Titik Masuk (*Entry Point*)**: Layar `LEVEL_SELECT` (`src/lib/components/LevelSelect.svelte`).
+- **Kartu Onboarding (*Tutorial Card*)**:
+  - Ditempatkan tepat di bagian atas menu Coding Game sebelum daftar level.
+  - Teks terstandarisasi:
+    - Judul: *"Baru pertama bermain?"*
+    - Deskripsi: *"Pelajari cara menyusun blok dan menggerakkan PyBot."*
+    - Tombol Aksi Utama: *"Lihat Tutorial"*
+    - Tombol Sekunder: *"Lewati"*
+- **Penyimpanan State Penolakan (*Dismissal Persistence*)**:
+  - Status tersimpan pada `localStorage` dengan kunci `pyquest_coding_tutorial_dismissed`.
+  - Jika pengguna memilih *"Lewati"*, kartu disembunyikan agar tidak memakan ruang pandang, namun tombol *"Tutorial"* berukuran ringkas tetap tersedia pada *top bar* kapan pun siswa ingin menonton ulang.
+- **Pemuatan Pemutar Video Sesuai Kebutuhan (*Lazy Loaded YouTube Embed*)**:
+  - Tag `<iframe>` pemutar YouTube **tidak pernah dimuat** pada saat startup aplikasi atau di halaman beranda guna menghemat kuota internet dan menjaga performa rendering tetap instan.
+  - Iframe hanya dibuat dan dihubungkan ke `https://www.youtube.com/embed/rTYO5_IfQDw` saat pengguna secara eksplisit menekan tombol *"Lihat Tutorial"*.
+  - Pemutaran otomatis (*autoplay*) dinonaktifkan demi kenyamanan anak.
+  - Tersedia tombol tautan cadangan *"Buka di YouTube"* (`https://www.youtube.com/shorts/rTYO5_IfQDw`) apabila peramban memblokir frame pihak ketiga.
+  - Dilengkapi ringkasan 4 langkah koding cepat mencakup: pemilihan misi, penyusunan balok, pemanfaatan loop, dan eksekusi koding berhadiah XP.
+- **Berkas Terkait**:
+  - `src/lib/components/LevelSelect.svelte`
+  - `src/lib/components/TutorialModal.svelte`
+- **Status Implementasi**: **TERVERIFIKASI & PASS**.
