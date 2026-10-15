@@ -1,11 +1,11 @@
-import adapterAuto from '@sveltejs/adapter-auto';
+import adapterNode from '@sveltejs/adapter-node';
 import adapterVercel from '@sveltejs/adapter-vercel';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
 const isVercel = !!process.env.VERCEL;
-const chosenAdapter = isVercel ? adapterVercel() : adapterAuto();
+const chosenAdapter = isVercel ? adapterVercel() : adapterNode();
 
 export default defineConfig({
 	plugins: [
