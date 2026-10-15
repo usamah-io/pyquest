@@ -66,6 +66,21 @@ export function getOrCreateDeviceId(): string {
  * Checks whether the physical device or browser profile already has PyQuest installed.
  * This is device-scoped and independent of which user account is logged in.
  */
+export function isStandaloneWindow(): boolean {
+	const win = typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? (globalThis as any).window : null);
+	const doc = typeof document !== 'undefined' ? document : (typeof globalThis !== 'undefined' ? (globalThis as any).document : null);
+	if (!win) return false;
+
+	return Boolean(
+		(typeof win.matchMedia === 'function' &&
+			(win.matchMedia('(display-mode: standalone)').matches ||
+				win.matchMedia('(display-mode: fullscreen)').matches ||
+				win.matchMedia('(display-mode: minimal-ui)').matches)) ||
+		(win.navigator as any)?.standalone === true ||
+		(doc && doc.referrer?.includes('android-app://'))
+	);
+}
+
 export function checkDeviceInstalled(): boolean {
 	if (memoryDeviceInstalled) return true;
 
@@ -74,18 +89,12 @@ export function checkDeviceInstalled(): boolean {
 	const storage = typeof window !== 'undefined' ? window.localStorage : (typeof globalThis !== 'undefined' ? (globalThis as any).localStorage : null);
 
 	// 1. Standalone / Fullscreen / Minimal-UI / iOS Home Screen / Android TWA
+	if (win && isStandaloneWindow()) {
+		return true;
+	}
+
+	// 2. Android WebView / APK wrapper detection
 	if (win) {
-		const isStandalone =
-			(typeof win.matchMedia === 'function' &&
-				(win.matchMedia('(display-mode: standalone)').matches ||
-					win.matchMedia('(display-mode: fullscreen)').matches ||
-					win.matchMedia('(display-mode: minimal-ui)').matches)) ||
-			(win.navigator as any)?.standalone === true ||
-			(doc && doc.referrer?.includes('android-app://'));
-
-		if (isStandalone) return true;
-
-		// 2. Android WebView / APK wrapper detection
 		const ua = win.navigator?.userAgent || '';
 		const isAndroidWebView =
 			/\bwv\b/.test(ua) ||
@@ -155,6 +164,20 @@ export async function saveDeviceInstalledToIndexedDB(): Promise<void> {
 	} catch {}
 }
 
+export async function clearDeviceInstalledFromIndexedDB(): Promise<void> {
+	try {
+		const db = await openDeviceDatabase();
+		if (!db) return;
+		await new Promise<void>((resolve) => {
+			const tx = db.transaction(DEVICE_STORE_NAME, 'readwrite');
+			const store = tx.objectStore(DEVICE_STORE_NAME);
+			store.delete('isInstalled');
+			tx.oncomplete = () => resolve();
+			tx.onerror = () => resolve();
+		});
+	} catch {}
+}
+
 export async function checkDeviceInstalledFromIndexedDB(): Promise<boolean> {
 	try {
 		const db = await openDeviceDatabase();
@@ -175,8 +198,10 @@ export async function checkDeviceInstalledFromIndexedDB(): Promise<boolean> {
 
 function createPwaStore() {
 	let deferredPrompt: any = null;
-	const initialInstalled = checkDeviceInstalled();
-	const initialDeviceId = typeof window !== 'undefined' ? getOrCreateDeviceId() : '';
+	const inBrowser = typeof window !== 'undefined';
+	const isStandalone = inBrowser && isStandaloneWindow();
+	const initialInstalled = isStandalone || (!inBrowser && checkDeviceInstalled());
+	const initialDeviceId = inBrowser ? getOrCreateDeviceId() : '';
 
 	const { subscribe, update, set } = writable<PwaState>({
 		canInstall: !initialInstalled,
@@ -188,6 +213,33 @@ function createPwaStore() {
 		showInstallGuide: false,
 		deviceId: initialDeviceId
 	});
+
+	function clearInstalledStatus() {
+		memoryDeviceInstalled = false;
+		try {
+			const storage = typeof window !== 'undefined' ? window.localStorage : (typeof globalThis !== 'undefined' ? (globalThis as any).localStorage : null);
+			const doc = typeof document !== 'undefined' ? document : (typeof globalThis !== 'undefined' ? (globalThis as any).document : null);
+			if (storage) {
+				storage.removeItem(DEVICE_INSTALLED_KEY);
+				storage.removeItem(LEGACY_STORAGE_KEY_INSTALLED);
+				storage.removeItem(BANNER_HIDE_KEY);
+				storage.removeItem('pyquest-profile-pwa-dismissed');
+			}
+			if (doc && typeof doc.cookie === 'string') {
+				doc.cookie = `${DEVICE_COOKIE_NAME}=; max-age=0; path=/; SameSite=Lax`;
+				doc.cookie = `pyquest_hide_pwa_banner=; max-age=0; path=/; SameSite=Lax`;
+				doc.cookie = `pyquest-profile-pwa-dismissed=; max-age=0; path=/; SameSite=Lax`;
+			}
+		} catch {}
+
+		clearDeviceInstalledFromIndexedDB();
+
+		update((s) => ({
+			...s,
+			isInstalled: false,
+			canInstall: !!deferredPrompt
+		}));
+	}
 
 	function markAsInstalled() {
 		memoryDeviceInstalled = true;
@@ -220,45 +272,47 @@ function createPwaStore() {
 		if (typeof window === 'undefined') return;
 
 		const deviceId = getOrCreateDeviceId();
-		const isInstalled = checkDeviceInstalled();
-
 		const userAgent = window.navigator.userAgent.toLowerCase();
 		const isIOSDevice =
 			/iphone|ipad|ipod/.test(userAgent) && !(window as any).MSStream;
 		const isAndroidDevice = /android/.test(userAgent);
 
-		update((s) => ({
-			...s,
-			deviceId,
-			isInstalled,
-			canInstall: !isInstalled && !!deferredPrompt,
-			isIOS: isIOSDevice && !isInstalled,
-			isAndroid: isAndroidDevice,
-			isOffline: !navigator.onLine
-		}));
+		const isStandalone = isStandaloneWindow();
 
-		// If this device was already detected as installed, persist all markers
-		if (isInstalled) {
+		if (isStandalone) {
+			// Running inside standalone PWA window
 			markAsInstalled();
-		}
+		} else {
+			// Running inside standard browser tab (Chrome, Edge, Safari, Firefox, etc.)
+			// In a browser tab, do not hide install buttons based on stale state.
+			// Allow users to see the install action or guide.
+			update((s) => ({
+				...s,
+				deviceId,
+				isInstalled: false,
+				canInstall: !!deferredPrompt,
+				isIOS: isIOSDevice,
+				isAndroid: isAndroidDevice,
+				isOffline: !navigator.onLine
+			}));
 
-		// Asynchronously verify against IndexedDB in case browser cache was cleaned
-		checkDeviceInstalledFromIndexedDB().then((idbInstalled) => {
-			if (idbInstalled) {
-				markAsInstalled();
+			// On Chromium browsers, check OS-level installation status in real-time
+			if ('getInstalledRelatedApps' in navigator && typeof (navigator as any).getInstalledRelatedApps === 'function') {
+				(navigator as any)
+					.getInstalledRelatedApps()
+					.then((relatedApps: any[]) => {
+						if (Array.isArray(relatedApps)) {
+							if (relatedApps.length > 0) {
+								// Browser explicitly confirms the app is currently installed on the OS
+								markAsInstalled();
+							} else {
+								// Browser explicitly confirms 0 installed apps (uninstalled or never installed)
+								clearInstalledStatus();
+							}
+						}
+					})
+					.catch(() => {});
 			}
-		});
-
-		// Check getInstalledRelatedApps on Chromium browsers
-		if ('getInstalledRelatedApps' in navigator && typeof (navigator as any).getInstalledRelatedApps === 'function') {
-			(navigator as any)
-				.getInstalledRelatedApps()
-				.then((relatedApps: any[]) => {
-					if (Array.isArray(relatedApps) && relatedApps.length > 0) {
-						markAsInstalled();
-					}
-				})
-				.catch(() => {});
 		}
 
 		// Listen for display-mode standalone changes
@@ -267,6 +321,8 @@ function createPwaStore() {
 			mql.addEventListener?.('change', (e) => {
 				if (e.matches) {
 					markAsInstalled();
+				} else {
+					clearInstalledStatus();
 				}
 			});
 		} catch {}
@@ -276,12 +332,8 @@ function createPwaStore() {
 			e.preventDefault();
 			deferredPrompt = e;
 
-			// If device was already detected as installed, NEVER set isInstalled to false!
-			if (checkDeviceInstalled()) {
-				update((s) => ({ ...s, canInstall: false, isInstalled: true }));
-				return;
-			}
-
+			// Browser explicitly signals app is installable! Clear any stale markers.
+			clearInstalledStatus();
 			update((s) => ({ ...s, canInstall: true, isInstalled: false }));
 		});
 
@@ -312,8 +364,11 @@ function createPwaStore() {
 				if (outcome === 'accepted') {
 					markAsInstalled();
 					return true;
+				} else {
+					// User cancelled prompt; app is still not installed
+					update((s) => ({ ...s, isInstalled: false, canInstall: false }));
+					return false;
 				}
-				return false;
 			} catch (err) {
 				console.error('[PWA] Prompt error:', err);
 				update((s) => ({ ...s, showInstallGuide: true }));
@@ -321,7 +376,7 @@ function createPwaStore() {
 			}
 		}
 
-		// When browser does not provide deferredPrompt (e.g. iOS or manual browser menu required)
+		// When deferredPrompt is not available (e.g. event has not fired yet, iOS Safari, or manual browser menu required)
 		update((s) => ({ ...s, showInstallGuide: true }));
 		return false;
 	}
@@ -345,6 +400,7 @@ function createPwaStore() {
 		subscribe,
 		init,
 		markAsInstalled,
+		clearInstalledStatus,
 		promptInstall,
 		toggleInstallGuide,
 		toggleIOSGuide,

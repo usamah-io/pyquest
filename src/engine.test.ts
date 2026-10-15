@@ -1028,6 +1028,17 @@ describe('Device Detection & PWA Installation Persistence Across Accounts', () =
 	it('should detect installation status from persistent device markers', () => {
 		expect(checkDeviceInstalled()).toBe(true);
 	});
+
+	it('should allow clearing installation state and recovering install capability after uninstallation', () => {
+		// App was installed
+		pwaStore.markAsInstalled();
+		expect(get(pwaStore).isInstalled).toBe(true);
+
+		// User uninstalls PyQuest in browser / OS
+		pwaStore.clearInstalledStatus();
+		expect(get(pwaStore).isInstalled).toBe(false);
+		expect(checkDeviceInstalled()).toBe(false);
+	});
 });
 
 
