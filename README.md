@@ -1,146 +1,129 @@
-# 🐍 PyQuest — Interactive Educational Python Game for Kids
+# 🐍 PyQuest — Petualangan Logika Python
 
-> **Game edukasi pemrograman Python interaktif berbasis web untuk anak-anak pemula, menggabungkan kuis konseptual terstruktur, balok kode visual ala Scratch 3, dan simulasi robotik penjelajah 2D di arena labirin.**  
-> *Dikembangkan untuk kompetisi bertema: Innovating Education Through Technology / Web Education for Kids*
+> **Belajar logika pemrograman melalui modul interaktif, kuis, dan petualangan coding.**  
+> PyQuest adalah website edukasi coding yang dirancang untuk membantu anak-anak, khususnya siswa SD yang baru mengenal pemrograman, belajar Python dasar dengan cara yang lebih menyenangkan dan mudah dipahami. Melalui materi bertahap, kuis interaktif, dan Coding Game berbentuk labirin, pengguna dapat mempelajari konsep logika pemrograman sambil mencoba menyelesaikan berbagai tantangan.
 
 [![Svelte 5](https://img.shields.io/badge/Svelte-5.57.1-orange.svg)](https://svelte.dev/)
 [![SvelteKit](https://img.shields.io/badge/SvelteKit-3.0.0-red.svg)](https://kit.svelte.dev/)
 [![Tailwind CSS v4](https://img.shields.io/badge/Tailwind-4.3.3-blue.svg)](https://tailwindcss.com/)
 [![Bun](https://img.shields.io/badge/Bun-1.4.2-black.svg)](https://bun.sh/)
-[![Tests](https://img.shields.io/badge/Unit%20Tests-61%20Pass%20%7C%206040%20Asserts-brightgreen.svg)](docs/TEST_REPORT.md)
+[![Tests](https://img.shields.io/badge/Unit%20Tests-66%20Pass%20%7C%206060%20Asserts-brightgreen.svg)](docs/TEST_REPORT.md)
 [![PWA Ready](https://img.shields.io/badge/PWA-Offline%20Ready-success.svg)](docs/APPLICATION_FLOWS.md)
 
 ---
 
-## 🌟 Apa Itu PyQuest?
+## 🚀 Fitur Utama
 
-**PyQuest** dirancang dari nol (*from scratch*) agar pengalaman belajar bahasa pemrograman Python bagi anak-anak usia 7–15 tahun terasa menyenangkan seperti bermain game petualangan:
-- **Modul Belajar Python (30 Level, 150 Soal)**: Mempelajari sintaks dasar `print()`, tipe data (*string, integer, float, boolean*), variabel, operator logika, percabangan `if-elif-else`, hingga perulangan `for` dan `while` dengan umpan balik edukatif ramah pemula.
-- **Coding Game Labirin (30 Level, 90 Misi)**: Anak menyusun urutan balok visual bergaya Scratch 3 (`MAJU`, `BELOK KIRI`, `BELOK KANAN`, `ULANGI`, `SELAMANYA`) untuk memandu robot **PyBot** mengoleksi koin dan meraih bintang emas.
-- **Generator Kode Python Real-Time**: Setiap balok visual yang disusun otomatis menghasilkan kode Python murni secara *live* (`pybot.move()`, `for _ in range(n):`, `while True:`), menjembatani transisi dari balok visual ke teks kode asli.
-- **Deterministik & Non-LLM Engine**: Eksekusi game dan evaluasi kuis berjalan 100% di browser klien tanpa ketergantungan API model AI berbayar, menjamin respon instan (<10ms), bebas halusinasi, dan aman untuk anak.
-- **Gamifikasi & Pelacakan Progres**: Sistem reward XP transparan, level karakter, lencana kelulusan, dan rekor *daily streak* kalender nyata dengan perlindungan anti-duplikasi skor.
-- **Offline-First (PWA Ready)**: Dilengkapi Service Worker dan IndexedDB sehingga aplikasi dapat dimainkan secara utuh bahkan saat koneksi internet terputus di sekolah atau daerah terpencil.
-- **Landscape-First & Stabil di Mobile**: Antarmuka responsif dengan proteksi rotasi otomatis, bilah navigasi bawah cerdas (*auto-hide*), dan pencegahan pinch-zoom tak sengaja.
+- **Modul Belajar Python** — Mengenal konsep dasar pemrograman secara bertahap (30 level terstruktur).
+- **Kuis Interaktif** — Menguji pemahaman melalui pertanyaan dan feedback langsung yang mendidik.
+- **Coding Game Labirin** — Menyusun balok perintah untuk mengarahkan robot PyBot menuju tujuan (30 level, 90 misi).
+- **Level dan Tantangan** — Berlatih melalui tantangan dengan tingkat kesulitan yang meningkat secara bertahap.
+- **Visualisasi Kode** — Menghubungkan susunan balok logika dengan instruksi kode Python nyata secara real-time.
+- **Antarmuka Responsif** — Mendukung penggunaan optimal melalui HP, tablet, dan desktop.
+- **PWA (Progressive Web App)** — Mendukung pengalaman instalasi aplikasi web dan mode offline sesuai kemampuan browser dan perangkat pengguna.
 
 ---
 
-## 🛠️ Tumpukan Teknologi (*Technology Stack*)
+## 🛠️ Teknologi
 
-| Lapisan | Teknologi | Peran dalam Sistem |
+Teknologi yang digunakan dalam proyek ini meliputi Svelte, SvelteKit, Tailwind CSS, Bun, dan perangkat pendukung pengembangan lainnya. Detail versi serta konfigurasi mengikuti implementasi aktual di repository:
+
+| Komponen | Teknologi | Deskripsi Implementasi |
 |---|---|---|
-| **Frontend Framework** | [SvelteKit 3](https://kit.svelte.dev/) & [Svelte 5](https://svelte.dev/) | Arsitektur SPA reaktif dengan Svelte 5 Runes (`$state`, `$derived`, `$props`), tanpa overhead virtual DOM. |
-| **Styling & Desain** | [Tailwind CSS v4](https://tailwindcss.com/) (`@tailwindcss/vite`) | Desain antarmuka modern bernuansa game sci-fi dengan token tema gelap/terang. |
-| **Runtime & Test Runner** | [Bun 1.4+](https://bun.sh/) & [Node.js v20+](https://nodejs.org/) | Eksekusi cepat, native TypeScript, dan test runner bawaan dengan 61 unit tests lolos. |
-| **Kompilasi & Build** | [Vite 8.3](https://vitejs.dev/) | Bundler modern dengan dukungan chunk splitting dan service worker builder. |
-| **Autentikasi** | Google Identity Services (GSI) | Masuk aman dengan akun Google resmi, verifikasi ID token di sisi server, dan cookie HTTP-only. |
-| **Persistensi Data** | `localStorage` + `IndexedDB` | Penyimpanan progres multi-akun lokal dan penyimpanan foto avatar kustom. |
-| **Efek Suara (Audio)** | Web Audio API | Sintesis nada audio instan (klik, langkah, chime kuis, selebrasi) tanpa beban file suara eksternal. |
-| **PWA & Offline** | Web App Manifest & Service Worker | Precache shell aplikasi, instalasi PWA di Android & iOS Safari, deteksi jaringan offline reaktif. |
-| **Deployment** | `@sveltejs/adapter-auto` | Siap deploy zero-config ke platform Vercel, Cloudflare Pages, atau Netlify. |
+| **Frontend Framework** | [Svelte 5](https://svelte.dev/) & [SvelteKit 3](https://kit.svelte.dev/) | Arsitektur reaktif modern menggunakan Svelte 5 Runes (`$state`, `$derived`, `$props`). |
+| **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) | Utilitas styling terkini dengan token desain kontras tinggi dan performa kompilasi instan. |
+| **Runtime & Test Runner** | [Bun](https://bun.sh/) & [Node.js](https://nodejs.org/) | Eksekusi cepat untuk pengembangan dan test runner dengan 66 unit tests tervalidasi. |
+| **Build Tool** | [Vite](https://vitejs.dev/) | Bundler aset produksi teroptimasi dan kompilasi service worker PWA. |
+| **Audio** | Web Audio API | Sintesis efek suara interaktif tanpa file audio eksternal yang membebani jaringan. |
+| **PWA & Offline** | Web App Manifest & Service Worker | Precache shell aplikasi dan aset untuk akses penuh tanpa koneksi internet. |
 
 ---
 
-## 📂 Dokumentasi Teknis Terperinci
+## 🏛️ Arsitektur Sistem
 
-Proyek ini dilengkapi dokumentasi arsitektur dan audit menyeluruh pada direktori [`docs/`](docs/):
+Diagram berikut menjelaskan gambaran hubungan pengguna, antarmuka, modul pembelajaran, Coding Game, dan pengelolaan progres PyQuest:
 
-1. 🏛️ **[Spesifikasi Arsitektur Sistem (`docs/ARCHITECTURE.md`)](docs/ARCHITECTURE.md)**: Diagram arsitektur Mermaid tingkat tinggi, pembagian tanggung jawab modul, aliran data, dan keputusan teknis (ADR).
-2. 🗺️ **[Peta Struktur Proyek (`docs/PROJECT_STRUCTURE.md`)](docs/PROJECT_STRUCTURE.md)**: Peta pohon direktori lengkap dan panduan lokasi berkas bagi pengembang.
-3. 🔄 **[Aliran Pengguna & Navigasi (`docs/APPLICATION_FLOWS.md`)](docs/APPLICATION_FLOWS.md)**: Diagram alur pengguna untuk login, modul kuis, arena Coding Game, navigasi tombol Back mobile, dan PWA offline.
-4. 📋 **[Inventaris Fitur & Matriks Verifikasi (`docs/FEATURE_INVENTORY.md`)](docs/FEATURE_INVENTORY.md)**: Daftar lengkap seluruh fitur pada 8 subsistem beserta berkas kode dan bukti verifikasinya.
-5. 🧪 **[Laporan Pengujian & Audit QA (`docs/TEST_REPORT.md`)](docs/TEST_REPORT.md)**: Hasil pengujian otomatis (61 unit tests), uji kompilasi produksi, serta skenario uji manual.
-6. 🏆 **[Matriks Kesiapan Penyerahan Kompetisi (`docs/COMPETITION_READINESS.md`)](docs/COMPETITION_READINESS.md)**: Matriks evaluasi berkas lomba, kurasi 5 prompt utama, dan rekomendasi screenshot.
-7. 🤖 **[Pedoman Acuan AI Agent (`AI_AGENT_REFERENCE.md`)](AI_AGENT_REFERENCE.md)**: Dokumen konvensi dan batasan teknis bagi agen AI pengembang.
+![Diagram Arsitektur Sistem PyQuest](docs/diagrams/pyquest_system_flowchart.png)
+
+### Penjelasan Singkat Komponen Arsitektur:
+- **Pengguna / Siswa**: Mengakses aplikasi melalui browser di HP, tablet, atau laptop.
+- **Frontend (Svelte 5 - `src/routes/+page.svelte`)**: Menampilkan halaman, navigasi, modul belajar, kuis, dan Coding Game (`GameCanvas.svelte`, `BlockWorkspace.svelte`, `QuestionCard.svelte`, dll).
+- **Game Engine & Core Helpers (`src/lib/game/`, `src/lib/questions/`)**:
+  - `compiler.ts`: Mengompilasi susunan balok visual (AST) menjadi urutan instruksi atomik.
+  - `engine.ts`: Menjalankan simulasi langkah PyBot (frame 380ms), mendeteksi rintangan, mengumpulkan koin, dan memvalidasi target.
+  - `validator.ts`: Memvalidasi solvabilitas labirin menggunakan algoritma BFS (Breadth-First Search).
+  - `quizEvaluator.ts`: Mengacak dan mengevaluasi jawaban kuis secara deterministik.
+- **State Controller & Stores (`src/lib/stores/`)**:
+  - `progressStore.ts`: Mengelola XP, riwayat level selesai, streak harian, dan progres belajar terisolasi per akun.
+  - `authStore.ts`: Mengelola sesi autentikasi pengguna dan integrasi Google OAuth.
+  - `pwaStore.ts`: Mendeteksi mode mandiri (standalone), kesiapan prompt instalasi, dan status jaringan offline.
+  - `soundStore.ts`: Pengaturan efek suara Web Audio API.
+  - `themeStore.ts`: Standardisasi tema aplikasi dengan kontras tinggi.
+- **Penyimpanan Lokal Browser**:
+  - `localStorage`: Menyimpan data progres pengguna (`pyquest_progress_v2_{id}`) dan registri akun.
+  - `IndexedDB`: Menyimpan foto avatar kustom pengguna.
+  - `Cookie`: Pengamanan sesi pengguna.
+- **Layanan Eksternal atau API**: Endpoint backend SvelteKit (`src/routes/api/`) digunakan jika diperlukan untuk verifikasi identitas sesi Google OAuth di sisi server.
 
 ---
 
-## 🚀 Panduan Memulai Cepat (*Quick Start*)
+## 📂 Struktur Proyek
+
+Struktur folder membantu pengembang memahami lokasi kode, komponen, konfigurasi, dan dokumentasi.  
+Lihat [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md) untuk peta direktori proyek beserta penjelasan fungsi setiap bagian.
+
+---
+
+## ⚡ Menjalankan Proyek
 
 ### Prasyarat
-- **Bun** (versi $\ge 1.2$, direkomendasikan 1.4+) ATAU **Node.js** (versi $\ge 20.0$) dengan **npm**.
-- Git terpasang di sistem.
+- Bun (versi $\ge 1.2$, direkomendasikan 1.4+) ATAU Node.js (versi $\ge 20.0$) dengan npm.
+- Git.
 
-### 1. Kloning Repositori
+### Instalasi
 ```bash
 git clone https://github.com/usamah-io/pyquest.git
 cd pyquest
-```
-
-### 2. Instalasi Dependensi
-Menggunakan Bun:
-```bash
 bun install
 ```
-*Atau menggunakan npm:*
-```bash
-npm install
-```
+*(Atau gunakan `npm install` jika menggunakan Node.js)*
 
-### 3. Konfigurasi Variabel Lingkungan (*Environment Variables*)
-Salin berkas contoh konfigurasi:
-```bash
-cp .env.example .env
-```
-Isi konfigurasi pada berkas `.env` (opsional untuk pengembangan lokal):
-```env
-# Client ID Google untuk browser (publik, aman)
-PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
-
-# Kredensial Server-Only (hanya jika menggunakan server verification)
-GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-```
-> *Catatan: PyQuest telah dilengkapi Client ID Google fallback resmi untuk pengujian langsung tanpa perlu mendaftar Google Cloud Console terlebih dahulu.*
-
-### 4. Menjalankan Server Pengembangan (*Development Server*)
+### Menjalankan Mode Pengembangan
 ```bash
 bun run dev
-# atau
-npm run dev
 ```
-Buka browser pada alamat `http://localhost:5173/`.
+*(Atau `npm run dev`)*  
+Buka alamat lokal yang ditampilkan oleh terminal (biasanya `http://localhost:5173`).
 
----
-
-## 🧪 Pengujian & Pemeriksaan Kode (*Testing & Quality Checks*)
-
-### Menjalankan Unit Tests (Bun Test Runner)
+### Menjalankan Pengujian (Unit Tests)
 ```bash
 bun test
-# atau pada Windows via native executable:
-& "C:\Users\ASUS\.bun\bin\bun.exe" test
 ```
-*Hasil aktual: **61 pass**, 0 fail, 6040 assertion calls dalam ~220ms.*
+*Hasil aktual: **66 pass**, 0 fail, 6060 assertion calls.*
 
-### Pengecekan Tipe TypeScript & Diagnostik Svelte
+### Production Build & Preview
 ```bash
-npm run check
-```
-*Hasil aktual: **0 errors, 0 warnings**.*
-
-### Membangun Paket Produksi (*Production Build*)
-```bash
-npm run build
-```
-Untuk menguji hasil build produksi secara lokal:
-```bash
-npm run preview
+bun run build
+bun run preview
 ```
 
 ---
 
-## 🌐 Panduan Deployment
+## 📚 Dokumentasi
 
-PyQuest menggunakan `@sveltejs/adapter-auto` yang mendeteksi target hosting secara otomatis:
-1. Hubungkan repositori GitHub ke akun [Vercel](https://vercel.com).
-2. Framework Preset akan terdeteksi otomatis sebagai **SvelteKit**.
-3. Pastikan Node.js version disetel ke 20.x atau 22.x.
-4. Klik **Deploy**. Aplikasi akan aktif dengan SSL/HTTPS otomatis dan CDN Anycast global.
+Dokumentasi teknis lengkap proyek PyQuest tersedia pada direktori [`docs/`](docs/):
+- 📄 **[PRD PyQuest](docs/PRD.md)** — Kebutuhan produk, tujuan, fitur, dan kriteria penerimaan.
+- 🏛️ **[Arsitektur Sistem](docs/ARCHITECTURE.md)** — Komponen, alur data sistem, dan ADR teknis.
+- 🗺️ **[Struktur Proyek](docs/PROJECT_STRUCTURE.md)** — Peta direktori dan fungsi file dalam repositori.
+- 🔄 **[Alur Aplikasi](docs/APPLICATION_FLOWS.md)** — Alur pengguna, alur bermain, dan navigasi layar.
+- 📋 **[Inventaris Fitur](docs/FEATURE_INVENTORY.md)** — Daftar fitur dan status verifikasi implementasinya.
+- 🧪 **[Laporan Pengujian](docs/TEST_REPORT.md)** — Hasil pengujian unit test dan validasi performa.
+- 🤖 **[Panduan AI Agent](AI_AGENT_REFERENCE.md)** — Aturan dan acuan pengembangan proyek.
 
 ---
 
-## 👥 Pengembang & Lisensi
+## 🎯 Tujuan Proyek
 
-- **Pengembang**: Tim PyQuest
-- **Lisensi**: Hak Cipta Dilindungi Undang-Undang (*Private Academic & Competition Project*).
+PyQuest dikembangkan untuk membuat pembelajaran coding lebih mudah diakses, interaktif, dan menyenangkan bagi pemula. Fokus utamanya adalah membantu pengguna memahami logika pemrograman melalui proses mencoba, melihat hasil, memperbaiki kesalahan, dan menyelesaikan tantangan.
+
+**Repository**: [usamah-io/pyquest](https://github.com/usamah-io/pyquest)
