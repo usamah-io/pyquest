@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { LearningLevel } from '$lib/types';
 	import { progressStore } from '$lib/stores/progressStore';
+	import { themeStore } from '$lib/stores/themeStore';
 	import { playClick } from '$lib/stores/soundStore';
 	import Icon from './Icon.svelte';
 
@@ -180,8 +181,25 @@
 			</div>
 		</div>
 
-		<!-- Progress Pills -->
+		<!-- Progress Pills & Theme Toggle -->
 		<div class="flex items-center gap-2 shrink-0">
+			<!-- Theme Toggle Button -->
+			<button
+				type="button"
+				onclick={() => {
+					playClick();
+					themeStore.toggleTheme();
+				}}
+				class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+				title={$themeStore === 'light' ? 'Ubah ke Mode Gelap' : 'Ubah ke Mode Terang'}
+				aria-label="Ganti Tema"
+			>
+				{#if $themeStore === 'light'}
+					<Icon name="moon" size={15} class="text-indigo-400" />
+				{:else}
+					<Icon name="sun" size={15} class="text-amber-400" />
+				{/if}
+			</button>
 			<div class="flex items-center gap-1.5 text-[11px] sm:text-xs bg-slate-900 border border-slate-800 px-2.5 sm:px-3 py-1.5 rounded-xl font-bold text-indigo-400">
 				<Icon name="zap" size={14} class="text-amber-400 shrink-0" />
 				<span>{$progressStore.completedQuestions.length} / {learningLevels.reduce((acc, l) => acc + l.questionIds.length, 0)}</span>

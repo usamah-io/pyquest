@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import type { GameLevel } from '$lib/types';
 	import { progressStore } from '$lib/stores/progressStore';
+	import { themeStore } from '$lib/stores/themeStore';
 	import { playClick } from '$lib/stores/soundStore';
 	import Icon from './Icon.svelte';
 	import TutorialModal from './TutorialModal.svelte';
@@ -243,8 +244,25 @@
 			</div>
 		</div>
 
-		<!-- Progress Pills & Tutorial Trigger -->
+		<!-- Progress Pills, Tutorial Trigger & Theme Toggle -->
 		<div class="flex items-center gap-2 shrink-0">
+			<!-- Theme Toggle Button -->
+			<button
+				type="button"
+				onclick={() => {
+					playClick();
+					themeStore.toggleTheme();
+				}}
+				class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+				title={$themeStore === 'light' ? 'Ubah ke Mode Gelap' : 'Ubah ke Mode Terang'}
+				aria-label="Ganti Tema"
+			>
+				{#if $themeStore === 'light'}
+					<Icon name="moon" size={15} class="text-indigo-400" />
+				{:else}
+					<Icon name="sun" size={15} class="text-amber-400" />
+				{/if}
+			</button>
 			<button
 				type="button"
 				onclick={handleOpenTutorial}

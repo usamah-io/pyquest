@@ -23,20 +23,40 @@
 			? 'bg-slate-900/95 border-emerald-500/40 shadow-emerald-500/10'
 			: 'bg-slate-900/95 border-rose-500/40 shadow-rose-500/10'}"
 	>
-		<!-- Status Icon & Title -->
-		<div class="mb-5">
+		<!-- Status Icon & PyBot Mascot & Title -->
+		<div class="mb-5 flex flex-col items-center">
 			{#if isCorrect}
-				<div class="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-3xl bg-emerald-500/20 border border-emerald-400 text-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-3">
-					<Icon name="check" size={36} />
+				<div class="relative mb-3">
+					<img
+						src="/mascot/pybot-happy-success.webp"
+						alt="PyBot Senang"
+						width="88"
+						height="88"
+						decoding="async"
+						class="w-20 h-20 sm:w-24 sm:h-24 object-contain animate-bounce drop-shadow-[0_8px_20px_rgba(16,185,129,0.35)]"
+					/>
+					<div class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center shadow-md font-bold">
+						<Icon name="check" size={16} />
+					</div>
 				</div>
 				<h2 class="text-2xl sm:text-3xl font-black text-emerald-400">Jawaban Tepat!</h2>
 				<p class="text-xs sm:text-sm text-slate-400 mt-1">Kamu mendapatkan bonus <strong class="text-amber-400 font-bold">+{question.xp || 15} XP</strong></p>
 			{:else}
-				<div class="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-3xl bg-rose-500/20 border border-rose-400 text-rose-400 flex items-center justify-center shadow-lg shadow-rose-500/20 mb-3">
-					<Icon name="x" size={36} />
+				<div class="relative mb-3">
+					<img
+						src="/mascot/pybot-waving.webp"
+						alt="PyBot Semangat"
+						width="88"
+						height="88"
+						decoding="async"
+						class="w-20 h-20 sm:w-24 sm:h-24 object-contain animate-float drop-shadow-[0_8px_20px_rgba(244,63,94,0.3)]"
+					/>
+					<div class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-md font-bold">
+						<Icon name="x" size={16} />
+					</div>
 				</div>
 				<h2 class="text-2xl sm:text-3xl font-black text-rose-400">Belum Tepat, Mari Pelajari!</h2>
-				<p class="text-xs sm:text-sm text-slate-400 mt-1">Kesalahan adalah bagian wajar dalam proses memahami logika koding.</p>
+				<p class="text-xs sm:text-sm text-slate-400 mt-1">Jangan berkecil hati! Kesalahan adalah bagian wajar dalam memahami logika Python.</p>
 			{/if}
 		</div>
 

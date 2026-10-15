@@ -29,10 +29,18 @@
 
 <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
 	<div class="w-full max-w-lg bg-slate-900 border-2 border-indigo-500/50 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-indigo-500/20 text-center relative overflow-hidden">
-		<!-- Trophy icon -->
-		<div class="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-3xl bg-indigo-600/30 border-2 border-indigo-400/60 p-1 mb-4 shadow-xl shadow-indigo-500/20">
-			<div class="w-full h-full bg-slate-900 rounded-[22px] flex items-center justify-center {isPerfect ? 'text-amber-400' : 'text-indigo-400'}">
-				<Icon name={isPerfect ? 'award' : 'trophy'} size={44} />
+		<!-- Trophy icon & PyBot celebration mascot -->
+		<div class="relative w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3">
+			<img
+				src="/mascot/pybot-happy-success.webp"
+				alt="PyBot Juara"
+				width="96"
+				height="96"
+				decoding="async"
+				class="w-full h-full object-contain animate-bounce drop-shadow-[0_8px_20px_rgba(99,102,241,0.35)]"
+			/>
+			<div class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full {isPerfect ? 'bg-amber-400 text-slate-950' : 'bg-indigo-500 text-white'} flex items-center justify-center shadow-md">
+				<Icon name={isPerfect ? 'award' : 'trophy'} size={16} />
 			</div>
 		</div>
 
@@ -53,7 +61,7 @@
 			{#if !isLastLevel}
 				Level berikutnya telah terbuka!
 			{:else}
-				Kamu telah menyelesaikan seluruh 10 Level Modul Belajar Python!
+				Kamu telah menyelesaikan seluruh 30 Level Modul Belajar Python!
 			{/if}
 		</p>
 

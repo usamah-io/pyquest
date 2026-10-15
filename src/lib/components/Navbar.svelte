@@ -36,7 +36,7 @@
 </script>
 
 <header
-	class="fixed top-0 left-0 right-0 z-30 h-14 flex items-center justify-between px-3 sm:px-6 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 text-slate-100 select-none transition-transform duration-300 ease-in-out {isVisible
+	class="fixed top-0 left-0 right-0 z-30 h-14 pt-[env(safe-area-inset-top,0px)] flex items-center justify-between px-3 sm:px-6 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 text-slate-100 select-none transition-transform duration-300 ease-in-out {isVisible
 		? 'translate-y-0 shadow-sm'
 		: '-translate-y-full pointer-events-none'}"
 >
