@@ -114,11 +114,14 @@ bun run preview
 Dokumentasi teknis lengkap proyek PyQuest tersedia pada direktori [`docs/`](docs/):
 - 📄 **[PRD PyQuest](docs/PRD.md)** — Kebutuhan produk, tujuan, fitur, dan kriteria penerimaan.
 - 🏛️ **[Arsitektur Sistem](docs/ARCHITECTURE.md)** — Komponen, alur data sistem, dan ADR teknis.
+- 📐 **[Spesifikasi Arsitektur (ASCII)](architecture.txt)** — Diagram arsitektur dan spesifikasi alur data sistem.
 - 🗺️ **[Struktur Proyek](docs/PROJECT_STRUCTURE.md)** — Peta direktori dan fungsi file dalam repositori.
 - 🔄 **[Alur Aplikasi](docs/APPLICATION_FLOWS.md)** — Alur pengguna, alur bermain, dan navigasi layar.
 - 📋 **[Inventaris Fitur](docs/FEATURE_INVENTORY.md)** — Daftar fitur dan status verifikasi implementasinya.
 - 🧪 **[Laporan Pengujian](docs/TEST_REPORT.md)** — Hasil pengujian unit test dan validasi performa.
-- 🤖 **[Panduan AI Agent](AI_AGENT_REFERENCE.md)** — Aturan dan acuan pengembangan proyek.
+- 🤖 **[Panduan AI Agent](AI_AGENT_REFERENCE.md)** — Aturan dan acuan pengembangan proyek bagi AI.
+- 📝 **[Jurnal 5 Prompt Terkurasi](docs/JURNAL_5_PROMPT_TERKURASI.md)** — Dokumentasi rekayasa prompt 5 fase untuk kompetisi.
+- 📜 **[Log Prompt Mentah Lengkap](docs/LOG_PROMPT_MENTAH_LENGKAP.md)** — Rekam jejak kronologis 125 prompt dari awal hingga rilis.
 
 ---
 

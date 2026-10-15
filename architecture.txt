@@ -1,0 +1,79 @@
+=======================================================================================================================
+PYQUEST — SPESIFIKASI ARSITEKTUR SISTEM & ALUR DATA (SYSTEM ARCHITECTURE SPECIFICATION)
+Platform Edukasi Logika Pemrograman Python Berbasis Web & Game untuk Anak
+Kompetisi: Telkomsel Coding Competition — Web Education for Kids
+=======================================================================================================================
+
+1. DIAGRAM ARSITEKTUR SISTEM (HIGH-LEVEL ARCHITECTURE DIAGRAM)
+-----------------------------------------------------------------------------------------------------------------------
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                             PYQUEST — SYSTEM ARCHITECTURE & DATA FLOW                               │
+│                                       (Full-Stack Interactive Python Learning Game Blueprint)                       │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+  [ USER / CLIENT PLATFORMS ]           [ SISI CLIENT (SVELTE FRONTEND & CLIENT ENGINES) ]             [ SISI SERVER ]
+ ┌───────────────────────────┐         ┌──────────────────────────────────────────────────┐           ┌─────────────────────┐
+ │ • Mobile (Portrait/Land)  │         │ ┌──────────────────────┐ ┌─────────────────────┐ │           │ 7. Bun Server / API │
+ │ • Tablet / iPad           │ ──Serv─▶│ │ 1. Learning UI       │ │ 4. Block Compiler   │ │ ──GET/POST▶│ • /quests/next      │
+ │ • Laptop / Desktop        │         │ │ 2. Coding Workspace  │ │    (Workspace ➔ AST │ │◀──Feedback─│ • /answers/validate │
+ └─────────────┬─────────────┘         │ │ 3. Game Board Canvas │ │    ➔ Command List)  │ │           │ • /progress/sync    │
+               │                       │ │ 4. Progress HUD      │ └──────────┬──────────┘ │           └──────────┬──────────┘
+               ▼                       │ └──────────┬───────────┘            ▼            │                      │
+ ┌───────────────────────────┐         │            │             ┌─────────────────────┐ │                      ▼
+ │ 13. HOSTING & DEPLOYMENT  │         │            │             │ 4. Game Engine (2D) │ │           ┌─────────────────────┐
+ │ • Vercel (Edge CDN & SSR) │─────────┼────────────┼────────────▶│ • Collision / Checks│ │           │ 5. Question Engine  │
+ │ • Bun Container Backend   │         │            ▼             │ • State Evaluator   │ │           │    (Selector & Val) │
+ │ • Security Boundary (TLS) │         │ ┌──────────────────────┐ └──────────┬──────────┘ │           └──────────┬──────────┘
+ └───────────────────────────┘         │ │ 10. Animation System │            ▼            │                      │
+                                       │ │     (Svelte Motion)  │ ┌─────────────────────┐ │                      ▼
+                                       │ └──────────────────────┘ │ 9. Reward / Progress│ │           ┌─────────────────────┐
+                                       │                          │    (XP & Streaks)   │─┼──Sync Progress──▶ Progress Service│
+                                       │                          └─────────────────────┘ │           │ 6. Feedback Engine  │
+                                       │                                                  │           │    (Deterministic   │
+                                       │  [ Svelte Stores (quest, workspace, progress) ]  │           │     Non-LLM Rules)  │
+                                       │  [ LocalStorage / IndexedDB Offline Cache ]      │           └──────────┬──────────┘
+                                       └──────────────────────────────────────────────────┘                      │
+                                                                                                                 ▼
+                                                                                                      ┌─────────────────────┐
+                                                                                                      │ Database & Storage  │
+                                                                                                      │ (ACID Persistence)  │
+                                                                                                      └─────────────────────┘
+
+-----------------------------------------------------------------------------------------------------------------------
+2. RINCIAN KOMPONEN SISTEM
+-----------------------------------------------------------------------------------------------------------------------
+
+A. CLIENT LAYER (FRONTEND & UI)
+   • Framework: SvelteKit 3 dengan Svelte 5 Runes ($state, $derived, $effect)
+   • Styling: Tailwind CSS v4 (Desain Solid Colors, High Contrast, No Gradients)
+   • Navigation: Smart Auto-Hide Header saat scroll turun, Persistent Bottom Navigation di Mobile
+   • Responsive Breakpoints: Dukungan penuh Mobile Portrait, Mobile Landscape, Tablet, dan Desktop
+   • Audio Synthesizer: soundStore.ts memanfaatkan native Web Audio API (Osilator matematis tanpa file mp3 besar)
+
+B. CODING GAME ENGINE & COMPILER (DETERMINISTIK NON-LLM)
+   • Block Workspace: Editor penyusunan balok visual drag-and-drop ala Scratch 3
+   • Atomic Blocks: MAJU, BELOK KIRI, BELOK KANAN, ULANGI (N KALI), SELAMANYA
+   • Compiler AST: compiler.ts menerjemahkan susunan balok ke Atomic Commands dan kode Python real-time
+   • Game Loop Engine: engine.ts mensimulasikan pergerakan robot PyBot, tabrakan rintangan, dan target koin/bintang
+   • Solvability Solver: validator.ts menggunakan algoritma Breadth-First Search (BFS) untuk membuktikan secara
+     matematis bahwa seluruh 90 misi labirin dapat diselesaikan tanpa galat rintangan (minMoves <= maxMoves)
+
+C. MODUL PEMBELAJARAN & EVALUASI KUIS
+   • Kurikulum: 30 Level Modul Belajar Logika Python
+   • Bank Soal: 150 Soal Konseptual interaktif (5 soal per level)
+   • Scoring Engine: quizEvaluator.ts dengan proteksi double-counting dan kalkulasi akurat (Correct/Wrong/Score/Streak)
+
+D. STATE MANAGEMENT & AUTENTIKASI
+   • Auth System: Integrasi resmi Google Identity Services (OAuth 2.0)
+   • Isolasi Akun: Penyimpanan progres diisolasi per ID pengguna sehingga progres akun baru tidak tercampur akun lama
+   • Guest Mode: Dukungan mode tamu lokal tanpa keharusan login awal
+
+E. OFFLINE-FIRST PWA & DEPLOYMENT
+   • Service Worker: Precaching shell aplikasi dan runtime caching aset statis
+   • Web App Manifest: PWA Standalone dengan maskable icons 192x192 & 512x512
+   • Hosting: Vercel Edge Serverless Deployment dengan waktu build produksi ~3-4 detik
+
+=======================================================================================================================
+Status Dokumen: Spesifikasi Arsitektur Resmi (Verified against Repository Source Code)
+Repositori: https://github.com/usamah-io/pyquest
+=======================================================================================================================
