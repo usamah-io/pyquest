@@ -4,6 +4,7 @@
 	import { levelsData } from '$lib/challenges/levelsData';
 	import { learningLevelsData } from '$lib/questions/learningLevelsData';
 	import { playClick } from '$lib/stores/soundStore';
+	import { themeStore } from '$lib/stores/themeStore';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -198,7 +199,7 @@
 	<!-- 1. CINEMATIC DASHBOARD HERO                              -->
 	<!-- ======================================================== -->
 	<section
-		class="relative w-full rounded-3xl overflow-hidden border border-slate-800/80 bg-slate-900/90 shadow-2xl backdrop-blur-md"
+		class="hero-showcase-banner relative w-full rounded-3xl overflow-hidden border border-slate-800/80 bg-slate-900/90 shadow-2xl backdrop-blur-md"
 	>
 		<!-- Background Panorama Artwork -->
 		<div class="hero-panorama-container absolute inset-0 z-0 overflow-hidden pointer-events-none">
@@ -208,24 +209,43 @@
 				width="1376"
 				height="768"
 				decoding="async"
-				class="w-full h-full object-cover object-right md:object-center opacity-55 scale-105"
+				class="w-full h-full object-cover object-right md:object-center opacity-75 scale-105"
 			/>
-			<div class="hero-panorama-overlay absolute inset-0 bg-slate-950/45"></div>
+			<div class="hero-panorama-overlay absolute inset-0"></div>
 		</div>
 
 		<!-- Hero Content Grid -->
 		<div class="relative z-10 p-5 sm:p-7 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
 			<!-- Left: Greeting & Description & Stats Pills -->
-			<div class="flex-1 flex flex-col space-y-4 max-w-xl text-left">
+			<div class="flex-1 flex flex-col space-y-4 max-w-xl text-left w-full">
 				<div>
-					<div class="text-xs sm:text-sm font-semibold text-slate-400 mb-1 flex items-center gap-2">
-						<span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-						<span>Selamat datang kembali,</span>
+					<div class="flex items-center justify-between gap-2 mb-1">
+						<div class="text-xs sm:text-sm font-semibold text-slate-300 hero-greeting flex items-center gap-2">
+							<span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+							<span>Selamat datang kembali,</span>
+						</div>
+						<!-- Quick Theme Toggle in Hero Card -->
+						<button
+							type="button"
+							onclick={() => {
+								playClick();
+								themeStore.toggleTheme();
+							}}
+							class="w-8 h-8 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-slate-700/60 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95"
+							title={$themeStore === 'light' ? 'Ubah ke Mode Gelap' : 'Ubah ke Mode Terang'}
+							aria-label="Ganti Tema"
+						>
+							{#if $themeStore === 'light'}
+								<Icon name="moon" size={15} class="text-indigo-400" />
+							{:else}
+								<Icon name="sun" size={15} class="text-amber-400" />
+							{/if}
+						</button>
 					</div>
-					<h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
+					<h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight leading-tight hero-title">
 						Hi, {$dashboardUserStore.firstName || $dashboardUserStore.name}!
 					</h1>
-					<p class="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
+					<p class="text-xs sm:text-sm text-slate-200 mt-2 leading-relaxed hero-desc">
 						Teruskan petualanganmu, kuasai logika pemrograman, dan jadilah programmer hebat!
 					</p>
 				</div>
@@ -236,7 +256,7 @@
 					<button
 						type="button"
 						onclick={() => onOpenXp && onOpenXp()}
-						class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-amber-500/30 hover:border-amber-400 text-amber-300 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-95"
+						class="hero-stat-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-amber-500/30 hover:border-amber-400 text-amber-300 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-95"
 						title="Buka Rincian Total XP"
 					>
 						<Icon name="star" size={14} class="text-amber-400" />
@@ -247,7 +267,7 @@
 					<button
 						type="button"
 						onclick={onStartCodingGame}
-						class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-indigo-500/30 hover:border-indigo-400 text-indigo-300 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-95"
+						class="hero-stat-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-indigo-500/30 hover:border-indigo-400 text-indigo-300 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-95"
 						title="Pilih Level Game"
 					>
 						<Icon name="shield" size={14} class="text-indigo-400" />
@@ -258,7 +278,7 @@
 					<button
 						type="button"
 						onclick={() => onOpenMissions && onOpenMissions()}
-						class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-cyan-500/30 hover:border-cyan-400 text-cyan-300 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-95"
+						class="hero-stat-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-cyan-500/30 hover:border-cyan-400 text-cyan-300 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-95"
 						title="Buka Arsip Misi Selesai"
 					>
 						<Icon name="check-circle" size={14} class="text-cyan-400" />
@@ -269,7 +289,7 @@
 					<button
 						type="button"
 						onclick={onStartLearning}
-						class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-purple-500/30 hover:border-purple-400 text-purple-300 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-95"
+						class="hero-stat-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-purple-500/30 hover:border-purple-400 text-purple-300 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-95"
 						title="Pilih Modul Materi"
 					>
 						<Icon name="book-open" size={14} class="text-purple-400" />
@@ -280,7 +300,7 @@
 					<button
 						type="button"
 						onclick={() => onOpenStreak && onOpenStreak()}
-						class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-amber-500/30 hover:border-orange-400 text-amber-400 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-95"
+						class="hero-stat-pill flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-amber-500/30 hover:border-orange-400 text-amber-400 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-95"
 						title="Buka Kalender Streak"
 					>
 						<Icon name="flame" size={14} class="text-amber-400" />

@@ -61,13 +61,13 @@
   --color-rose-200: #9F1239;
 }
 
-/* Headings on light surfaces must be deep high-contrast text */
-[data-theme="light"] h1,
-[data-theme="light"] h2,
-[data-theme="light"] h3,
-[data-theme="light"] h4,
-[data-theme="light"] h5,
-[data-theme="light"] h6 {
+/* Headings on light surfaces must be deep high-contrast text (excluding atmospheric hero showcase) */
+[data-theme="light"] h1:not(.hero-showcase-banner *),
+[data-theme="light"] h2:not(.hero-showcase-banner *),
+[data-theme="light"] h3:not(.hero-showcase-banner *),
+[data-theme="light"] h4:not(.hero-showcase-banner *),
+[data-theme="light"] h5:not(.hero-showcase-banner *),
+[data-theme="light"] h6:not(.hero-showcase-banner *) {
   color: #172033;
 }
 
@@ -87,14 +87,64 @@
   border-color: #D5DCE8 !important;
 }
 
-/* Light Mode Hero Banner Panorama Illustration: Keep atmospheric and clearly visible */
-[data-theme="light"] .hero-panorama-container img {
-  opacity: 0.88 !important;
-  filter: contrast(1.05) saturate(1.1) !important;
+/* ========================================================================= */
+/* HERO SHOWCASE BANNER: CRISP, HIGH-CONTRAST ATMOSPHERIC CARD IN BOTH THEMES */
+/* ========================================================================= */
+
+.hero-showcase-banner,
+[data-theme="light"] .hero-showcase-banner,
+[data-theme="dark"] .hero-showcase-banner {
+  background-color: #0b1120 !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+  box-shadow: 0 20px 40px -15px rgba(2, 6, 23, 0.6) !important;
 }
 
-[data-theme="light"] .hero-panorama-container .hero-panorama-overlay {
-  background-color: rgba(245, 247, 252, 0.22) !important;
+.hero-showcase-banner .hero-panorama-container img,
+[data-theme="light"] .hero-showcase-banner .hero-panorama-container img,
+[data-theme="dark"] .hero-showcase-banner .hero-panorama-container img {
+  opacity: 0.82 !important;
+  filter: contrast(1.15) saturate(1.2) !important;
+}
+
+.hero-showcase-banner .hero-panorama-overlay,
+[data-theme="light"] .hero-showcase-banner .hero-panorama-overlay,
+[data-theme="dark"] .hero-showcase-banner .hero-panorama-overlay {
+  background: linear-gradient(135deg, rgba(11, 17, 32, 0.94) 0%, rgba(11, 17, 32, 0.8) 45%, rgba(11, 17, 32, 0.45) 100%) !important;
+}
+
+/* Ensure all typography within hero banner retains pure high-contrast illumination */
+[data-theme="light"] .hero-showcase-banner h1,
+[data-theme="dark"] .hero-showcase-banner h1,
+.hero-showcase-banner h1,
+.hero-showcase-banner .hero-title {
+  color: #FFFFFF !important;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.75) !important;
+}
+
+[data-theme="light"] .hero-showcase-banner .hero-greeting,
+[data-theme="dark"] .hero-showcase-banner .hero-greeting,
+.hero-showcase-banner .hero-greeting {
+  color: #94A3B8 !important;
+}
+
+[data-theme="light"] .hero-showcase-banner .hero-desc,
+[data-theme="dark"] .hero-showcase-banner .hero-desc,
+.hero-showcase-banner .hero-desc {
+  color: #E2E8F0 !important;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="light"] .hero-showcase-banner .text-white,
+.hero-showcase-banner .text-white {
+  color: #FFFFFF !important;
+}
+
+/* High contrast glass capsules for Stats Pills inside Hero Banner */
+[data-theme="light"] .hero-showcase-banner .hero-stat-pill,
+[data-theme="dark"] .hero-showcase-banner .hero-stat-pill,
+.hero-showcase-banner .hero-stat-pill {
+  background-color: rgba(2, 6, 23, 0.88) !important;
+  border-color: rgba(100, 116, 139, 0.45) !important;
 }
 
 /* Light Mode Module Cards Ambient Art: Visible atmosphere without washing out */
@@ -110,6 +160,8 @@
 /* In Light Mode, text-white on neutral surfaces becomes dark primary text,
    while preserving pure white text on solid buttons, badges, and coding blocks */
 [data-theme="light"] .text-white:not(
+  .hero-showcase-banner,
+  .hero-showcase-banner *,
   button.bg-indigo-600 *,
   button.bg-indigo-500 *,
   button.bg-emerald-500 *,

@@ -20,7 +20,6 @@
 	import TotalXpView from '$lib/components/TotalXpView.svelte';
 	import StreakView from '$lib/components/StreakView.svelte';
 	import BottomNav from '$lib/components/BottomNav.svelte';
-	import Navbar from '$lib/components/Navbar.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 
 	import { learningLevelsData } from '$lib/questions/learningLevelsData';
@@ -802,17 +801,6 @@
 		}}
 	/>
 
-	<!-- Mobile Fixed Top Auto-Hide Navigation Bar -->
-	{#if currentScreen === 'LANDING'}
-		<div class="lg:hidden">
-			<Navbar
-				isVisible={isNavbarVisible}
-				onSelectMode={handleSelectNavbarMode}
-				onOpenProfile={handleOpenProfile}
-			/>
-		</div>
-	{/if}
-
 	<!-- Body Layout with Desktop Sidebar -->
 	<div class="flex-1 flex {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'portrait:h-auto portrait:overflow-visible landscape:overflow-hidden md:overflow-hidden' : 'overflow-hidden'} min-h-0">
 		{#if currentScreen === 'LANDING' || currentScreen === 'LEARN_SELECT' || currentScreen === 'LEVEL_SELECT' || currentScreen === 'PROFILE' || currentScreen === 'MISSIONS' || currentScreen === 'XP_PROGRESS' || currentScreen === 'STREAK_VIEW'}
@@ -829,7 +817,7 @@
 		<main
 			bind:this={mainContainerEl}
 			onscroll={handleMainScroll}
-			class="flex-1 flex flex-col {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'p-1.5 sm:p-2.5 landscape:p-1 portrait:h-auto portrait:overflow-y-auto portrait:pb-24 landscape:h-full landscape:max-h-full landscape:overflow-hidden md:h-full md:max-h-full md:overflow-hidden' : currentScreen === 'LOGIN' ? 'p-2 sm:p-4 overflow-y-auto' : currentScreen === 'LANDING' ? 'pt-16 p-2 sm:p-4 md:p-6 lg:pt-6 pb-24 lg:pb-6 overflow-y-auto' : 'p-2 sm:p-4 md:p-6 pb-24 lg:pb-6 overflow-y-auto'} min-h-0"
+			class="flex-1 flex flex-col {currentScreen === 'CHALLENGE' || currentScreen === 'REWARD' ? 'p-1.5 sm:p-2.5 landscape:p-1 portrait:h-auto portrait:overflow-y-auto portrait:pb-24 landscape:h-full landscape:max-h-full landscape:overflow-hidden md:h-full md:max-h-full md:overflow-hidden' : currentScreen === 'LOGIN' ? 'p-2 sm:p-4 overflow-y-auto' : currentScreen === 'LANDING' ? 'p-2.5 sm:p-4 md:p-6 pb-24 lg:pb-6 overflow-y-auto' : 'p-2 sm:p-4 md:p-6 pb-24 lg:pb-6 overflow-y-auto'} min-h-0"
 		>
 			<!-- 0. LOGIN SCREEN (Real Google Sign-In) -->
 			{#if currentScreen === 'LOGIN'}
