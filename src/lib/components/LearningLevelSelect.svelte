@@ -159,54 +159,88 @@
 
 <div class="flex-1 flex flex-col max-w-4xl mx-auto w-full p-2.5 sm:p-5 overflow-y-auto select-none relative">
 	<!-- Top Bar -->
-	<div class="flex items-center justify-between gap-3 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-slate-800/80">
-		<div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
-			<button
-				type="button"
-				onclick={onBackToHome}
-				class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
-				title="Kembali ke Beranda"
-				aria-label="Kembali ke Beranda"
-			>
-				<Icon name="chevron-left" size={18} />
-			</button>
-			<div class="min-w-0">
-				<h1 class="text-base sm:text-2xl font-black text-white flex items-center gap-2 truncate">
-					<Icon name="book-open" size={20} class="text-indigo-400 shrink-0 hidden sm:inline" />
-					<span class="truncate">Jalur Modul Belajar Python</span>
-				</h1>
-				<p class="text-[11px] sm:text-xs text-slate-400 truncate">
-					Pahami teori sintaksis pemrograman sebelum praktik di labirin koding
-				</p>
+	<div class="mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-slate-800/80 flex flex-col gap-2.5 sm:gap-0">
+		<!-- Desktop & Mobile Main Row -->
+		<div class="flex items-center justify-between gap-2.5 sm:gap-3">
+			<div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+				<button
+					type="button"
+					onclick={onBackToHome}
+					class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+					title="Kembali ke Beranda"
+					aria-label="Kembali ke Beranda"
+				>
+					<Icon name="chevron-left" size={18} />
+				</button>
+				<div class="min-w-0 flex-1">
+					<h1 class="text-base sm:text-2xl font-black text-white flex items-center gap-2">
+						<Icon name="book-open" size={20} class="text-indigo-400 shrink-0 hidden sm:inline" />
+						<span class="truncate sm:overflow-visible">Jalur Modul Belajar Python</span>
+					</h1>
+					<p class="text-[11px] sm:text-xs text-slate-400 truncate">
+						Pahami teori sintaksis pemrograman sebelum praktik di labirin koding
+					</p>
+				</div>
+			</div>
+
+			<!-- Mobile Quick Action: Theme Toggle Only (Leaves full width for Title) -->
+			<div class="flex sm:hidden items-center shrink-0">
+				<button
+					type="button"
+					onclick={() => {
+						playClick();
+						themeStore.toggleTheme();
+					}}
+					class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+					title={$themeStore === 'light' ? 'Ubah ke Mode Gelap' : 'Ubah ke Mode Terang'}
+					aria-label="Ganti Tema"
+				>
+					{#if $themeStore === 'light'}
+						<Icon name="moon" size={15} class="text-indigo-400" />
+					{:else}
+						<Icon name="sun" size={15} class="text-amber-400" />
+					{/if}
+				</button>
+			</div>
+
+			<!-- Desktop Toolbar (Theme Toggle, Soal Progress, XP) -->
+			<div class="hidden sm:flex items-center gap-2 shrink-0">
+				<button
+					type="button"
+					onclick={() => {
+						playClick();
+						themeStore.toggleTheme();
+					}}
+					class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+					title={$themeStore === 'light' ? 'Ubah ke Mode Gelap' : 'Ubah ke Mode Terang'}
+					aria-label="Ganti Tema"
+				>
+					{#if $themeStore === 'light'}
+						<Icon name="moon" size={15} class="text-indigo-400" />
+					{:else}
+						<Icon name="sun" size={15} class="text-amber-400" />
+					{/if}
+				</button>
+				<div class="flex items-center gap-1.5 text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl font-bold text-indigo-400">
+					<Icon name="book-open" size={14} class="text-indigo-400 shrink-0" />
+					<span>{$progressStore.completedQuestions.length} / {learningLevels.reduce((acc, l) => acc + l.questionIds.length, 0)}</span>
+					<span class="text-slate-500 font-normal hidden md:inline">Soal</span>
+				</div>
+				<div class="flex items-center gap-1.5 text-xs bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl font-bold text-amber-400">
+					<Icon name="zap" size={14} class="text-amber-400 shrink-0" />
+					<span>{$progressStore.xp} XP</span>
+				</div>
 			</div>
 		</div>
 
-		<!-- Progress Pills & Theme Toggle -->
-		<div class="flex items-center gap-2 shrink-0">
-			<!-- Theme Toggle Button -->
-			<button
-				type="button"
-				onclick={() => {
-					playClick();
-					themeStore.toggleTheme();
-				}}
-				class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer shadow-xs"
-				title={$themeStore === 'light' ? 'Ubah ke Mode Gelap' : 'Ubah ke Mode Terang'}
-				aria-label="Ganti Tema"
-			>
-				{#if $themeStore === 'light'}
-					<Icon name="moon" size={15} class="text-indigo-400" />
-				{:else}
-					<Icon name="sun" size={15} class="text-amber-400" />
-				{/if}
-			</button>
-			<div class="flex items-center gap-1.5 text-[11px] sm:text-xs bg-slate-900 border border-slate-800 px-2.5 sm:px-3 py-1.5 rounded-xl font-bold text-indigo-400">
-				<Icon name="zap" size={14} class="text-amber-400 shrink-0" />
-				<span>{$progressStore.completedQuestions.length} / {learningLevels.reduce((acc, l) => acc + l.questionIds.length, 0)}</span>
-				<span class="text-slate-500 font-normal hidden md:inline">Soal</span>
+		<!-- Mobile Secondary Row (Soal & XP Indicators) -->
+		<div class="flex sm:hidden items-center justify-between gap-2 pt-1 border-t border-slate-800/40">
+			<div class="flex items-center gap-1.5 text-[11px] bg-slate-900/90 border border-slate-800 px-2.5 py-1.5 rounded-xl font-bold text-indigo-400">
+				<Icon name="book-open" size={13} class="text-indigo-400 shrink-0" />
+				<span>{$progressStore.completedQuestions.length} / {learningLevels.reduce((acc, l) => acc + l.questionIds.length, 0)} Soal</span>
 			</div>
-			<div class="flex items-center gap-1.5 text-[11px] sm:text-xs bg-slate-900 border border-slate-800 px-2.5 sm:px-3 py-1.5 rounded-xl font-bold text-amber-400">
-				<Icon name="zap" size={14} class="text-amber-400 shrink-0" />
+			<div class="flex items-center gap-1.5 text-[11px] bg-slate-900/90 border border-slate-800 px-2.5 py-1.5 rounded-xl font-bold text-amber-400">
+				<Icon name="zap" size={13} class="text-amber-400 shrink-0" />
 				<span>{$progressStore.xp} XP</span>
 			</div>
 		</div>

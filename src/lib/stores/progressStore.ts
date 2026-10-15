@@ -101,11 +101,12 @@ function evaluateStreakExpiry(p: UserProgress): UserProgress {
 }
 
 const STORAGE_KEY = 'pyquest_progress_v2';
-let currentStorageKey = STORAGE_KEY;
+const GUEST_STORAGE_KEY = 'pyquest_progress_v2_guest';
+let currentStorageKey = GUEST_STORAGE_KEY;
 const userProgressCache: Record<string, UserProgress> = {};
 
 function getStorageKey(userId?: string): string {
-	if (!userId || userId === 'guest-1') return STORAGE_KEY;
+	if (!userId || userId === 'guest-1') return GUEST_STORAGE_KEY;
 	return `${STORAGE_KEY}_${userId}`;
 }
 
@@ -113,9 +114,6 @@ function saveProgressToStorage(data: UserProgress) {
 	userProgressCache[currentStorageKey] = data;
 	if (typeof window !== 'undefined') {
 		localStorage.setItem(currentStorageKey, JSON.stringify(data));
-		if (currentStorageKey !== STORAGE_KEY) {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-		}
 	}
 }
 
@@ -123,7 +121,19 @@ function createProgressStore() {
 	let initial = INITIAL_PROGRESS;
 
 	if (typeof window !== 'undefined') {
-		const saved = localStorage.getItem(STORAGE_KEY);
+		let activeUserId = 'guest-1';
+		try {
+			const savedSession = localStorage.getItem('pyquest_current_user_v4');
+			if (savedSession) {
+				const parsedSession = JSON.parse(savedSession);
+				if (parsedSession?.isAuthenticated && parsedSession.user?.id) {
+					activeUserId = parsedSession.user.id;
+				}
+			}
+		} catch {}
+
+		currentStorageKey = getStorageKey(activeUserId);
+		const saved = localStorage.getItem(currentStorageKey);
 		if (saved) {
 			try {
 				const parsed = JSON.parse(saved);
@@ -148,13 +158,7 @@ function createProgressStore() {
 			currentStorageKey = getStorageKey(userId);
 			let loaded = INITIAL_PROGRESS;
 			if (typeof window !== 'undefined') {
-				let saved = localStorage.getItem(currentStorageKey);
-				if (!saved && currentStorageKey !== STORAGE_KEY) {
-					saved = localStorage.getItem(STORAGE_KEY);
-					if (saved) {
-						localStorage.setItem(currentStorageKey, saved);
-					}
-				}
+				const saved = localStorage.getItem(currentStorageKey);
 				if (saved) {
 					try {
 						const parsed = JSON.parse(saved);
@@ -304,9 +308,11 @@ function createProgressStore() {
 		},
 		reset: () => {
 			delete userProgressCache[currentStorageKey];
+			delete userProgressCache[GUEST_STORAGE_KEY];
 			delete userProgressCache[STORAGE_KEY];
 			if (typeof window !== 'undefined') {
 				localStorage.removeItem(currentStorageKey);
+				localStorage.removeItem(GUEST_STORAGE_KEY);
 				localStorage.removeItem(STORAGE_KEY);
 			}
 			set(INITIAL_PROGRESS);

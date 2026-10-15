@@ -960,6 +960,34 @@ describe('Google Authentication, Profile Setup & Account Persistence', () => {
 		expect(get(progressStore).xp).toBe(45);
 	});
 
+	it('should ensure brand new Google user starts at Level 1 with 0 XP and does not inherit previous user progress', () => {
+		// Existing user has progress
+		const existingUserId = 'google-veteran-user';
+		progressStore.loadForUser(existingUserId);
+		progressStore.reset();
+		progressStore.completeChallenge('lvl1-ch1', 20);
+		progressStore.completeChallenge('lvl1-ch2', 20);
+		progressStore.completeChallenge('lvl1-ch3', 20);
+		progressStore.completeLevel(1, 25);
+		expect(get(progressStore).xp).toBe(85);
+		expect(get(progressStore).completedChallenges.length).toBe(3);
+
+		// Brand new user logs in for the first time without calling reset()
+		const brandNewUserId = 'google-brand-new-user-test';
+		progressStore.loadForUser(brandNewUserId);
+
+		const freshProgress = get(progressStore);
+		expect(freshProgress.xp).toBe(0);
+		expect(freshProgress.completedChallenges.length).toBe(0);
+		expect(freshProgress.completedLevels.length).toBe(0);
+		expect(freshProgress.streak).toBe(0);
+
+		// Switch back to existing user: verified intact
+		progressStore.loadForUser(existingUserId);
+		expect(get(progressStore).xp).toBe(85);
+		expect(get(progressStore).completedChallenges.length).toBe(3);
+	});
+
 	it('should cleanly reset session on logout', async () => {
 		await authStore.logout();
 		const auth = get(authStore);
