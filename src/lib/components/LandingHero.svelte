@@ -4,7 +4,6 @@
 	import { levelsData } from '$lib/challenges/levelsData';
 	import { learningLevelsData } from '$lib/questions/learningLevelsData';
 	import { playClick } from '$lib/stores/soundStore';
-	import { themeStore } from '$lib/stores/themeStore';
 	import Icon from './Icon.svelte';
 
 	let {
@@ -219,28 +218,9 @@
 			<!-- Left: Greeting & Description & Stats Pills -->
 			<div class="flex-1 flex flex-col space-y-4 max-w-xl text-left w-full">
 				<div>
-					<div class="flex items-center justify-between gap-2 mb-1">
-						<div class="text-xs sm:text-sm font-semibold text-slate-300 hero-greeting flex items-center gap-2">
-							<span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-							<span>Selamat datang kembali,</span>
-						</div>
-						<!-- Quick Theme Toggle in Hero Card -->
-						<button
-							type="button"
-							onclick={() => {
-								playClick();
-								themeStore.toggleTheme();
-							}}
-							class="w-8 h-8 rounded-xl bg-slate-950/80 hover:bg-slate-950 border border-slate-700/60 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95"
-							title={$themeStore === 'light' ? 'Ubah ke Mode Gelap' : 'Ubah ke Mode Terang'}
-							aria-label="Ganti Tema"
-						>
-							{#if $themeStore === 'light'}
-								<Icon name="moon" size={15} class="text-indigo-400" />
-							{:else}
-								<Icon name="sun" size={15} class="text-amber-400" />
-							{/if}
-						</button>
+					<div class="text-xs sm:text-sm font-semibold text-slate-300 hero-greeting mb-1 flex items-center gap-2">
+						<span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+						<span>Selamat datang kembali,</span>
 					</div>
 					<h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight leading-tight hero-title">
 						Hi, {$dashboardUserStore.firstName || $dashboardUserStore.name}!

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { dashboardUserStore } from '$lib/stores/authStore';
 	import { pwaStore } from '$lib/stores/pwaStore';
-	import { themeStore } from '$lib/stores/themeStore';
 	import { playClick } from '$lib/stores/soundStore';
 	import PwaInstallButton from './PwaInstallButton.svelte';
 	import PyQuestLogo from './PyQuestLogo.svelte';
@@ -25,30 +24,14 @@
 <aside class="hidden lg:flex flex-col w-60 xl:w-64 bg-slate-900/90 border-r border-slate-800/80 p-4 select-none shrink-0 justify-between backdrop-blur-md z-20">
 	<!-- Navigation Links -->
 	<div class="space-y-6 pt-1">
-		<!-- Desktop Brand Logo & Quick Theme Toggle -->
-		<div class="px-2 pt-1 pb-1 flex items-center justify-between">
+		<!-- Desktop Brand Logo -->
+		<div class="px-2 pt-1 pb-1 flex items-center">
 			<PyQuestLogo
 				size="md"
 				showSubtitle={true}
 				clickable={true}
 				onclick={() => onSelectMode && onSelectMode('HOME')}
 			/>
-			<button
-				type="button"
-				onclick={() => {
-					playClick();
-					themeStore.toggleTheme();
-				}}
-				class="w-9 h-9 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/70 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/40 shrink-0"
-				title={$themeStore === 'light' ? 'Ubah ke Mode Gelap' : 'Ubah ke Mode Terang'}
-				aria-label="Ganti Tema"
-			>
-				{#if $themeStore === 'light'}
-					<Icon name="moon" size={16} class="text-indigo-400" />
-				{:else}
-					<Icon name="sun" size={16} class="text-amber-400" />
-				{/if}
-			</button>
 		</div>
 
 		<div>

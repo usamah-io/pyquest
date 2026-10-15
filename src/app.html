@@ -29,16 +29,13 @@
 		<!-- Google Identity Services (OAuth) -->
 		<script src="https://accounts.google.com/gsi/client" async defer></script>
 
-		<!-- Immediate Theme Initializer (Prevents Flash on Refresh) -->
+		<!-- Immediate Theme Initializer (Consistent Dark Mode) -->
 		<script>
 			try {
-				var savedTheme = localStorage.getItem('pyquest-theme') || 'dark';
-				document.documentElement.setAttribute('data-theme', savedTheme);
-				if (savedTheme === 'light') {
-					document.documentElement.classList.add('light');
-				} else {
-					document.documentElement.classList.add('dark');
-				}
+				document.documentElement.setAttribute('data-theme', 'dark');
+				document.documentElement.classList.remove('light');
+				document.documentElement.classList.add('dark');
+				localStorage.removeItem('pyquest-theme');
 			} catch (e) {}
 		</script>
 

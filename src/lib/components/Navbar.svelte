@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { authStore, dashboardUserStore } from '$lib/stores/authStore';
-	import { themeStore } from '$lib/stores/themeStore';
 	import { playClick } from '$lib/stores/soundStore';
 	import PyQuestLogo from './PyQuestLogo.svelte';
 	import Icon from './Icon.svelte';
@@ -50,25 +49,8 @@
 		/>
 	</div>
 
-	<!-- Right: Quick Theme Toggle & User Profile Avatar -->
+	<!-- Right: User Profile Avatar -->
 	<div class="flex items-center gap-2.5 relative">
-		<!-- Quick Theme Toggle Button -->
-		<button
-			type="button"
-			onclick={() => {
-				playClick();
-				themeStore.toggleTheme();
-			}}
-			class="w-9 h-9 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/70 text-slate-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
-			title={$themeStore === 'light' ? 'Ubah ke Mode Gelap' : 'Ubah ke Mode Terang'}
-			aria-label="Ganti Tema"
-		>
-			{#if $themeStore === 'light'}
-				<Icon name="moon" size={16} class="text-indigo-400" />
-			{:else}
-				<Icon name="sun" size={16} class="text-amber-400" />
-			{/if}
-		</button>
 		<!-- Profile Avatar Button (Clickable) -->
 		<button
 			type="button"
@@ -118,29 +100,6 @@
 					>
 						<Icon name="user" size={15} class="text-indigo-400" />
 						<span>Buka Halaman Profil</span>
-					</button>
-
-					<!-- Quick Theme Switcher Item -->
-					<button
-						type="button"
-						onclick={() => {
-							playClick();
-							themeStore.toggleTheme();
-						}}
-						class="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-200 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer text-left"
-					>
-						<span class="flex items-center gap-2.5">
-							{#if $themeStore === 'light'}
-								<Icon name="moon" size={15} class="text-indigo-400" />
-								<span>Mode Gelap</span>
-							{:else}
-								<Icon name="sun" size={15} class="text-amber-400" />
-								<span>Mode Terang</span>
-							{/if}
-						</span>
-						<span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700/60">
-							{$themeStore}
-						</span>
 					</button>
 
 					{#if !$dashboardUserStore.isAuthenticated}

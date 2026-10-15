@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { authStore, dashboardUserStore } from '$lib/stores/authStore';
 	import { soundStore, playClick } from '$lib/stores/soundStore';
-	import { themeStore } from '$lib/stores/themeStore';
 	import { pwaStore } from '$lib/stores/pwaStore';
 	import { progressStore } from '$lib/stores/progressStore';
 	import { levelsData } from '$lib/challenges/levelsData';
@@ -330,45 +329,11 @@
 				</div>
 			</div>
 
-			<!-- Preferensi Aplikasi (Tema & Efek Suara) -->
+			<!-- Preferensi Aplikasi (Efek Suara) -->
 			<div class="w-full pt-4 border-t border-slate-800 space-y-3 text-left">
 				<span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block">
 					Preferensi Aplikasi
 				</span>
-
-				<!-- Tema Tampilan -->
-				<div class="space-y-1.5">
-					<div class="flex items-center justify-between text-xs text-slate-400">
-						<span>Tema:</span>
-						<span class="font-bold text-indigo-400 capitalize text-[11px] font-mono">
-							{$themeStore === 'light' ? 'Terang' : 'Gelap'}
-						</span>
-					</div>
-					<div class="grid grid-cols-2 gap-2">
-						<button
-							type="button"
-							onclick={() => {
-								if ($themeStore !== 'dark') themeStore.setTheme('dark');
-								playClick();
-							}}
-							class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {$themeStore === 'dark' ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-slate-300 dark:border-slate-700/60'}"
-						>
-							<Icon name="moon" size={14} class={$themeStore === 'dark' ? 'text-white' : 'text-slate-600 dark:text-slate-400'} />
-							<span>Gelap</span>
-						</button>
-						<button
-							type="button"
-							onclick={() => {
-								if ($themeStore !== 'light') themeStore.setTheme('light');
-								playClick();
-							}}
-							class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border {$themeStore === 'light' ? 'bg-amber-500 text-white border-amber-400 shadow-md shadow-amber-500/30' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border-slate-300 dark:border-slate-700/60'}"
-						>
-							<Icon name="sun" size={14} class={$themeStore === 'light' ? 'text-white' : 'text-slate-600 dark:text-slate-400'} />
-							<span>Terang</span>
-						</button>
-					</div>
-				</div>
 
 				<!-- Efek Suara -->
 				<div class="space-y-1.5 pt-1">

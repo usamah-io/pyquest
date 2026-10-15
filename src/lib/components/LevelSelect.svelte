@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 	import type { GameLevel } from '$lib/types';
 	import { progressStore } from '$lib/stores/progressStore';
-	import { themeStore } from '$lib/stores/themeStore';
 	import { playClick } from '$lib/stores/soundStore';
 	import Icon from './Icon.svelte';
 	import TutorialModal from './TutorialModal.svelte';
@@ -246,44 +245,8 @@
 				</div>
 			</div>
 
-			<!-- Mobile Quick Action: Theme Toggle Only (Leaves full width for Title) -->
-			<div class="flex sm:hidden items-center shrink-0">
-				<button
-					type="button"
-					onclick={() => {
-						playClick();
-						themeStore.toggleTheme();
-					}}
-					class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer shadow-xs"
-					title={$themeStore === 'light' ? 'Ubah ke Mode Gelap' : 'Ubah ke Mode Terang'}
-					aria-label="Ganti Tema"
-				>
-					{#if $themeStore === 'light'}
-						<Icon name="moon" size={15} class="text-indigo-400" />
-					{:else}
-						<Icon name="sun" size={15} class="text-amber-400" />
-					{/if}
-				</button>
-			</div>
-
-			<!-- Desktop Toolbar (Theme Toggle, Tutorial, Trophy, XP) -->
+			<!-- Desktop Toolbar (Tutorial, Trophy, XP) -->
 			<div class="hidden sm:flex items-center gap-2 shrink-0">
-				<button
-					type="button"
-					onclick={() => {
-						playClick();
-						themeStore.toggleTheme();
-					}}
-					class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer shadow-xs"
-					title={$themeStore === 'light' ? 'Ubah ke Mode Gelap' : 'Ubah ke Mode Terang'}
-					aria-label="Ganti Tema"
-				>
-					{#if $themeStore === 'light'}
-						<Icon name="moon" size={15} class="text-indigo-400" />
-					{:else}
-						<Icon name="sun" size={15} class="text-amber-400" />
-					{/if}
-				</button>
 				<button
 					type="button"
 					onclick={handleOpenTutorial}
